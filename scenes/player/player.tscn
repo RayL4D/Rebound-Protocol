@@ -11,7 +11,7 @@
 [sub_resource type="BoxMesh" id="BoxMesh_dovo2"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_hitarea"]
-size = Vector3(1, 1, 0.2)
+size = Vector3(1.2, 1.2, 0.5)
 
 [node name="Player" type="CharacterBody3D" unique_id=222719199]
 collision_layer = 1
