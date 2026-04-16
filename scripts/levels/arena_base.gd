@@ -1,11 +1,12 @@
 extends Node
 
 
-# Called when the node enters the scene tree for the first time.
-func _ready() -> void:
-	pass # Replace with function body.
+# arena_base.gd
+func _ready():
+	_add_collision_recursive(self)
 
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
+func _add_collision_recursive(node: Node):
+	if node is MeshInstance3D:
+		node.create_trimesh_collision()
+	for child in node.get_children():
+		_add_collision_recursive(child)
