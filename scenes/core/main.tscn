@@ -1,0 +1,38 @@
+[gd_scene format=3 uid="uid://cuwxo1g0v1p1j"]
+
+[ext_resource type="PackedScene" uid="uid://cp8oo218ghcj" path="res://scenes/player/player.tscn" id="1_fgbdc"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/enemy_placeholder.tscn" id="2_i4cec"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_fgbdc"]
+size = Vector3(60, 2, 60)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_fgbdc"]
+albedo_color = Color(0, 0.88622624, 0.15232566, 1)
+metallic = 1.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_i4cec"]
+material = SubResource("StandardMaterial3D_fgbdc")
+size = Vector3(60, 2, 60)
+
+[node name="Main" type="Node" unique_id=875402153]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1458293194]
+transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 10, 0)
+shadow_enabled = true
+
+[node name="Player" parent="." unique_id=222719199 instance=ExtResource("1_fgbdc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+
+[node name="Ground" type="StaticBody3D" parent="." unique_id=1267050387]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground" unique_id=1677208724]
+shape = SubResource("BoxShape3D_fgbdc")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground" unique_id=1524868557]
+mesh = SubResource("BoxMesh_i4cec")
+
+[node name="EnemyPlaceholder" parent="." unique_id=160369764 instance=ExtResource("2_i4cec")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0032377243, 0.9873953, -16.14559)
+stop_distance = 10.0
+shoot_range = 20.0
