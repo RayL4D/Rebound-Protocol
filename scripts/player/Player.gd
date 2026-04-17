@@ -11,7 +11,11 @@ extends CharacterBody3D
 
 # --- Références nœuds --------------------------------------------
 @onready var spring_arm: SpringArm3D = $SpringArm3D
-@onready var shield: Node3D         = $Shield
+@onready var shield: Node3D          = $Shield
+@onready var robot_model: Node3D     = $RobotModel
+
+# Texture du modèle — chargée une seule fois au démarrage
+var _player_texture: Texture2D = preload("res://assets/textures/player/texture-g.png")
 
 # --- Variables d'état --------------------------------------------
 var current_hp: int
@@ -31,12 +35,36 @@ signal hp_changed(new_hp: int)
 
 func _ready() -> void:
 	current_hp = max_hp
-	# La SpringArm3D est fixée dans l'éditeur (rotation X = -55°)
-	# Elle ne tourne pas avec le joueur — caméra top-down statique
+
+	# Évite l'éjection verticale par la collision trimesh du sol
+	floor_snap_length = 0.3
+
+	# La SpringArm3D se détache du parent → suit le joueur en position
+	# mais garde sa rotation d'éditeur (tilt -60° top-down)
 	spring_arm.set_as_top_level(true)
-	# Ajouter le joueur au groupe "player" pour que les ennemis
-	# puissent le retrouver via get_tree().get_first_node_in_group("player")
+
 	add_to_group("player")
+	_apply_texture_recursive(robot_model)
+
+	# Stoppe l'AnimationPlayer intégré au GLB Kenney pour éviter l'autoplay
+	# qui cause le root motion (personnage qui dérive tout seul).
+	# find_child cherche en profondeur dans toute la hiérarchie du GLB.
+	# L'AnimationTree prendra le relais à l'étape 5.
+	var anim_player := robot_model.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	if anim_player:
+		anim_player.stop()
+
+
+# Applique la texture sur tous les MeshInstance3D du modèle (tête, torse,
+# bras, jambes) en un seul appel. Plus fiable que de le faire manuellement
+# dans l'éditeur car ça résiste aux réécritures du .tscn par Godot.
+func _apply_texture_recursive(node: Node) -> void:
+	if node is MeshInstance3D:
+		var mat := StandardMaterial3D.new()
+		mat.albedo_texture = _player_texture
+		node.set_surface_override_material(0, mat)
+	for child in node.get_children():
+		_apply_texture_recursive(child)
 
 
 func _physics_process(delta: float) -> void:
@@ -47,8 +75,12 @@ func _physics_process(delta: float) -> void:
 	_handle_movement()
 	move_and_slide()
 
-	# La caméra suit le joueur même si top_level = true
-	spring_arm.global_position = global_position
+	# La caméra pivote depuis le centre du personnage (pas depuis ses pieds).
+	# Sans l'offset Y, le pivot est à Y=0 (pieds) et la caméra regarde les jambes.
+	spring_arm.global_position = global_position + Vector3(0, 0.9, 0)
+
+	# Annule le root motion résiduel du GLB frame par frame
+	robot_model.position = Vector3.ZERO
 
 
 # =============================================================
@@ -56,7 +88,10 @@ func _physics_process(delta: float) -> void:
 # =============================================================
 
 func _apply_gravity(delta: float) -> void:
-	if not is_on_floor():
+	if is_on_floor():
+		# Reset Y immédiatement au sol — évite l'éjection par la trimesh
+		velocity.y = 0.0
+	else:
 		velocity.y -= gravity * delta
 
 

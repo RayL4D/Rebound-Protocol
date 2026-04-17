@@ -3,10 +3,11 @@
 [ext_resource type="Script" uid="uid://dtemtoqfgarfw" path="res://scripts/player/Player.gd" id="1_8afob"]
 [ext_resource type="Script" uid="uid://bgkginfq3aqd" path="res://scripts/player/Shield.gd" id="2_gmlin"]
 [ext_resource type="Script" uid="uid://v4jutpy8jkwk" path="res://scripts/player/Parry_timer.gd" id="3_lvxji"]
-
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_x7p2l"]
+[ext_resource type="PackedScene" uid="uid://dvct7n48fh007" path="res://assets/models/player/character-g.glb" id="4_lvxji"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_8afob"]
+radius = 0.25
+height = 1.8
 
 [sub_resource type="BoxMesh" id="BoxMesh_dovo2"]
 
@@ -14,8 +15,6 @@
 size = Vector3(1.2, 1.2, 0.5)
 
 [node name="Player" type="CharacterBody3D" unique_id=222719199]
-collision_layer = 1
-collision_mask = 1
 script = ExtResource("1_8afob")
 
 [node name="SpringArm3D" type="SpringArm3D" parent="." unique_id=2018840139]
@@ -24,8 +23,8 @@ spring_length = 12.0
 
 [node name="Camera3D" type="Camera3D" parent="SpringArm3D" unique_id=1796041781]
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=830800315]
-mesh = SubResource("CapsuleMesh_x7p2l")
+[node name="RobotModel" parent="." unique_id=1575018680 instance=ExtResource("4_lvxji")]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=836211236]
 shape = SubResource("CapsuleShape3D_8afob")
@@ -46,3 +45,5 @@ shape = SubResource("BoxShape3D_hitarea")
 
 [node name="ParryTimer" type="Node" parent="Shield" unique_id=577294641]
 script = ExtResource("3_lvxji")
+
+[editable path="RobotModel"]
