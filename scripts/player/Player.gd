@@ -199,4 +199,8 @@ func heal(amount: int) -> void:
 
 func _die() -> void:
 	is_dead = true
+	# Déclenché ici directement car _physics_process retourne immédiatement
+	# quand is_dead est true — _update_animation() ne serait jamais appelée.
+	var playback := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
+	playback.travel("die")
 	player_died.emit()
