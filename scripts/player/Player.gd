@@ -6,20 +6,24 @@ class_name Player
 extends CharacterBody3D
 
 # --- Exports (modifiables dans l'inspector Godot) ----------------
-@export var move_speed: float = 5.0
-@export var max_hp: int   = 100
+@export var move_speed: float     = 5.0
+@export var max_hp: int           = 100
+@export var rotation_speed: float = 15.0  # Vitesse d'interpolation de la rotation
 
 # --- Références nœuds --------------------------------------------
-@onready var spring_arm: SpringArm3D = $SpringArm3D
-@onready var shield: Node3D          = $Shield
-@onready var robot_model: Node3D     = $RobotModel
+@onready var spring_arm: SpringArm3D  = $SpringArm3D
+@onready var shield: Node3D           = $Shield
+@onready var robot_model: Node3D      = $RobotModel
+@onready var camera: Camera3D         = $SpringArm3D/Camera3D
+@onready var anim_tree: AnimationTree = $AnimationTree
 
 # Texture du modèle — chargée une seule fois au démarrage
 var _player_texture: Texture2D = preload("res://assets/textures/player/texture-g.png")
 
 # --- Variables d'état --------------------------------------------
 var current_hp: int
-var is_dead: bool = false
+var is_dead: bool          = false
+var _parry_requested: bool = false
 
 # Gravité récupérée depuis les paramètres projet Godot
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -35,29 +39,23 @@ signal hp_changed(new_hp: int)
 
 func _ready() -> void:
 	current_hp = max_hp
-
-	# Évite l'éjection verticale par la collision trimesh du sol
 	floor_snap_length = 0.3
-
-	# La SpringArm3D se détache du parent → suit le joueur en position
-	# mais garde sa rotation d'éditeur (tilt -60° top-down)
 	spring_arm.set_as_top_level(true)
-
 	add_to_group("player")
 	_apply_texture_recursive(robot_model)
 
-	# Stoppe l'AnimationPlayer intégré au GLB Kenney pour éviter l'autoplay
-	# qui cause le root motion (personnage qui dérive tout seul).
-	# find_child cherche en profondeur dans toute la hiérarchie du GLB.
-	# L'AnimationTree prendra le relais à l'étape 5.
+	# Stoppe l'AnimationPlayer brut du GLB — c'est l'AnimationTree qui prend
+	# le relais pour piloter les états (idle/sprint/parry/die).
 	var anim_player := robot_model.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if anim_player:
 		anim_player.stop()
 
+	# Pas besoin de connecter parry_resolved pour les animations :
+	# on détecte l'appui SPACE directement dans _physics_process.
+
 
 # Applique la texture sur tous les MeshInstance3D du modèle (tête, torse,
-# bras, jambes) en un seul appel. Plus fiable que de le faire manuellement
-# dans l'éditeur car ça résiste aux réécritures du .tscn par Godot.
+# bras, jambes) en un seul appel.
 func _apply_texture_recursive(node: Node) -> void:
 	if node is MeshInstance3D:
 		var mat := StandardMaterial3D.new()
@@ -73,14 +71,20 @@ func _physics_process(delta: float) -> void:
 
 	_apply_gravity(delta)
 	_handle_movement()
+	_rotate_toward_mouse(delta)
+
+	# Déclenche l'animation de parade dès l'appui sur SPACE
+	if Input.is_action_just_pressed("parry"):
+		_parry_requested = true
+		var pb := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
+		pb.travel("parry")
+
 	move_and_slide()
 
-	# La caméra pivote depuis le centre du personnage (pas depuis ses pieds).
-	# Sans l'offset Y, le pivot est à Y=0 (pieds) et la caméra regarde les jambes.
 	spring_arm.global_position = global_position + Vector3(0, 0.9, 0)
-
-	# Annule le root motion résiduel du GLB frame par frame
 	robot_model.position = Vector3.ZERO
+
+	_update_animation()
 
 
 # =============================================================
@@ -89,26 +93,85 @@ func _physics_process(delta: float) -> void:
 
 func _apply_gravity(delta: float) -> void:
 	if is_on_floor():
-		# Reset Y immédiatement au sol — évite l'éjection par la trimesh
 		velocity.y = 0.0
 	else:
 		velocity.y -= gravity * delta
 
 
 func _handle_movement() -> void:
-	# get_axis retourne -1 / 0 / 1 selon les actions InputMap
 	var input_x: float = Input.get_axis("move_left", "move_right")
 	var input_z: float = Input.get_axis("move_forward", "move_backward")
 
 	var input_dir := Vector2(input_x, input_z)
-
-	# Normaliser pour éviter le déplacement diagonal plus rapide
 	if input_dir.length() > 1.0:
 		input_dir = input_dir.normalized()
 
-	# Input 2D → direction 3D (top-down : Z = profondeur)
 	velocity.x = input_dir.x * move_speed
 	velocity.z = input_dir.y * move_speed
+
+
+# =============================================================
+# ROTATION VERS LA SOURIS
+# =============================================================
+
+func _rotate_toward_mouse(delta: float) -> void:
+	var mouse_pos     := get_viewport().get_mouse_position()
+	var ray_origin    := camera.project_ray_origin(mouse_pos)
+	var ray_direction := camera.project_ray_normal(mouse_pos)
+
+	if abs(ray_direction.y) < 0.001:
+		return
+
+	var t            := (global_position.y - ray_origin.y) / ray_direction.y
+	var target_point := ray_origin + ray_direction * t
+
+	var look_dir := (target_point - global_position)
+	look_dir.y = 0.0
+
+	if look_dir.length_squared() < 0.01:
+		return
+
+	var target_angle := atan2(look_dir.x, look_dir.z)
+	robot_model.rotation.y = rotate_toward(
+		robot_model.rotation.y,
+		target_angle,
+		rotation_speed * delta
+	)
+
+
+# =============================================================
+# ANIMATIONS
+# =============================================================
+
+func _update_animation() -> void:
+	var playback := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
+
+	if is_dead:
+		playback.travel("die")
+		return
+
+	var current := playback.get_current_node()
+
+	# _parry_requested bloque les frames de transition entre l'appel de
+	# travel("parry") et le moment où le state machine entre réellement dans
+	# cet état — sans ça, _update_animation écrase la demande dès le frame suivant.
+	if _parry_requested:
+		if current == "parry":
+			_parry_requested = false  # Entrée confirmée, le flag n'est plus nécessaire
+		return  # Dans tous les cas on attend, qu'on soit en transition ou dedans
+
+	# L'animation de parade joue jusqu'à la fin (transition AtEnd → idle automatique)
+	if current == "parry":
+		return
+
+	# Déplacement horizontal uniquement (on ignore Y pour ne pas switcher en l'air)
+	var is_moving := Vector2(velocity.x, velocity.z).length_squared() > 0.1
+	if is_moving:
+		playback.travel("sprint")
+	else:
+		playback.travel("idle")
+
+
 
 
 # =============================================================
