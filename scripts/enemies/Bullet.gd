@@ -28,11 +28,11 @@ func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 
 
-func _process(delta: float) -> void:
-	# Déplacement en ligne droite chaque frame
-	# global_position : position dans l'espace monde (pas local)
-	# direction * speed * delta : on multiplie par delta pour que
-	# la vitesse soit indépendante du framerate
+func _physics_process(delta: float) -> void:
+	# _physics_process au lieu de _process : le déplacement est maintenant
+	# synchronisé avec le moteur physique. C'est indispensable pour que
+	# les Area3D (comme la HitArea du bouclier) détectent correctement
+	# la balle — sinon elle peut "tunneler" à travers sans déclencher area_entered.
 	global_position += direction * speed * delta
 
 
