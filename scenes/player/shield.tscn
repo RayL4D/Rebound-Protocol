@@ -1,0 +1,36 @@
+[gd_scene format=3 uid="uid://bx87d68g68wkc"]
+
+[ext_resource type="Script" uid="uid://bgkginfq3aqd" path="res://scripts/player/Shield.gd" id="1_e6x5r"]
+[ext_resource type="Script" uid="uid://v4jutpy8jkwk" path="res://scripts/player/Parry_timer.gd" id="2_3h12n"]
+[ext_resource type="QuadMesh" uid="uid://dpend1yiu4akp" path="res://assets/shaders/shield_mat.tres" id="3_5yl6w"]
+[ext_resource type="Shader" uid="uid://71l6vdcqapbb" path="res://assets/shaders/shield.gdshader" id="4_cua4h"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_hitarea"]
+size = Vector3(1.2, 1.2, 0.5)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0owmy"]
+render_priority = 0
+shader = ExtResource("4_cua4h")
+shader_parameter/shield_color = Color(0, 0.85430586, 1, 0.85)
+shader_parameter/intensity = 1.5
+shader_parameter/hex_scale = 6.0
+shader_parameter/pulse_speed = 1.5
+shader_parameter/wave_speed = 3.0
+
+[node name="Shield" type="Node3D" unique_id=626046708]
+script = ExtResource("1_e6x5r")
+
+[node name="HitArea" type="Area3D" parent="." unique_id=381993482]
+collision_layer = 4
+collision_mask = 3
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="HitArea" unique_id=214491228]
+shape = SubResource("BoxShape3D_hitarea")
+
+[node name="ParryTimer" type="Node" parent="." unique_id=1911791534]
+script = ExtResource("2_3h12n")
+max_parry_window = 0.3
+
+[node name="ShieldMesh" type="MeshInstance3D" parent="." unique_id=1447310872]
+mesh = ExtResource("3_5yl6w")
+surface_material_override/0 = SubResource("ShaderMaterial_0owmy")
