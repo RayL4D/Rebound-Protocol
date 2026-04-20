@@ -2,6 +2,10 @@
 # Shield.gd — Rotation du bouclier + logique de parade + visuel
 # Rebound Protocol · Conventions : snake_case vars, PascalCase class
 # =============================================================
+# Le visuel (MeshInstance3D + ShaderMaterial) est configuré dans
+# l'éditeur sur le nœud enfant "ShieldMesh". Le script récupère
+# le matériau au démarrage pour gérer les flashes de parade.
+# =============================================================
 class_name Shield
 extends Node3D
 
@@ -9,8 +13,9 @@ extends Node3D
 @export var orbit_radius: float = 0.8
 
 # --- Références nœuds --------------------------------------------
-@onready var parry_timer: ParryTimer = $ParryTimer
-@onready var hit_area: Area3D        = $HitArea
+@onready var parry_timer:    ParryTimer      = $ParryTimer
+@onready var hit_area:       Area3D          = $HitArea
+@onready var _mesh_instance: MeshInstance3D  = $ShieldMesh
 
 # --- Scène de la balle renvoyée ----------------------------------
 var _bullet_reflected_scene: PackedScene = preload("res://scenes/enemies/bullet_reflected.tscn")
@@ -21,10 +26,9 @@ var camera: Camera3D
 var _shield_direction: Vector3 = Vector3.FORWARD
 var _pending_bullet: Bullet    = null
 
-# --- Visuels -----------------------------------------------------
-var _base_color: Color          = Color(0.0, 0.7, 1.0, 0.85)
+# --- Matériau (lu depuis ShieldMesh dans l'éditeur) --------------
 var _shield_mat: ShaderMaterial
-var _mesh_instance: MeshInstance3D
+var _base_color: Color
 
 
 # =============================================================
@@ -38,63 +42,14 @@ func _ready() -> void:
 	hit_area.area_entered.connect(_on_bullet_entered)
 	parry_timer.parry_resolved.connect(_on_parry_resolved)
 
-	_setup_shield_visual()
+	# Récupérer le ShaderMaterial configuré dans l'éditeur
+	_shield_mat = _mesh_instance.material_override as ShaderMaterial
+	if _shield_mat == null:
+		push_error("Shield: aucun ShaderMaterial trouvé sur ShieldMesh — vérifie l'éditeur.")
+		return
 
-
-func _setup_shield_visual() -> void:
-	for child in get_children():
-		if child is MeshInstance3D:
-			child.queue_free()
-
-	_mesh_instance      = MeshInstance3D.new()
-	var quad            := QuadMesh.new()
-	quad.size            = Vector2(1.0, 1.5)
-	_mesh_instance.mesh  = quad
-	add_child(_mesh_instance)
-
-	var shader         := Shader.new()
-	shader.code         = _shader_code()
-	_shield_mat         = ShaderMaterial.new()
-	_shield_mat.shader  = shader
-	_shield_mat.set_shader_parameter("shield_color", _base_color)
-	_shield_mat.set_shader_parameter("intensity",    1.5)
-	_shield_mat.set_shader_parameter("hex_scale",    6.0)
-	_shield_mat.set_shader_parameter("pulse_speed",  1.5)
-	_shield_mat.set_shader_parameter("wave_speed",   3.0)
-	_mesh_instance.material_override = _shield_mat
-
-
-func _shader_code() -> String:
-	return (
-	  "shader_type spatial;\n"
-	+ "render_mode blend_add, depth_draw_never, cull_disabled, unshaded;\n"
-	+ "uniform vec4  shield_color : source_color = vec4(0.0,0.7,1.0,0.85);\n"
-	+ "uniform float intensity    : hint_range(0.0,5.0)  = 1.5;\n"
-	+ "uniform float hex_scale    : hint_range(1.0,20.0) = 6.0;\n"
-	+ "uniform float pulse_speed  : hint_range(0.1,5.0)  = 1.5;\n"
-	+ "uniform float wave_speed   : hint_range(0.1,10.0) = 3.0;\n"
-	+ "vec2 hex_center(vec2 p){\n"
-	+ "  vec2 r=vec2(1.0,1.732); vec2 h=r*0.5;\n"
-	+ "  vec2 a=mod(p,r)-h; vec2 b=mod(p-h,r)-h;\n"
-	+ "  return dot(a,a)<dot(b,b)?a:b;}\n"
-	+ "void fragment(){\n"
-	+ "  vec2 uv=UV*2.0-1.0;\n"
-	+ "  float sd=length(uv*vec2(0.85,1.0));\n"
-	+ "  float shape=1.0-smoothstep(0.75,1.0,sd);\n"
-	+ "  if(shape<0.001){discard;}\n"
-	+ "  float pulse=sin(TIME*pulse_speed)*0.5+0.5;\n"
-	+ "  vec2 hex=hex_center(UV*hex_scale);\n"
-	+ "  float hd=length(hex);\n"
-	+ "  float hline=1.0-smoothstep(0.04,0.14,hd);\n"
-	+ "  float hglow=exp(-hd*10.0)*0.25;\n"
-	+ "  float edge=smoothstep(0.45,0.85,sd);\n"
-	+ "  float wave=pow(sin(UV.y*10.0-TIME*wave_speed)*0.5+0.5,5.0)*0.35;\n"
-	+ "  float b=(hline*0.65+hglow+edge*0.9+wave+pulse*0.12)*shape;\n"
-	+ "  vec3 holo=shield_color.rgb+vec3(-0.05,0.05,0.15)*(UV.y-0.5);\n"
-	+ "  ALBEDO=holo;\n"
-	+ "  ALPHA=clamp(b*intensity*shield_color.a,0.0,1.0);\n"
-	+ "  EMISSION=holo*(hline+edge*0.6+pulse*0.08)*intensity;}\n"
-	)
+	# Lire la couleur de base depuis le matériau (définie dans l'inspector)
+	_base_color = _shield_mat.get_shader_parameter("shield_color")
 
 
 func _process(_delta: float) -> void:

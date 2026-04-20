@@ -7,6 +7,8 @@ extends CharacterBody3D
 
 # --- Exports (modifiables dans l'inspector Godot) ----------------
 @export var move_speed: float     = 5.0
+@export var jump_force: float     = 8.0
+@export var fall_multiplier: float = 2.5  # Gravité multipliée pendant la chute
 @export var max_hp: int           = 100
 @export var rotation_speed: float = 15.0  # Vitesse d'interpolation de la rotation
 
@@ -24,6 +26,8 @@ var _player_texture: Texture2D = preload("res://assets/textures/player/texture-g
 var current_hp: int
 var is_dead: bool          = false
 var _parry_requested: bool = false
+var _was_on_floor: bool    = true   # Pour détecter l'atterrissage
+var _model_base_scale: Vector3     # Scale originale du RobotModel (lue dans _ready)
 
 # Gravité récupérée depuis les paramètres projet Godot
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -43,6 +47,7 @@ func _ready() -> void:
 	spring_arm.set_as_top_level(true)
 	add_to_group("player")
 	_apply_texture_recursive(robot_model)
+	_model_base_scale = robot_model.scale  # Mémoriser la scale réelle du modèle
 
 	# Stoppe l'AnimationPlayer brut du GLB — c'est l'AnimationTree qui prend
 	# le relais pour piloter les états (idle/sprint/parry/die).
@@ -70,6 +75,7 @@ func _physics_process(delta: float) -> void:
 		return
 
 	_apply_gravity(delta)
+	_handle_jump()       # Après gravity : overrride velocity.y si saut demandé
 	_handle_movement()
 	_rotate_toward_mouse(delta)
 
@@ -83,7 +89,7 @@ func _physics_process(delta: float) -> void:
 
 	spring_arm.global_position = global_position + Vector3(0, 0.9, 0)
 	robot_model.position = Vector3.ZERO
-
+	_update_lean(delta)
 	_update_animation()
 
 
@@ -94,8 +100,54 @@ func _physics_process(delta: float) -> void:
 func _apply_gravity(delta: float) -> void:
 	if is_on_floor():
 		velocity.y = 0.0
+	elif velocity.y < 0.0:
+		# Chute : gravité renforcée pour éviter le flottement
+		velocity.y -= gravity * fall_multiplier * delta
 	else:
+		# Montée : gravité normale
 		velocity.y -= gravity * delta
+
+
+func _handle_jump() -> void:
+	var on_floor := is_on_floor()
+
+	if Input.is_action_just_pressed("jump") and on_floor:
+		velocity.y        = jump_force
+		floor_snap_length = 0.0   # Laisser le sol pour de vrai
+		_squash_stretch_jump()
+	elif on_floor and not _was_on_floor:
+		floor_snap_length = 0.3   # Rétablir le snap à l'atterrissage
+		_squash_stretch_land()
+	elif on_floor:
+		floor_snap_length = 0.3
+
+	_was_on_floor = on_floor
+
+
+# Tilt du modèle selon la vélocité verticale — donne l'impression d'un arc
+func _update_lean(delta: float) -> void:
+	# velocity.y positif = montée → penche en arrière
+	# velocity.y négatif = chute → penche en avant
+	var target_tilt: float = clamp(-velocity.y * 0.03, -0.3, 0.3)
+	robot_model.rotation.x = lerp(robot_model.rotation.x, target_tilt, 12.0 * delta)
+
+
+# Squash & stretch au décollage
+func _squash_stretch_jump() -> void:
+	var b := _model_base_scale
+	var tween := create_tween()
+	tween.tween_property(robot_model, "scale", Vector3(b.x * 1.2, b.y * 0.7,  b.z * 1.2),  0.07)
+	tween.tween_property(robot_model, "scale", Vector3(b.x * 0.85, b.y * 1.3, b.z * 0.85), 0.12)
+	tween.tween_property(robot_model, "scale", b,                                            0.18)
+
+
+# Squash & stretch à l'atterrissage
+func _squash_stretch_land() -> void:
+	var b := _model_base_scale
+	var tween := create_tween()
+	tween.tween_property(robot_model, "scale", Vector3(b.x * 1.3,  b.y * 0.65, b.z * 1.3),  0.06)
+	tween.tween_property(robot_model, "scale", Vector3(b.x * 0.92, b.y * 1.1,  b.z * 0.92), 0.09)
+	tween.tween_property(robot_model, "scale", b,                                             0.1)
 
 
 func _handle_movement() -> void:
