@@ -62,12 +62,24 @@ script = ExtResource("1_8afob")
 
 [node name="SpringArm3D" type="SpringArm3D" parent="." unique_id=2018840139]
 transform = Transform3D(1, 0, 0, 0, 0.57357645, 0.81915206, 0, -0.81915206, 0.57357645, 0, 0, 0)
-spring_length = 12.0
+spring_length = 8.0
 
 [node name="Camera3D" type="Camera3D" parent="SpringArm3D" unique_id=1796041781]
 
 [node name="RobotModel" parent="." unique_id=1575018680 instance=ExtResource("4_lvxji")]
 transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0, 0)
+
+[node name="torso" parent="RobotModel/character-g/root" parent_id_path=PackedInt32Array(1575018680, 91212867) index="2" unique_id=1572204047]
+transform = Transform3D(1, 0, 0, 0, 0.99788487, 0.06500622, 0, -0.06500622, 0.99788487, 0, 0.7, 0)
+
+[node name="arm-left" parent="RobotModel/character-g/root/torso" index="0" unique_id=1539902478]
+transform = Transform3D(1, 0, 0, 0, 0.98101735, 0.19391984, 0, -0.19391984, 0.98101735, 0.4000001, 1.1, -0.099999905)
+
+[node name="arm-right" parent="RobotModel/character-g/root/torso" index="1" unique_id=822799953]
+transform = Transform3D(1, 0, 0, 0, 0.98101735, 0.19391984, 0, -0.19391984, 0.98101735, -0.4000001, 1.1, -0.099999905)
+
+[node name="head" parent="RobotModel/character-g/root/torso" index="2" unique_id=793382359]
+transform = Transform3D(0.098101735, 0, 0.019391984, 0, 0.1, 0, -0.019391984, 0, 0.098101735, 0, 1.2, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=836211236]
 shape = SubResource("CapsuleShape3D_8afob")
@@ -88,6 +100,7 @@ shape = SubResource("BoxShape3D_hitarea")
 
 [node name="ParryTimer" type="Node" parent="Shield" unique_id=577294641]
 script = ExtResource("3_lvxji")
+max_parry_window = 0.3
 
 [node name="AnimationTree" type="AnimationTree" parent="." unique_id=204249420]
 root_node = NodePath("../RobotModel")

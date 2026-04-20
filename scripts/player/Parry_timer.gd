@@ -5,10 +5,13 @@ class_name ParryTimer
 extends Node
 
 # --- Exports (tweakables sans recompiler) ------------------------
-# ⚠ Fenêtre critique : temps en secondes pour déclencher un critique
+# Fenêtre critique : temps en secondes pour déclencher un CRITICAL
 @export var perfect_window: float  = 0.15
+# Durée maximale de validité d'un appui SPACE.
+# Si la balle arrive après ce délai, le SPACE est ignoré → ABSORB.
+@export var max_parry_window: float = 0.4
 # Durée pendant laquelle SPACE est ignoré après une parade
-@export var parry_cooldown: float = 0.3
+@export var parry_cooldown: float  = 0.3
 
 # --- Enum des états de parade -----------------------------------
 enum ParryState {
@@ -45,6 +48,11 @@ func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("parry"):
 		_space_pressed    = true
 		_space_press_time = _get_time()
+
+	# Expirer automatiquement le SPACE s'il est trop vieux —
+	# sans ça, un appui bien avant l'impact compte quand même comme parade.
+	if _space_pressed and (_get_time() - _space_press_time) > max_parry_window:
+		_space_pressed = false
 
 
 # =============================================================
