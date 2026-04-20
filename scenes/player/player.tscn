@@ -3,29 +3,83 @@
 [ext_resource type="Script" uid="uid://dtemtoqfgarfw" path="res://scripts/player/Player.gd" id="1_8afob"]
 [ext_resource type="Script" uid="uid://bgkginfq3aqd" path="res://scripts/player/Shield.gd" id="2_gmlin"]
 [ext_resource type="Script" uid="uid://v4jutpy8jkwk" path="res://scripts/player/Parry_timer.gd" id="3_lvxji"]
-
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_x7p2l"]
+[ext_resource type="PackedScene" uid="uid://dvct7n48fh007" path="res://assets/models/player/character-g.glb" id="4_lvxji"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_8afob"]
+radius = 0.25
+height = 1.8
 
 [sub_resource type="BoxMesh" id="BoxMesh_dovo2"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_hitarea"]
 size = Vector3(1.2, 1.2, 0.5)
 
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_p47bc"]
+animation = &"die"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_75vfm"]
+animation = &"idle"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_lvxji"]
+animation = &"attack-melee-left"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_0owmy"]
+animation = &"sprint"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_qek5x"]
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_5gtgg"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_h17s1"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_je7p5"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_fm80t"]
+switch_mode = 2
+advance_mode = 2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_gx1jg"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_ugbui"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_fcs02"]
+
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_myrg7"]
+states/Start/position = Vector2(107.2, 118.4)
+states/die/node = SubResource("AnimationNodeAnimation_p47bc")
+states/die/position = Vector2(258, 7.199997)
+states/idle/node = SubResource("AnimationNodeAnimation_75vfm")
+states/idle/position = Vector2(204.4, 85.6)
+states/parry/node = SubResource("AnimationNodeAnimation_lvxji")
+states/parry/position = Vector2(382, 177.59999)
+states/sprint/node = SubResource("AnimationNodeAnimation_0owmy")
+states/sprint/position = Vector2(430.8, 64.799995)
+transitions = ["Start", "idle", SubResource("AnimationNodeStateMachineTransition_qek5x"), "idle", "sprint", SubResource("AnimationNodeStateMachineTransition_5gtgg"), "sprint", "idle", SubResource("AnimationNodeStateMachineTransition_h17s1"), "idle", "parry", SubResource("AnimationNodeStateMachineTransition_je7p5"), "parry", "idle", SubResource("AnimationNodeStateMachineTransition_fm80t"), "idle", "die", SubResource("AnimationNodeStateMachineTransition_gx1jg"), "sprint", "die", SubResource("AnimationNodeStateMachineTransition_ugbui"), "parry", "die", SubResource("AnimationNodeStateMachineTransition_fcs02")]
+
 [node name="Player" type="CharacterBody3D" unique_id=222719199]
-collision_layer = 1
-collision_mask = 1
 script = ExtResource("1_8afob")
 
 [node name="SpringArm3D" type="SpringArm3D" parent="." unique_id=2018840139]
 transform = Transform3D(1, 0, 0, 0, 0.57357645, 0.81915206, 0, -0.81915206, 0.57357645, 0, 0, 0)
-spring_length = 12.0
+spring_length = 8.0
 
 [node name="Camera3D" type="Camera3D" parent="SpringArm3D" unique_id=1796041781]
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=830800315]
-mesh = SubResource("CapsuleMesh_x7p2l")
+[node name="RobotModel" parent="." unique_id=1575018680 instance=ExtResource("4_lvxji")]
+transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0, 0)
+
+[node name="torso" parent="RobotModel/character-g/root" parent_id_path=PackedInt32Array(1575018680, 91212867) index="2" unique_id=1572204047]
+transform = Transform3D(1, 0, 0, 0, 0.99788487, 0.06500622, 0, -0.06500622, 0.99788487, 0, 0.7, 0)
+
+[node name="arm-left" parent="RobotModel/character-g/root/torso" index="0" unique_id=1539902478]
+transform = Transform3D(1, 0, 0, 0, 0.98101735, 0.19391984, 0, -0.19391984, 0.98101735, 0.4000001, 1.1, -0.099999905)
+
+[node name="arm-right" parent="RobotModel/character-g/root/torso" index="1" unique_id=822799953]
+transform = Transform3D(1, 0, 0, 0, 0.98101735, 0.19391984, 0, -0.19391984, 0.98101735, -0.4000001, 1.1, -0.099999905)
+
+[node name="head" parent="RobotModel/character-g/root/torso" index="2" unique_id=793382359]
+transform = Transform3D(0.098101735, 0, 0.019391984, 0, 0.1, 0, -0.019391984, 0, 0.098101735, 0, 1.2, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=836211236]
 shape = SubResource("CapsuleShape3D_8afob")
@@ -46,3 +100,11 @@ shape = SubResource("BoxShape3D_hitarea")
 
 [node name="ParryTimer" type="Node" parent="Shield" unique_id=577294641]
 script = ExtResource("3_lvxji")
+max_parry_window = 0.3
+
+[node name="AnimationTree" type="AnimationTree" parent="." unique_id=204249420]
+root_node = NodePath("../RobotModel")
+tree_root = SubResource("AnimationNodeStateMachine_myrg7")
+anim_player = NodePath("../RobotModel/AnimationPlayer")
+
+[editable path="RobotModel"]
