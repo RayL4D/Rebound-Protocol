@@ -69,6 +69,7 @@ transitions = ["Start", "idle", SubResource("AnimationNodeStateMachineTransition
 [node name="Player" type="CharacterBody3D" unique_id=222719199]
 script = ExtResource("1_8afob")
 jump_force = 5.0
+fall_multiplier = 3.5
 
 [node name="SpringArm3D" type="SpringArm3D" parent="." unique_id=2018840139]
 transform = Transform3D(1, 0, 0, 0, 0.57357645, 0.81915206, 0, -0.81915206, 0.57357645, 0, 0, 0)
@@ -80,16 +81,16 @@ spring_length = 8.0
 transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0, 0)
 
 [node name="torso" parent="RobotModel/character-g/root" parent_id_path=PackedInt32Array(1575018680, 91212867) index="2" unique_id=1572204047]
-transform = Transform3D(1, 0, 0, 0, 0.9992298, -0.039240446, 0, 0.039240446, 0.9992298, 0, 0.7, 0)
+transform = Transform3D(1, 0, 0, 0, 0.9999961, -0.0027830333, 0, 0.0027830333, 0.9999961, 0, 0.7, 0)
 
 [node name="arm-left" parent="RobotModel/character-g/root/torso" index="0" unique_id=1539902478]
-transform = Transform3D(1, 0, 0, 0, 0.9930753, -0.117479645, 0, 0.117479645, 0.9930753, 0.4000001, 1.1, -0.099999905)
+transform = Transform3D(1, 0, 0, 0, 0.99996513, -0.008349, 0, 0.008349, 0.99996513, 0.4000001, 1.1, -0.099999905)
 
 [node name="arm-right" parent="RobotModel/character-g/root/torso" index="1" unique_id=822799953]
-transform = Transform3D(1, 0, 0, 0, 0.9930753, -0.117479645, 0, 0.117479645, 0.9930753, -0.4000001, 1.1, -0.099999905)
+transform = Transform3D(1, 0, 0, 0, 0.99996513, -0.008349, 0, 0.008349, 0.99996513, -0.4000001, 1.1, -0.099999905)
 
 [node name="head" parent="RobotModel/character-g/root/torso" index="2" unique_id=793382359]
-transform = Transform3D(0.09930753, 0, -0.011747965, 0, 0.1, 0, 0.011747965, 0, 0.09930753, 0, 1.2, 0)
+transform = Transform3D(0.099996515, 0, -0.00083489995, 0, 0.1, 0, 0.00083489995, 0, 0.099996515, 0, 1.2, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=836211236]
 shape = SubResource("CapsuleShape3D_8afob")

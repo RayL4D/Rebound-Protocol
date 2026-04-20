@@ -42,8 +42,10 @@ func _ready() -> void:
 	hit_area.area_entered.connect(_on_bullet_entered)
 	parry_timer.parry_resolved.connect(_on_parry_resolved)
 
-	# Récupérer le ShaderMaterial configuré dans l'éditeur
+	# Chercher le ShaderMaterial : d'abord en Material Override, sinon en surface 0
 	_shield_mat = _mesh_instance.material_override as ShaderMaterial
+	if _shield_mat == null:
+		_shield_mat = _mesh_instance.get_surface_override_material(0) as ShaderMaterial
 	if _shield_mat == null:
 		push_error("Shield: aucun ShaderMaterial trouvé sur ShieldMesh — vérifie l'éditeur.")
 		return
