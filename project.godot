@@ -11,9 +11,14 @@ config_version=5
 [application]
 
 config/name="Rebound Protocol"
-run/main_scene="uid://b321xwtf8g6w1"
+run/main_scene="uid://c3c1mmg3r6473"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
+
+[display]
+
+window/size/viewport_width=1139
+window/size/mode=2
 
 [input]
 

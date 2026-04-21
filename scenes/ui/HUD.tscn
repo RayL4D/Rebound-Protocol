@@ -1,6 +1,10 @@
 [gd_scene format=3 uid="uid://c7a5yullmt606"]
 
 [ext_resource type="Script" uid="uid://cnc1o5a4j1cp0" path="res://scripts/ui/HUD.gd" id="1_kw0id"]
+[ext_resource type="FontFile" uid="uid://b21was6vhbavk" path="res://ui_theme/fonts/Kenney Future.ttf" id="2_atyv1"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_6ll6g"]
+font = ExtResource("2_atyv1")
 
 [node name="HUD" type="CanvasLayer" unique_id=1994348935]
 script = ExtResource("1_kw0id")
@@ -55,6 +59,4 @@ offset_right = 1075.0
 offset_bottom = 599.0
 grow_horizontal = 0
 grow_vertical = 0
-text = "Ennemis : 0
-"
-label_settings = SubResource("LabelSettings_atyv1")
+text = "Ennemis : 0"
