@@ -71,22 +71,28 @@ func _orbit_toward_mouse() -> void:
 	var ray_dir   := camera.project_ray_normal(mouse_pos)
 	var plane_y   := player.global_position.y
 
-	if abs(ray_dir.y) < 0.001:
-		return
+	var dir := Vector3.ZERO
 
-	var t         := (plane_y - ray_orig.y) / ray_dir.y
-	var world_pos := ray_orig + ray_dir * t
-	var dir       := (world_pos - player.global_position)
-	dir.y          = 0.0
+	if abs(ray_dir.y) > 0.001:
+		var t := (plane_y - ray_orig.y) / ray_dir.y
+		if t > 0.0:
+			# Intersection normale avec le sol
+			var world_pos := ray_orig + ray_dir * t
+			dir = (world_pos - player.global_position)
+			dir.y = 0.0
+
+	# Souris vers le ciel (t ≤ 0) → projection horizontale du rayon
+	if dir.length() < 0.01:
+		dir = Vector3(ray_dir.x, 0.0, ray_dir.z)
 
 	if dir.length() < 0.01:
 		return
 
-	dir                = dir.normalized()
-	_shield_direction   = dir
-	global_position     = player.global_position + dir * orbit_radius
-	global_position.y   = player.global_position.y
-	global_rotation.y   = atan2(dir.x, dir.z)
+	dir               = dir.normalized()
+	_shield_direction  = dir
+	global_position    = player.global_position + dir * orbit_radius
+	global_position.y  = player.global_position.y
+	global_rotation.y  = atan2(dir.x, dir.z)
 
 
 # =============================================================
