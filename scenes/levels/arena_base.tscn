@@ -16,6 +16,7 @@
 [ext_resource type="PackedScene" uid="uid://plej8ebppvy7" path="res://scenes/enemies/enemy_placeholder.tscn" id="13_srw3s"]
 [ext_resource type="PackedScene" uid="uid://c7a5yullmt606" path="res://scenes/ui/HUD.tscn" id="14_srw3s"]
 [ext_resource type="PackedScene" uid="uid://pbrlw8kcrlq4" path="res://scenes/ui/game_over.tscn" id="15_tm1id"]
+[ext_resource type="Script" uid="uid://c8iuwrbemhmo6" path="res://scripts/levels/wave_manager.gd" id="16_wvmgr"]
 
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_k4hq7"]
@@ -1205,7 +1206,7 @@ glow_bloom = 0.2
 script = ExtResource("1_7emnw")
 
 [node name="WaveManager" type="Node" parent="." unique_id=1335280051]
-script = ExtResource("15_tm1id")
+script = ExtResource("16_wvmgr")
 dropship_scene = ExtResource("3_quicy")
 enemy_scene = ExtResource("13_srw3s")
 dropship_spawn_points = Array[NodePath]([NodePath("DropShipSpawn_01"), NodePath("DropShipSpawn_02")])
