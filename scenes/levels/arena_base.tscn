@@ -1,9 +1,10 @@
-[gd_scene format=4 uid="uid://b321xwtf8g6w1"]
+[gd_scene format=4 uid="uid://c3c1mmg3r6473"]
 
 [ext_resource type="Script" uid="uid://b76vj02lf87yo" path="res://scripts/levels/arena_base.gd" id="1_7emnw"]
 [ext_resource type="PackedScene" uid="uid://dtenrqcyval18" path="res://assets/models/environments/tutorial_and_first_level/rock_largeA.glb" id="1_h46r2"]
 [ext_resource type="PackedScene" uid="uid://jytqqujsg1yf" path="res://assets/models/environments/tutorial_and_first_level/rocks_smallA.glb" id="2_84wy6"]
 [ext_resource type="PackedScene" uid="uid://c06uo4paqj2b4" path="res://assets/models/environments/tutorial_and_first_level/satelliteDish.glb" id="3_7emnw"]
+[ext_resource type="PackedScene" uid="uid://dh1hioalq5p7" path="res://scenes/enemies/dropship.tscn" id="3_quicy"]
 [ext_resource type="PackedScene" uid="uid://csui6dw1nx06k" path="res://assets/models/environments/tutorial_and_first_level/hangar_roundA.glb" id="4_bnh6i"]
 [ext_resource type="PackedScene" uid="uid://c1stu4jqgvuns" path="res://assets/models/environments/tutorial_and_first_level/hangar_smallA.glb" id="5_idjjk"]
 [ext_resource type="PackedScene" uid="uid://3255r7r66u0f" path="res://assets/models/environments/tutorial_and_first_level/crater.glb" id="6_srw3s"]
@@ -15,6 +16,7 @@
 [ext_resource type="PackedScene" uid="uid://plej8ebppvy7" path="res://scenes/enemies/enemy_placeholder.tscn" id="13_srw3s"]
 [ext_resource type="PackedScene" uid="uid://c7a5yullmt606" path="res://scenes/ui/HUD.tscn" id="14_srw3s"]
 [ext_resource type="PackedScene" uid="uid://pbrlw8kcrlq4" path="res://scenes/ui/game_over.tscn" id="15_tm1id"]
+
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_k4hq7"]
 size = Vector3(87.09143, 19.416855, 88.09277)
@@ -1202,6 +1204,21 @@ glow_bloom = 0.2
 [node name="ArenaBase" type="Node" unique_id=1261572821]
 script = ExtResource("1_7emnw")
 
+[node name="WaveManager" type="Node" parent="." unique_id=1335280051]
+script = ExtResource("15_tm1id")
+dropship_scene = ExtResource("3_quicy")
+enemy_scene = ExtResource("13_srw3s")
+dropship_spawn_points = Array[NodePath]([NodePath("DropShipSpawn_01"), NodePath("DropShipSpawn_02")])
+
+[node name="DropShipSpawn_01" type="Marker3D" parent="WaveManager" unique_id=1781928310]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.638, 1, -21.24)
+
+[node name="DropShipSpawn_02" type="Marker3D" parent="WaveManager" unique_id=488352686]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.238, 1, 8.029)
+
+[node name="DropShipSpawn_03" type="Marker3D" parent="WaveManager" unique_id=416791806]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.9471798, 1, -11.7885475)
+
 [node name="Ground" type="StaticBody3D" parent="." unique_id=1694744146]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ground" unique_id=1452091958]
@@ -1368,8 +1385,6 @@ transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -48.390343, -0.5, -13.5528
 
 [node name="Player" parent="." unique_id=222719199 instance=ExtResource("12_idjjk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 33.821785)
-
-[node name="EnemyPlaceholder" parent="." unique_id=2034265161 instance=ExtResource("13_srw3s")]
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1587413322]
 transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70710677, 0, 0, 0)
