@@ -10,7 +10,16 @@ extends CharacterBody3D
 @export var jump_force: float     = 8.0
 @export var fall_multiplier: float = 2.5  # Gravité multipliée pendant la chute
 @export var max_hp: int           = 100
-@export var rotation_speed: float = 15.0  # Vitesse d'interpolation de la rotation
+@export var rotation_speed: float    = 15.0  # Vitesse d'interpolation de la rotation
+@export var cam_orbit_speed: float   = 90.0  # Degrés/seconde pour l'orbite Q/E
+
+# --- Caméra ------------------------------------------------------
+@export var zoom_min: float        = 3.0    # Distance minimale (zoom max)
+@export var zoom_max: float        = 15.0   # Distance maximale (zoom min)
+@export var zoom_speed: float      = 1.2    # Pas par cran de molette
+@export var cam_pitch_min: float   = -85.0  # Angle le plus plongeant (presque top-down)
+@export var cam_pitch_max: float   = -20.0  # Angle le plus rasant (quasi TPS)
+@export var cam_sensitivity: float = 0.25   # Sensibilité du clic droit
 
 # --- Références nœuds --------------------------------------------
 @onready var spring_arm: SpringArm3D  = $SpringArm3D
@@ -28,6 +37,14 @@ var is_dead: bool          = false
 var _parry_requested: bool = false
 var _was_on_floor: bool    = true   # Pour détecter l'atterrissage
 var _model_base_scale: Vector3     # Scale originale du RobotModel (lue dans _ready)
+var _model_base_y: float = 0.0     # Offset Y du modèle dans l'éditeur (pour éviter le flottement)
+
+# --- Caméra runtime ----------------------------------------------
+var _rmb_held:         bool  = false
+var _cam_pitch:        float = -60.0  # Initialisé depuis le SpringArm dans _ready
+var _cam_yaw:          float = 0.0    # Yaw courant (interpolé)
+var _target_snap_yaw:  float = 0.0    # Yaw cible (multiple de 90°, accumule sans modulo)
+var _target_zoom:      float = 8.0    # Initialisé depuis le SpringArm dans _ready
 
 # Gravité récupérée depuis les paramètres projet Godot
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -47,7 +64,14 @@ func _ready() -> void:
 	spring_arm.set_as_top_level(true)
 	add_to_group("player")
 	_apply_texture_recursive(robot_model)
-	_model_base_scale = robot_model.scale  # Mémoriser la scale réelle du modèle
+	_model_base_scale = robot_model.scale      # Mémoriser la scale réelle du modèle
+	_model_base_y     = robot_model.position.y # Mémoriser le Y offset configuré dans l'éditeur
+
+	# Lire les valeurs initiales depuis le SpringArm configuré dans l'éditeur
+	_cam_pitch        = spring_arm.rotation_degrees.x
+	_cam_yaw          = spring_arm.rotation_degrees.y
+	_target_snap_yaw  = _cam_yaw   # Synchroniser la cible sur l'angle initial
+	_target_zoom      = spring_arm.spring_length
 
 	# Stoppe l'AnimationPlayer brut du GLB — c'est l'AnimationTree qui prend
 	# le relais pour piloter les états (idle/sprint/parry/die).
@@ -76,6 +100,7 @@ func _physics_process(delta: float) -> void:
 
 	_apply_gravity(delta)
 	_handle_jump()       # Après gravity : overrride velocity.y si saut demandé
+	_handle_camera_orbit(delta)
 	_handle_movement()
 	_rotate_toward_mouse(delta)
 
@@ -87,10 +112,55 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 
-	spring_arm.global_position = global_position + Vector3(0, 0.9, 0)
-	robot_model.position = Vector3.ZERO
+	spring_arm.global_position    = global_position + Vector3(0, 0.9, 0)
+	spring_arm.rotation_degrees.x = _cam_pitch
+	spring_arm.rotation_degrees.y = _cam_yaw
+	spring_arm.spring_length      = lerp(spring_arm.spring_length, _target_zoom, 10.0 * delta)
+	robot_model.position.x = 0.0
+	robot_model.position.z = 0.0
+	# robot_model.position.y est géré par _update_lean + l'offset éditeur
 	_update_lean(delta)
 	_update_animation()
+
+
+# =============================================================
+# CAMÉRA
+# =============================================================
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		match event.button_index:
+			MOUSE_BUTTON_WHEEL_UP:
+				# Zoom avant — réduire la longueur du bras
+				_target_zoom = clamp(_target_zoom - zoom_speed, zoom_min, zoom_max)
+			MOUSE_BUTTON_WHEEL_DOWN:
+				# Zoom arrière — allonger le bras
+				_target_zoom = clamp(_target_zoom + zoom_speed, zoom_min, zoom_max)
+			MOUSE_BUTTON_RIGHT:
+				# Mémoriser l'état du clic droit pour le drag
+				_rmb_held = event.pressed
+
+	# Pitch de la caméra avec clic droit maintenu (vertical seulement)
+	if event is InputEventMouseMotion and _rmb_held:
+		_cam_pitch -= event.relative.y * cam_sensitivity
+		_cam_pitch  = clamp(_cam_pitch, cam_pitch_min, cam_pitch_max)
+
+	# Orbite par snap de 90° — détection ici pour éviter la répétition du held
+	if event is InputEventKey and event.pressed and not event.echo:
+		if Input.is_action_just_pressed("cam_orbit_left"):
+			_target_snap_yaw += 90.0
+		elif Input.is_action_just_pressed("cam_orbit_right"):
+			_target_snap_yaw -= 90.0
+
+
+# =============================================================
+# ORBITE CAMÉRA (Q / E)
+# =============================================================
+
+func _handle_camera_orbit(delta: float) -> void:
+	# Interpolation fluide vers l'angle cible (multiple de 90°)
+	# On accumule sans modulo pour éviter les sauts 359° → 0°
+	_cam_yaw = lerp(_cam_yaw, _target_snap_yaw, 10.0 * delta)
 
 
 # =============================================================
@@ -129,7 +199,8 @@ func _update_lean(delta: float) -> void:
 	# velocity.y positif = montée → penche en arrière
 	# velocity.y négatif = chute → penche en avant
 	var target_tilt: float = clamp(-velocity.y * 0.03, -0.3, 0.3)
-	robot_model.rotation.x = lerp(robot_model.rotation.x, target_tilt, 12.0 * delta)
+	robot_model.rotation.x   = lerp(robot_model.rotation.x,   target_tilt,    12.0 * delta)
+	robot_model.position.y   = lerp(robot_model.position.y,   _model_base_y,  12.0 * delta)
 
 
 # Squash & stretch au décollage
@@ -158,8 +229,17 @@ func _handle_movement() -> void:
 	if input_dir.length() > 1.0:
 		input_dir = input_dir.normalized()
 
-	velocity.x = input_dir.x * move_speed
-	velocity.z = input_dir.y * move_speed
+	# Déplacement relatif à la caméra — on lit directement la base de la caméra
+	# plutôt que de recalculer depuis le yaw, pour éviter tout désalignement.
+	var cb        := camera.global_transform.basis
+	var cam_fwd   := -Vector3(cb.z.x, 0.0, cb.z.z).normalized()   # -Z local projeté au sol
+	var cam_right :=  Vector3(cb.x.x, 0.0, cb.x.z).normalized()   # +X local projeté au sol
+
+	# input_dir.y est négatif quand "move_forward" est pressé (convention get_axis)
+	# → on l'inverse pour que cam_fwd corresponde bien à "avancer"
+	var move := cam_right * input_dir.x - cam_fwd * input_dir.y
+	velocity.x = move.x * move_speed
+	velocity.z = move.z * move_speed
 
 
 # =============================================================
@@ -171,14 +251,21 @@ func _rotate_toward_mouse(delta: float) -> void:
 	var ray_origin    := camera.project_ray_origin(mouse_pos)
 	var ray_direction := camera.project_ray_normal(mouse_pos)
 
-	if abs(ray_direction.y) < 0.001:
-		return
+	var look_dir := Vector3.ZERO
 
-	var t            := (global_position.y - ray_origin.y) / ray_direction.y
-	var target_point := ray_origin + ray_direction * t
+	if abs(ray_direction.y) > 0.001:
+		var t := (global_position.y - ray_origin.y) / ray_direction.y
+		if t > 0.0:
+			# Intersection normale avec le plan du sol → on tourne vers ce point
+			var target_point := ray_origin + ray_direction * t
+			look_dir = (target_point - global_position)
+			look_dir.y = 0.0
 
-	var look_dir := (target_point - global_position)
-	look_dir.y = 0.0
+	# Souris vers le ciel (t ≤ 0) → projection horizontale du rayon :
+	# si la souris est en haut à droite, le rayon pointe en haut à droite en 3D,
+	# on ignore juste son Y pour garder la direction latérale correcte.
+	if look_dir.length_squared() < 0.01:
+		look_dir = Vector3(ray_direction.x, 0.0, ray_direction.z)
 
 	if look_dir.length_squared() < 0.01:
 		return
