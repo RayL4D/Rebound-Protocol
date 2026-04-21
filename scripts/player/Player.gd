@@ -12,6 +12,7 @@ extends CharacterBody3D
 @export var max_hp: int           = 100
 @export var rotation_speed: float    = 15.0  # Vitesse d'interpolation de la rotation
 @export var cam_orbit_speed: float   = 90.0  # Degrés/seconde pour l'orbite Q/E
+@export var iframe_duration: float   = 0.8   # Secondes d'invincibilité après un dégât
 
 # --- Caméra ------------------------------------------------------
 @export var zoom_min: float        = 3.0    # Distance minimale (zoom max)
@@ -38,6 +39,8 @@ var _parry_requested: bool = false
 var _was_on_floor: bool    = true   # Pour détecter l'atterrissage
 var _model_base_scale: Vector3     # Scale originale du RobotModel (lue dans _ready)
 var _model_base_y: float = 0.0     # Offset Y du modèle dans l'éditeur (pour éviter le flottement)
+var _invincible: bool    = false    # True pendant les iframes
+var _iframe_tween: Tween = null     # Tween du clignotement
 
 # --- Caméra runtime ----------------------------------------------
 var _rmb_held:         bool  = false
@@ -318,7 +321,7 @@ func _update_animation() -> void:
 # =============================================================
 
 func take_damage(amount: int) -> void:
-	if is_dead:
+	if is_dead or _invincible:
 		return
 
 	current_hp = max(0, current_hp - amount)
@@ -326,6 +329,30 @@ func take_damage(amount: int) -> void:
 
 	if current_hp == 0:
 		_die()
+	else:
+		_start_iframes()
+
+
+# Invincibilité temporaire avec clignotement visuel
+func _start_iframes() -> void:
+	_invincible = true
+
+	# Clignotement : Node3D n'a pas modulate, on toggle la visibilité
+	if _iframe_tween:
+		_iframe_tween.kill()
+	_iframe_tween = create_tween().set_loops()
+	_iframe_tween.tween_callback(func(): robot_model.visible = not robot_model.visible)
+	_iframe_tween.tween_interval(0.08)
+
+	# Attendre la fin de la durée d'invincibilité
+	await get_tree().create_timer(iframe_duration).timeout
+
+	# Remettre le modèle visible
+	_invincible = false
+	if _iframe_tween:
+		_iframe_tween.kill()
+		_iframe_tween = null
+	robot_model.visible = true
 
 
 func heal(amount: int) -> void:
@@ -338,6 +365,13 @@ func heal(amount: int) -> void:
 
 func _die() -> void:
 	is_dead = true
+
+	# Stopper le clignotement des iframes si actif au moment de la mort
+	if _iframe_tween:
+		_iframe_tween.kill()
+		_iframe_tween = null
+	robot_model.visible = true
+
 	# Déclenché ici directement car _physics_process retourne immédiatement
 	# quand is_dead est true — _update_animation() ne serait jamais appelée.
 	var playback := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
