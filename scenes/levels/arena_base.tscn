@@ -15,7 +15,8 @@
 [ext_resource type="PackedScene" uid="uid://cp8oo218ghcj" path="res://scenes/player/player.tscn" id="12_idjjk"]
 [ext_resource type="PackedScene" uid="uid://plej8ebppvy7" path="res://scenes/enemies/enemy_placeholder.tscn" id="13_srw3s"]
 [ext_resource type="PackedScene" uid="uid://c7a5yullmt606" path="res://scenes/ui/HUD.tscn" id="14_srw3s"]
-[ext_resource type="Script" uid="uid://c8iuwrbemhmo6" path="res://scripts/levels/wave_manager.gd" id="15_tm1id"]
+[ext_resource type="PackedScene" uid="uid://pbrlw8kcrlq4" path="res://scenes/ui/game_over.tscn" id="15_tm1id"]
+
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_k4hq7"]
 size = Vector3(87.09143, 19.416855, 88.09277)
@@ -1390,3 +1391,5 @@ transform = Transform3D(1, 0, 0, 0, 0.70710677, 0.70710677, 0, -0.70710677, 0.70
 shadow_enabled = true
 
 [node name="HUD" parent="." unique_id=1994348935 instance=ExtResource("14_srw3s")]
+
+[node name="GameOver" parent="." unique_id=892376385 instance=ExtResource("15_tm1id")]
