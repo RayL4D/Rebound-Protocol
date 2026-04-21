@@ -10,6 +10,9 @@ class WaveData:
 	var enemy_count: int
 	var dropship_count: int
 	var message: String
+	# --- Si c'est une vague de boss ---
+	var enemy_scene: PackedScene = null
+	var dropship_mesh: PackedScene = null
 
 	func _init(p_count: int, p_ships: int, p_msg: String) -> void:
 		enemy_count = p_count
@@ -20,20 +23,18 @@ class WaveData:
 @export var enemy_scene: PackedScene
 @export var dropship_spawn_points: Array[NodePath] = []
 
-# --- Références UI ---
 var _wave_label: Label    = null
 var _message_label: Label = null
 var _enemies_label: Label = null
-
+# --- État interne ---
 var _waves: Array[WaveData] = []
 var _current_wave: int = -1
 var _enemies_alive: int = 0
 var _player: Player = null
 var _spawn_positions: Array[Vector3] = []
 
+
 func _ready() -> void:
-	# On attend un frame pour que Player._ready() ait eu le temps
-	# de faire add_to_group("player") avant qu'on le cherche
 	await get_tree().process_frame
 
 	_player = get_tree().get_first_node_in_group("player")
@@ -44,10 +45,11 @@ func _ready() -> void:
 	_player.player_died.connect(_on_player_died)
 	_start_wave(0)
 
+
 func setup_waves(waves: Array[WaveData]) -> void:
 	_waves = waves
 
-## Appelé par arena_base.gd pour brancher les labels du HUD
+# Appelé par arena_base.gd pour brancher les labels du HUD
 func setup_ui(wave_label: Label, message_label: Label, enemies_label: Label = null) -> void:
 	_wave_label     = wave_label
 	_message_label  = message_label
@@ -76,7 +78,10 @@ func _start_wave(index: int) -> void:
 	_spawn_wave(wave)
 
 
+var _current_wave_data: WaveData = null
+
 func _spawn_wave(wave: WaveData) -> void:
+	_current_wave_data = wave
 	_enemies_alive = wave.enemy_count
 	_update_enemies_label()
 
@@ -87,7 +92,7 @@ func _spawn_wave(wave: WaveData) -> void:
 
 	var ships := mini(wave.dropship_count, positions.size())
 	var base_per_ship: int = int(float(wave.enemy_count) / float(ships))
-	var remainder: int = wave.enemy_count % ships
+	var remainder: int     = wave.enemy_count % ships
 
 	for i in range(ships):
 		var count := base_per_ship + (1 if i < remainder else 0)
@@ -102,15 +107,15 @@ func _spawn_dropship(pos: Vector3, enemy_count: int) -> void:
 		return
 
 	var ship: Dropship = dropship_scene.instantiate()
-	ship.mob_scene = enemy_scene
+	ship.mob_scene = _current_wave_data.enemy_scene if _current_wave_data.enemy_scene else enemy_scene
 	ship.spawn_count = enemy_count
 	ship.enemy_died_callback = _on_enemy_died
+	ship.dropship_mesh = _current_wave_data.dropship_mesh
 
 	get_tree().current_scene.add_child(ship)
 	ship.global_position = pos
 
 
-## Appelé par arena_base.gd pour définir les positions de spawn en code
 func setup_spawn_points(positions: Array[Vector3]) -> void:
 	_spawn_positions = positions
 
