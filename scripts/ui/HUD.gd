@@ -24,6 +24,37 @@ var _pulse_time:    float    = 0.0
 const WORLD_OFFSET := Vector3(0.0, 2.4, 0.0)
 const COLOR_CYAN   := Color(0.0, 0.85, 1.0)
 
+# --- Vignette de dégât -------------------------------------------
+var _vignette_rect: ColorRect      = null
+var _vignette_mat:  ShaderMaterial = null
+var _vignette_tween: Tween         = null
+
+const DAMAGE_VIGNETTE_SHADER := """
+shader_type canvas_item;
+uniform float intensity : hint_range(0.0, 1.0) = 0.0;
+
+void fragment() {
+	vec2 uv = UV * 2.0 - 1.0;
+
+	// Distance depuis le bord le plus proche (0 = bord, 1 = centre)
+	float edge = min(1.0 - abs(uv.x), 1.0 - abs(uv.y));
+
+	// Contour fin : seulement les 18% du bord
+	float rim   = smoothstep(0.18, 0.0,  edge);
+	// Très léger halo intérieur pour la profondeur
+	float glow  = smoothstep(0.38, 0.10, edge) * 0.18;
+
+	// Ligne lumineuse au ras du bord (effet scan tech)
+	float line  = smoothstep(0.02, 0.0,  abs(edge - 0.01)) * 0.6;
+
+	float alpha = clamp(rim * 0.7 + glow + line, 0.0, 1.0) * intensity;
+
+	// Rouge vif sur le bord, bordeaux plus sombre vers l'intérieur
+	vec3 col = mix(vec3(0.55, 0.0, 0.0), vec3(1.0, 0.12, 0.12), rim);
+	COLOR = vec4(col, alpha);
+}
+"""
+
 
 func _ready() -> void:
 	_build_ui()
@@ -65,6 +96,17 @@ func _process(delta: float) -> void:
 # =============================================================
 
 func _build_ui() -> void:
+	# Vignette de dégât — plein écran, derrière tout le reste
+	var shader        := Shader.new()
+	shader.code        = DAMAGE_VIGNETTE_SHADER
+	_vignette_mat      = ShaderMaterial.new()
+	_vignette_mat.shader = shader
+	_vignette_rect     = ColorRect.new()
+	_vignette_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_vignette_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_vignette_rect.material     = _vignette_mat
+	add_child(_vignette_rect)
+
 	var total_w := BAR_WIDTH + 24.0   # espace pour label "HP" à gauche
 	var total_h := BAR_HEIGHT + 14.0
 
@@ -177,6 +219,21 @@ func _refresh_bar(fill: float) -> void:
 func _on_hp_changed(new_hp: int) -> void:
 	_target_fill = float(new_hp) / float(_player.max_hp)
 	_update_label(new_hp)
+	_flash_damage_vignette()
+
+
+func _flash_damage_vignette() -> void:
+	if _vignette_mat == null:
+		return
+	# Interrompre un flash précédent si le joueur encaisse plusieurs coups
+	if _vignette_tween:
+		_vignette_tween.kill()
+	_vignette_mat.set_shader_parameter("intensity", 1.0)
+	_vignette_tween = create_tween()
+	_vignette_tween.tween_method(
+		func(v: float): _vignette_mat.set_shader_parameter("intensity", v),
+		1.0, 0.0, 0.7
+	).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
 
 
 func _on_player_died() -> void:
