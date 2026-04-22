@@ -4,36 +4,42 @@
 # =============================================================
 extends Node
 
-# import du gestionnaire de vagues
-@onready var wave_manager: WaveManager = $WaveManager
+@onready var wave_manager: Node = $WaveManager
+@onready var tutorial_manager: TutorialManager = $TutorialManager
 @onready var hud: Node = $HUD
+
 
 func _ready() -> void:
 	_add_collision_recursive(self)
 
-	# Connecter les labels de l'hud au gestionnaire de vagues
-	# Les nœuds Label sont cherchés dans la scène HUD avec leur unique name
-	var wave_label: Label    = hud.get_node_or_null("%WaveLabel")
-	var message_label: Label = hud.get_node_or_null("%MessageLabel")
-	var enemies_label: Label = hud.get_node_or_null("%EnemiesLabel")
-	wave_manager.setup_ui(wave_label, message_label, enemies_label)
+	# --- Labels HUD ---
+	var wave_label:    Label   = hud.get_node_or_null("%WaveLabel")
+	var message_label: Label   = hud.get_node_or_null("%MessageLabel")
+	var enemies_label: Label   = hud.get_node_or_null("%EnemiesLabel")
+	var step_label:    Label   = hud.get_node_or_null("%StepLabel")
+	var panel:         Control = hud.get_node_or_null("%PanelContainer")
 
-	# Définit les 3 vagues du tutoriel
+	wave_manager.setup_ui(wave_label, message_label, enemies_label, panel)
+
+	# --- Vagues ---
 	var waves: Array[WaveManager.WaveData] = [
-		WaveManager.WaveData.new(
-			1, 1, # Nombres d'ennemis, de vaisseaux, message et assets si besoin (boss)
-	        "Pare les balles ennemies avec [ESPACE] !\nUn ennemi arrive."
-		),
-		WaveManager.WaveData.new(
-			2, 1,
-	        "Bien joué ! Deux ennemis cette fois.\nReste mobile !"
-		),
-		WaveManager.WaveData.new(
-			3, 2,
-			"Vague finale — trois ennemis, deux vaisseaux.\nConcentre-toi !"
-		),
+		WaveManager.WaveData.new(1, 1, ""),   # Ennemi test post-tuto
+		WaveManager.WaveData.new(1, 1, "Vague 1 — Pare et contre-attaque !"),
+		WaveManager.WaveData.new(2, 1, "Vague 2 — Deux ennemis, reste mobile !"),
+		WaveManager.WaveData.new(3, 2, "Vague finale — trois ennemis, deux vaisseaux !"),
 	]
 	wave_manager.setup_waves(waves)
+
+	# --- Tutoriel ---
+	var player: Player = get_tree().get_first_node_in_group("player")
+	tutorial_manager.setup(player, panel, message_label, step_label)
+	tutorial_manager.tutorial_completed.connect(_on_tutorial_completed)
+	tutorial_manager.start()
+
+
+func _on_tutorial_completed() -> void:
+	wave_manager.start()
+
 
 # =============================================================
 # COLLISION DÉCOR
