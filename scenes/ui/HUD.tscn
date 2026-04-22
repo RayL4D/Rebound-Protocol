@@ -83,7 +83,7 @@ columns = 3
 [node name="WaveLabel" type="Label" parent="WaveContainer/GridContainer" unique_id=355252361]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Vague 0 / 0"
+text = "WAVE_HUD"
 label_settings = SubResource("LabelSettings_6ll6g")
 horizontal_alignment = 2
 
@@ -96,5 +96,5 @@ horizontal_alignment = 1
 [node name="EnemiesLabel" type="Label" parent="WaveContainer/GridContainer" unique_id=1107192269]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Ennemis restants : 0"
+text = "ENEMIES_HUD"
 label_settings = SubResource("LabelSettings_ig75s")

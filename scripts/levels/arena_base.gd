@@ -10,6 +10,12 @@ extends Node
 
 
 func _ready() -> void:
+	
+	#var locale = OS.get_locale_language()
+	#TranslationServer.set_locale(locale)
+	
+	TranslationServer.set_locale("es") # Anglais pour le test
+	
 	_add_collision_recursive(self)
 
 	# --- Labels HUD ---
@@ -24,9 +30,9 @@ func _ready() -> void:
 	# --- Vagues ---
 	var waves: Array[WaveManager.WaveData] = [
 		WaveManager.WaveData.new(1, 1, ""),   # Ennemi test post-tuto
-		WaveManager.WaveData.new(1, 1, "Vague 1 — Pare et contre-attaque !"),
-		WaveManager.WaveData.new(2, 1, "Vague 2 — Deux ennemis, reste mobile !"),
-		WaveManager.WaveData.new(3, 2, "Vague finale — trois ennemis, deux vaisseaux !"),
+		WaveManager.WaveData.new(1, 1, tr("WAVE_MSG_1")),
+		WaveManager.WaveData.new(2, 1, tr("WAVE_MSG_2")),
+		WaveManager.WaveData.new(3, 2, tr("WAVE_MSG_FINAL")),
 	]
 	wave_manager.setup_waves(waves)
 
