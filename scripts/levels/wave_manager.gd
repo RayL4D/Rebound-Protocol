@@ -5,14 +5,14 @@
 class_name WaveManager
 extends Node
 
-# --- Structure d'une vague ------------------------------------
+# --- Structure d'une vague ---
 class WaveData:
 	var enemy_count: int
 	var dropship_count: int
 	var message: String
-	# --- Si c'est une vague de boss ---
-	var enemy_scene: PackedScene = null
-	var dropship_mesh: PackedScene = null
+	# --- boss ---	
+	var enemy_scene: PackedScene = null 
+	var dropship_mesh: PackedScene = null 
 
 	func _init(p_count: int, p_ships: int, p_msg: String) -> void:
 		enemy_count = p_count
@@ -23,10 +23,12 @@ class WaveData:
 @export var enemy_scene: PackedScene
 @export var dropship_spawn_points: Array[NodePath] = []
 
+# --- Références UI (assignées par arena_base.gd via setup_ui) ---
 var _wave_label: Label    = null
 var _message_label: Label = null
 var _enemies_label: Label = null
-# --- État interne ---
+var _panel: Control       = null
+# --- État interne ----
 var _waves: Array[WaveData] = []
 var _current_wave: int = -1
 var _enemies_alive: int = 0
@@ -35,6 +37,12 @@ var _spawn_positions: Array[Vector3] = []
 
 
 func _ready() -> void:
+	# Le WaveManager attend que arena_base appelle start()
+	# après la fin du tutoriel
+	pass
+
+
+func start() -> void:
 	await get_tree().process_frame
 
 	_player = get_tree().get_first_node_in_group("player")
@@ -44,18 +52,17 @@ func _ready() -> void:
 
 	_player.player_died.connect(_on_player_died)
 	_start_wave(0)
-
+	
 
 func setup_waves(waves: Array[WaveData]) -> void:
 	_waves = waves
 
-# Appelé par arena_base.gd pour brancher les labels du HUD
-func setup_ui(wave_label: Label, message_label: Label, enemies_label: Label = null) -> void:
-	_wave_label     = wave_label
-	_message_label  = message_label
-	_enemies_label  = enemies_label
-	if _message_label:
-		_message_label.visible = false
+## Appelé par arena_base.gd pour brancher les labels du HUD
+func setup_ui(wave_label: Label, message_label: Label, enemies_label: Label = null, panel: Control = null) -> void:
+	_wave_label = wave_label
+	_message_label = message_label
+	_enemies_label = enemies_label
+	_panel = panel
 
 
 # =============================================================
@@ -92,7 +99,7 @@ func _spawn_wave(wave: WaveData) -> void:
 
 	var ships := mini(wave.dropship_count, positions.size())
 	var base_per_ship: int = int(float(wave.enemy_count) / float(ships))
-	var remainder: int     = wave.enemy_count % ships
+	var remainder: int = wave.enemy_count % ships
 
 	for i in range(ships):
 		var count := base_per_ship + (1 if i < remainder else 0)
@@ -118,6 +125,7 @@ func _spawn_dropship(pos: Vector3, enemy_count: int) -> void:
 
 func setup_spawn_points(positions: Array[Vector3]) -> void:
 	_spawn_positions = positions
+	
 
 func _get_spawn_positions() -> Array[Vector3]:
 	# Priorité aux positions passées en code, sinon on lit les NodePath de l'inspecteur
@@ -169,16 +177,17 @@ func _update_wave_label() -> void:
 
 
 func _show_message(msg: String) -> void:
+	if _panel:
+		_panel.visible = true
 	if _message_label:
-		_message_label.text    = msg
-		_message_label.visible = true
+		_message_label.text = msg
 
 
 func _hide_message() -> void:
-	if _message_label:
-		_message_label.visible = false
+	if _panel:
+		_panel.visible = false
 
 
 func _update_enemies_label() -> void:
 	if _enemies_label:
-		_enemies_label.text = "Ennemis : %d" % _enemies_alive
+		_enemies_label.text = "Ennemis restants : %d" % _enemies_alive
