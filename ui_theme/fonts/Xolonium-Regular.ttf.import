@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://b21was6vhbavk"
-path="res://.godot/imported/Kenney Future.ttf-50d62e537389ab996bf1f2ebfb4ae1d6.fontdata"
+uid="uid://ci0o36dhvuhqf"
+path="res://.godot/imported/Xolonium-Regular.ttf-80d3bb6d14155d01d79fd9ed710259ed.fontdata"
 
 [deps]
 
-source_file="res://ui_theme/fonts/Kenney Future.ttf"
-dest_files=["res://.godot/imported/Kenney Future.ttf-50d62e537389ab996bf1f2ebfb4ae1d6.fontdata"]
+source_file="res://ui_theme/fonts/Xolonium-Regular.ttf"
+dest_files=["res://.godot/imported/Xolonium-Regular.ttf-80d3bb6d14155d01d79fd9ed710259ed.fontdata"]
 
 [params]
 
