@@ -35,7 +35,12 @@ func _fire() -> void:
 	var target_pos := _target.global_position
 	target_pos.y = target_pos.y - 0.9 + 0.05  # pieds du joueur + léger offset sol
 
-	# MortarWarning est entièrement auto-contenu (pas besoin de PackedScene)
+	# Shell visuel : sphère lumineuse en arc parabolique depuis l'arme jusqu'au sol
+	var shell := MortarShell.new()
+	get_tree().current_scene.add_child(shell)
+	shell.init(global_position, target_pos, impact_delay)
+
+	# Zone d'avertissement au sol (gère les dégâts)
 	var warning := MortarWarning.new()
 	get_tree().current_scene.add_child(warning)
 	warning.init(target_pos, impact_delay, impact_radius, damage)

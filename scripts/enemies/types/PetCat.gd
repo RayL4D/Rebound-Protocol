@@ -1,31 +1,31 @@
 # =============================================================
-# PetMortar.gd — Pet orbital + tir de mortier
+# PetCat.gd — Pet rafale orbitale
 # Rebound Protocol
 # =============================================================
 # Comportement :
-#   • Maintient une distance idéale avec le joueur
-#   • Tourne autour de lui en strafant latéralement
-#   • Tire des mortiers sur la POSITION ACTUELLE du joueur →
-#     le joueur doit bouger en permanence pour esquiver
+#   • Tourne en orbite autour du joueur (comme PetMortar)
+#   • Tire des rafales de 3 balles rapides, puis recharge
+#   • Distance orbitale plus serrée → pression constante
+#   • Dangereux en groupe : les rafales se chevauchent
 #
 # Hiérarchie de scène attendue :
-#   PetMortar (CharacterBody3D) ← ce script
+#   PetCat (CharacterBody3D) ← ce script
 #   ├── CollisionShape3D
-#   ├── [Modèle Cube Pets importé]
+#   ├── [Modèle animal-cat.glb]
 #   ├── WeaponMount (Node3D)
-#   │   ├── [Modèle Blaster Kit (plus gros / différent)]
-#   │   └── WeaponMortar (Node3D) ← script WeaponMortar.gd
+#   │   ├── [Modèle blaster-b.glb]
+#   │   └── WeaponBurst (Node3D) ← script WeaponBurst.gd
 #   └── (pas de ShootTimer — géré par WeaponComponent)
 # =============================================================
-class_name PetMortar
+class_name PetCat
 extends Enemy
 
 # --- Exports propres à ce type ----------------------------------
-@export var preferred_distance: float = 8.0  # distance idéale avec le joueur
-@export var orbit_speed_mult: float   = 0.8  # vitesse de rotation orbitale (1 = move_speed)
+@export var preferred_distance: float = 6.0   # orbite plus serrée que PetMortar
+@export var orbit_speed_mult:   float = 1.2   # plus agile que le singe
 
 # --- Référence au composant d'arme ------------------------------
-@onready var weapon: WeaponMortar = $WeaponMount/WeaponMortar
+@onready var weapon: WeaponBurst = $WeaponMount/WeaponBurst
 
 # Sens de rotation orbital (1 ou -1) — aléatoire au spawn
 var _orbit_sign: float = 1.0
@@ -36,38 +36,37 @@ var _orbit_sign: float = 1.0
 # =============================================================
 
 func _on_ready() -> void:
-	# Sens de rotation aléatoire pour que les PetMortar ne tournent pas tous pareil
 	_orbit_sign = 1.0 if randf() > 0.5 else -1.0
 
 	if weapon == null:
-		push_error("PetMortar: nœud WeaponMortar introuvable — vérifie le chemin $WeaponMount/WeaponMortar")
+		push_error("PetCat: nœud WeaponBurst introuvable — vérifie $WeaponMount/WeaponBurst")
 		return
 	if player == null:
 		return
 	weapon.activate(player)
 
-	# Jouer gesture-positive à chaque tir de mortier
-	weapon.fired.connect(_on_mortar_fired)
-
-	# Quand gesture-positive se termine, rendre la main à idle/walk/run
+	# Animation gesture-negative (grognement) à chaque début de rafale
+	weapon.fired.connect(_on_burst_fired)
 	if _anim_player != null:
 		_anim_player.animation_finished.connect(_on_animation_finished)
 
 
-func _on_mortar_fired() -> void:
-	if _anim_player == null:
+func _on_burst_fired() -> void:
+	# Jouer gesture-negative uniquement au premier tir du burst
+	# (WeaponBurst émet fired à chaque balle, on filtre avec _gesture_active)
+	if _anim_player == null or _gesture_active:
 		return
 	_gesture_active = true
-	_anim_player.play("gesture-positive")
+	_anim_player.play("gesture-negative")
 
 
 func _on_animation_finished(anim_name: StringName) -> void:
-	if anim_name == &"gesture-positive":
+	if anim_name == &"gesture-negative":
 		_gesture_active = false
 
 
 # =============================================================
-# MOUVEMENT — surcharge de Enemy._update_movement
+# MOUVEMENT — orbite serrée autour du joueur
 # =============================================================
 
 func _update_movement(_delta: float) -> void:
@@ -80,20 +79,18 @@ func _update_movement(_delta: float) -> void:
 
 	var to_player_n := to_player.normalized()
 
-	# Composante radiale : s'approcher ou s'éloigner selon la distance
+	# Composante radiale : ajustement de la distance préférée
 	var radial := Vector3.ZERO
-	var margin := 1.5  # tolérance avant de corriger la distance
+	var margin := 1.2
 	if dist < preferred_distance - margin:
 		radial = -to_player_n  # trop proche → reculer
 	elif dist > preferred_distance + margin:
 		radial = to_player_n   # trop loin → avancer
 
-	# Composante orbitale : toujours strafer latéralement autour du joueur
-	# Perpendiculaire à to_player dans le plan horizontal
+	# Composante orbitale (strafe latéral)
 	var strafe_dir := Vector3(-to_player_n.z, 0.0, to_player_n.x) * _orbit_sign
 
-	# Combiner et normaliser pour éviter que les diagonales aillent trop vite
-	var move_dir := (radial + strafe_dir)
+	var move_dir := (radial + strafe_dir * orbit_speed_mult)
 	if move_dir.length_squared() > 0.01:
 		move_dir = move_dir.normalized()
 

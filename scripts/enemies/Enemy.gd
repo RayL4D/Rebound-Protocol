@@ -34,8 +34,10 @@ var _weapon_texture: Texture2D = preload("res://assets/textures/weapons/colormap
 
 # --- État -------------------------------------------------------
 var current_hp: int
-var player: Player  = null
-var _model: Node3D  = null
+var player: Player          = null
+var _model: Node3D          = null
+var _anim_player: AnimationPlayer = null  # trouvé automatiquement dans _setup_model
+var _gesture_active: bool = false         # true pendant une animation de geste (bloque idle/walk/run)
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
@@ -90,6 +92,23 @@ func _setup_model() -> void:
 	if weapon_mount:
 		_apply_texture_recursive(weapon_mount, _weapon_texture)
 
+	# Trouver l'AnimationPlayer dans le GLB importé (recherche récursive)
+	_anim_player = _find_anim_player(_model)
+	if _anim_player != null:
+		_anim_player.play("idle")
+
+
+# Recherche récursive de l'AnimationPlayer dans la hiérarchie du modèle.
+# Les GLB Kenney l'enfouissent plusieurs niveaux sous la racine.
+func _find_anim_player(node: Node) -> AnimationPlayer:
+	if node is AnimationPlayer:
+		return node
+	for child in node.get_children():
+		var found := _find_anim_player(child)
+		if found != null:
+			return found
+	return null
+
 
 # Même logique que Player.gd : parcourt tous les MeshInstance3D
 # de façon récursive et applique la texture sur chacun.
@@ -117,6 +136,7 @@ func _physics_process(delta: float) -> void:
 	_update_movement(delta)
 	move_and_slide()
 	_face_player()
+	_update_animation()
 
 
 # =============================================================
@@ -140,6 +160,37 @@ func _face_player() -> void:
 	dir.y = 0.0
 	if dir.length_squared() > 0.01:
 		rotation.y = atan2(dir.x, dir.z)
+
+
+# =============================================================
+# ANIMATIONS
+# =============================================================
+
+# Choisit idle / walk / run en fonction de la vitesse horizontale.
+# Appelée chaque frame depuis _physics_process — aucune sous-classe
+# n'a besoin de s'en préoccuper, sauf si elle veut surcharger.
+func _update_animation() -> void:
+	if _anim_player == null:
+		return
+
+	# Un geste est en cours (ex : gesture-positive au tir du mortier) — ne pas interrompre
+	if _gesture_active:
+		return
+
+	# Vitesse horizontale uniquement (Y ignoré)
+	var speed := Vector2(velocity.x, velocity.z).length()
+
+	var anim: String
+	if speed > move_speed * 0.6:
+		anim = "run"
+	elif speed > 0.25:
+		anim = "walk"
+	else:
+		anim = "idle"
+
+	# Ne relance l'animation que si elle change pour éviter les redémarrages
+	if _anim_player.current_animation != anim:
+		_anim_player.play(anim)
 
 
 # =============================================================

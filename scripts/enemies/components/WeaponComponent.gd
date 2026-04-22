@@ -21,6 +21,9 @@ extends Node3D
 @export var shoot_range: float = 10.0  # portée en unités
 @export var damage: int        = 10    # dégâts par projectile
 
+# --- Signal — émis à chaque tir effectif -----------------------
+signal fired
+
 # --- État interne -----------------------------------------------
 var _target: Node3D  = null
 var _cooldown: float = 0.0
@@ -42,6 +45,7 @@ func _process(delta: float) -> void:
 	# Vérifier la portée avant de tirer
 	if global_position.distance_to(_target.global_position) <= shoot_range:
 		_fire()
+		fired.emit()
 		_cooldown = 1.0 / fire_rate
 
 
