@@ -1,0 +1,33 @@
+[gd_scene format=3 uid="uid://doppdl6cdfi1e"]
+
+[ext_resource type="Script" uid="uid://cj2v370u1femt" path="res://scripts/enemies/types/PetMortar.gd" id="1_y6r7y"]
+[ext_resource type="PackedScene" uid="uid://bpjsftailh6c3" path="res://assets/models/weapons/blaster-h.glb" id="2_24hee"]
+[ext_resource type="Script" uid="uid://ddmkhp3lteb4d" path="res://scripts/enemies/components/WeaponMortar.gd" id="2_v3fw3"]
+[ext_resource type="PackedScene" uid="uid://bwxgpcyxy45he" path="res://assets/models/enemies/animal-bee.glb" id="4_q0a5q"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2silt"]
+size = Vector3(2, 1.5, 1.5)
+
+[node name="PetMortar" type="CharacterBody3D" unique_id=437757490]
+collision_layer = 2
+collision_mask = 5
+script = ExtResource("1_y6r7y")
+max_hp = 40
+move_speed = 1.8
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1296372810]
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0.1, 0)
+shape = SubResource("BoxShape3D_2silt")
+
+[node name="WeaponMount" type="Node3D" parent="." unique_id=1587660172]
+transform = Transform3D(-2.5, -1.09278474e-07, -1.8927587e-07, 0, 2.1650634, -1.25, 2.1855695e-07, -1.25, -2.1650634, 0, 0.8, 0.1)
+
+[node name="blaster-h2" parent="WeaponMount" unique_id=42188305 instance=ExtResource("2_24hee")]
+
+[node name="WeaponMortar" type="Node3D" parent="WeaponMount" unique_id=1071951884]
+script = ExtResource("2_v3fw3")
+fire_rate = 0.5
+shoot_range = 12.0
+damage = 15
+
+[node name="animal-bee2" parent="." unique_id=1898029691 instance=ExtResource("4_q0a5q")]
