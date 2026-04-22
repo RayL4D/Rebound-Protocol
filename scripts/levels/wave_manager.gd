@@ -77,7 +77,12 @@ func _start_wave(index: int) -> void:
 	_current_wave = index
 	var wave: WaveData = _waves[index]
 
-	_show_message("Vague %d / %d\n%s" % [index + 1, _waves.size(), wave.message])
+	var final_text = tr("HUD_WAVE_COUNT") % [index + 1, _waves.size()]
+
+	if wave.message != null and wave.message != "":
+		final_text += "\n" + tr(wave.message)
+
+	_show_message(final_text)
 	_update_wave_label()
 
 	await get_tree().create_timer(2.5).timeout
@@ -151,20 +156,20 @@ func _on_enemy_died() -> void:
 
 
 func _on_wave_cleared() -> void:
-	_show_message("Vague %d terminée !" % (_current_wave + 1))
+	_show_message(tr("WAVE_CLEARED") % (_current_wave + 1))
 	await get_tree().create_timer(2.0).timeout
 	_hide_message()
 	_start_wave(_current_wave + 1)
 
 
 func _on_player_died() -> void:
-	_show_message("Tu es mort.\nRetour à la vague 1...")
+	_show_message(tr("UI_DEATH_MSG"))
 	await get_tree().create_timer(2.5).timeout
 	get_tree().reload_current_scene()
 
 
 func _on_all_waves_cleared() -> void:
-	_show_message("Arène terminée !\nBravo !")
+	_show_message(tr("ALL_WAVES_CLEARED"))
 
 
 # =============================================================
@@ -173,7 +178,7 @@ func _on_all_waves_cleared() -> void:
 
 func _update_wave_label() -> void:
 	if _wave_label:
-		_wave_label.text = "Vague %d / %d" % [_current_wave + 1, _waves.size()]
+		_wave_label.text = tr("HUD_WAVE_COUNT") % [_current_wave + 1, _waves.size()]
 
 
 func _show_message(msg: String) -> void:
@@ -190,4 +195,4 @@ func _hide_message() -> void:
 
 func _update_enemies_label() -> void:
 	if _enemies_label:
-		_enemies_label.text = "Ennemis restants : %d" % _enemies_alive
+		_enemies_label.text = tr("HUD_ENEMIES_LEFT") % _enemies_alive

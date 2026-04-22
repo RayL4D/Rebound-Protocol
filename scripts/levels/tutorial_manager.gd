@@ -46,31 +46,31 @@ func _process(_delta: float) -> void:
 func _run_tutorial() -> void:
 	# Étape 1 : Mouvement
 	_moved = false
-	_show(1, "Protocole de calibrage initié.\nTest des propulseurs directionnels requis.")
+	_show(1, tr("TUTO_STEP_1"))
 	while not _moved: await get_tree().process_frame
-	_show(1, "Parfait !")
+	_show(1, tr("TUTO_PERFECT"))
 	await _pause(1.0)
 
 	# Étape 2 : Caméra (Simple pause car pas de détection logicielle ici)
-	_show(2, "Calibrage des capteurs optiques.\nAjustez l'angle de vision.")
+	_show(2, tr("TUTO_STEP_2"))
 	await _pause(3.5)
 
 	# Étape 3 : Saut
 	_jumped = false
-	_show(3, "Test du système d'élévation.\nInitialisation du saut requise.")
+	_show(3, tr("TUTO_STEP_3"))
 	while not _jumped: await get_tree().process_frame
-	_show(3, "Bien joué !")
+	_show(3, tr("TUTO_GOOD_JOB"))
 	await _pause(1.0)
 
 	# Étape 4 : Parade
 	_parried = false
-	_show(4, "Calibrage du bouclier cinétique.\nInterceptez le projectile.")
+	_show(4, tr("TUTO_STEP_4"))
 	while not _parried: await get_tree().process_frame
-	_show(4, "Excellent !")
+	_show(4, tr("TUTO_EXCELLENT"))
 	await _pause(1.0)
 
 	# Étape 5 : Fin
-	_show(5, "Calibrage terminé !\nUn vaisseau ennemi approche...")
+	_show(5, tr("TUTO_STEP_5"))
 	await _pause(2.5)
 
 	_hide()
@@ -83,7 +83,7 @@ func _pause(duration: float) -> void:
 
 func _show(step: int, msg: String) -> void:
 	if _panel: _panel.visible = true
-	if _step_label: _step_label.text = "%d / %d" % [step, TOTAL_STEPS]
+	if _step_label: _step_label.text = tr("HUD_WAVE_COUNT") % [step, TOTAL_STEPS]
 	if _message_label: _message_label.text = msg
 
 
