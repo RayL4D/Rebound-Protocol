@@ -26,6 +26,7 @@ transform = Transform3D(-2.5, -1.09278474e-07, -1.8927587e-07, 0, 2.1650634, -1.
 
 [node name="WeaponMortar" type="Node3D" parent="WeaponMount" unique_id=1071951884]
 script = ExtResource("2_v3fw3")
+impact_delay = 2.0
 fire_rate = 0.5
 shoot_range = 12.0
 damage = 15
