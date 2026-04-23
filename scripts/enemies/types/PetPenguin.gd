@@ -47,7 +47,7 @@ extends Enemy
 
 # --- Constantes de placement de l'arme --------------------------
 # Position du point "dos" dans l'espace LOCAL NON SCALÉ du modèle GLB
-const BACK_LOCAL  := Vector3(0.0, 0.9, -0.5)
+const BACK_LOCAL  := Vector3(0.0, 0.9, -0.55)
 # Rotation souhaitée de l'arme en ESPACE MONDE quand le modèle est debout.
 # X = 90°, Z = 180° → même réglage que le joueur trouve dans l'Inspector
 # quand WeaponMount est à la racine (espace monde ≈ espace local à la racine).
