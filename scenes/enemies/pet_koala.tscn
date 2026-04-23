@@ -1,0 +1,39 @@
+[gd_scene format=3 uid="uid://dajdjjps15wxw"]
+
+[ext_resource type="Script" uid="uid://dhr24xwir27w3" path="res://scripts/enemies/types/PetKoala.gd" id="1_koalascr"]
+[ext_resource type="Script" uid="uid://b2osxjb1dmp8o" path="res://scripts/enemies/components/WeaponSniper.gd" id="2_sniperscr"]
+[ext_resource type="PackedScene" uid="uid://bs26bii3oepy7" path="res://assets/models/enemies/animal-koala.glb" id="3_koalamdl"]
+[ext_resource type="PackedScene" uid="uid://cdssfpb0nboc" path="res://assets/models/weapons/blaster-e.glb" id="4_blaste"]
+[ext_resource type="PackedScene" uid="uid://bj16wiujb6fxb" path="res://assets/models/weapons/scope-large-a.glb" id="5_scope"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_koala01"]
+size = Vector3(2, 1.5, 1.5)
+
+[node name="PetKoala" type="CharacterBody3D" unique_id=2002060848]
+collision_layer = 16
+collision_mask = 5
+script = ExtResource("1_koalascr")
+max_hp = 25
+move_speed = 1.0
+
+[node name="animal-koala2" parent="." unique_id=2022368240 instance=ExtResource("3_koalamdl")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1946099802]
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0.4, 0)
+shape = SubResource("BoxShape3D_koala01")
+
+[node name="WeaponMount" type="Node3D" parent="." unique_id=1975738237]
+transform = Transform3D(-1, 8.742278e-08, 0, 8.742278e-08, 1, 8.742278e-08, 7.642742e-15, 8.742278e-08, -1, 0, 0.8, 0.75)
+
+[node name="WeaponSniper" type="Node3D" parent="WeaponMount" unique_id=1569005934]
+script = ExtResource("2_sniperscr")
+bullet_speed = 22.0
+fire_rate = 0.28
+shoot_range = 20.0
+damage = 40
+
+[node name="blaster-e2" parent="WeaponMount" unique_id=1950339735 instance=ExtResource("4_blaste")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16, 0)
+
+[node name="scope-large-a2" parent="WeaponMount" unique_id=83944695 instance=ExtResource("5_scope")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16, 0)
