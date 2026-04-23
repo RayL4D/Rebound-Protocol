@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/enemies/types/PetFox.gd" id="1_foxscr"]
 [ext_resource type="Script" path="res://scripts/enemies/components/WeaponBullet.gd" id="2_bulletscr"]
 [ext_resource type="PackedScene" uid="uid://dvt7x1tqgh5pe" path="res://assets/models/enemies/animal-fox.glb" id="3_foxmdl"]
-[ext_resource type="PackedScene" uid="uid://cwm5m70quya5n" path="res://assets/models/weapons/blaster-c.glb" id="4_blastc"]
+[ext_resource type="PackedScene" uid="uid://bmav271syea7a" path="res://assets/models/weapons/blaster-i.glb" id="4_blasti"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_fox01"]
 size = Vector3(2, 1.5, 1.5)
@@ -12,8 +12,11 @@ size = Vector3(2, 1.5, 1.5)
 collision_layer = 16
 collision_mask = 5
 script = ExtResource("1_foxscr")
-max_hp = 20
-move_speed = 3.5
+max_hp = 22
+move_speed = 5.0
+preferred_distance = 7.0
+zigzag_freq = 0.8
+zigzag_amp = 1.6
 
 [node name="animal-fox2" parent="." instance=ExtResource("3_foxmdl")]
 
@@ -26,10 +29,10 @@ transform = Transform3D(-1, 8.742278e-08, 0, 8.742278e-08, 1, 8.742278e-08, 7.64
 
 [node name="WeaponBullet" type="Node3D" parent="WeaponMount"]
 script = ExtResource("2_bulletscr")
-fire_rate = 0.4
-shoot_range = 18.0
-damage = 28
-bullet_speed = 18.0
+fire_rate = 1.2
+shoot_range = 10.0
+damage = 10
+bullet_speed = 11.0
 
-[node name="blaster-c2" parent="WeaponMount" instance=ExtResource("4_blastc")]
+[node name="blaster-i2" parent="WeaponMount" instance=ExtResource("4_blasti")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16, 0)

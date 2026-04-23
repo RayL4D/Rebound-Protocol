@@ -2,10 +2,10 @@
 # Enemy.gd — Classe de base pour tous les ennemis
 # Rebound Protocol
 # =============================================================
-# Ne pas attacher directement à une scène — utilise PetShooter,
-# PetMortar, ou tout autre type qui hérite de cette classe.
+# Ne pas attacher directement à une scène — utilise PetDog,
+# PetMonkey, ou tout autre type qui hérite de cette classe.
 #
-# Héritage :  Enemy (ici) → PetShooter / PetMortar / ...
+# Héritage :  Enemy (ici) → PetDog / PetMonkey / PetCat / ...
 # Composition : chaque ennemi a un nœud WeaponComponent enfant
 #               qui gère la logique de tir indépendamment.
 # =============================================================

@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/enemies/types/PetBunny.gd" id="1_bunnyscr"]
 [ext_resource type="Script" path="res://scripts/enemies/components/WeaponBullet.gd" id="2_bulletscr"]
 [ext_resource type="PackedScene" uid="uid://bicbumfsqxj62" path="res://assets/models/enemies/animal-bunny.glb" id="3_bunnymdl"]
-[ext_resource type="PackedScene" uid="uid://cmkxy52jryr0q" path="res://assets/models/weapons/blaster-d.glb" id="4_blastd"]
+[ext_resource type="PackedScene" uid="uid://cwm5m70quya5n" path="res://assets/models/weapons/blaster-c.glb" id="4_blastc"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_bunny01"]
 size = Vector3(2, 1.5, 1.5)
@@ -31,5 +31,5 @@ shoot_range = 7.0
 damage = 7
 bullet_speed = 14.0
 
-[node name="blaster-d2" parent="WeaponMount" instance=ExtResource("4_blastd")]
+[node name="blaster-c2" parent="WeaponMount" instance=ExtResource("4_blastc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16, 0)

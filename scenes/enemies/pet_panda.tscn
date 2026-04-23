@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://pet_panda_scene01"]
+
+[ext_resource type="Script" path="res://scripts/enemies/types/PetPanda.gd" id="1_pandascr"]
+[ext_resource type="PackedScene" uid="uid://djwa5tdk6fj1g" path="res://assets/models/enemies/animal-panda.glb" id="2_pandamdl"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_panda01"]
+size = Vector3(2, 1.5, 1.5)
+
+[node name="PetPanda" type="CharacterBody3D"]
+collision_layer = 16
+collision_mask = 5
+script = ExtResource("1_pandascr")
+max_hp = 55
+move_speed = 2.8
+melee_damage = 18
+melee_interval = 1.2
+
+[node name="animal-panda2" parent="." instance=ExtResource("2_pandamdl")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0.4, 0)
+shape = SubResource("BoxShape3D_panda01")
