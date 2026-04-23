@@ -1,5 +1,5 @@
 # =============================================================
-# HUD.gd — Interface joueur (barre de vie holographique)
+# HUD.gd — Interface joueur (barre de vie holographique + Pointeur)
 # =============================================================
 extends CanvasLayer
 
@@ -29,32 +29,25 @@ var _vignette_rect: ColorRect      = null
 var _vignette_mat:  ShaderMaterial = null
 var _vignette_tween: Tween         = null
 
+# --- Pointeur de fin de niveau -----------------------------------
+var _guide_icon: TextureRect = null
+var guide_target: Node3D = null
+
 const DAMAGE_VIGNETTE_SHADER := """
 shader_type canvas_item;
 uniform float intensity : hint_range(0.0, 1.0) = 0.0;
 
 void fragment() {
 	vec2 uv = UV * 2.0 - 1.0;
-
-	// Distance depuis le bord le plus proche (0 = bord, 1 = centre)
 	float edge = min(1.0 - abs(uv.x), 1.0 - abs(uv.y));
-
-	// Contour fin : seulement les 18% du bord
 	float rim   = smoothstep(0.18, 0.0,  edge);
-	// Très léger halo intérieur pour la profondeur
 	float glow  = smoothstep(0.38, 0.10, edge) * 0.18;
-
-	// Ligne lumineuse au ras du bord (effet scan tech)
 	float line  = smoothstep(0.02, 0.0,  abs(edge - 0.01)) * 0.6;
-
 	float alpha = clamp(rim * 0.7 + glow + line, 0.0, 1.0) * intensity;
-
-	// Rouge vif sur le bord, bordeaux plus sombre vers l'intérieur
 	vec3 col = mix(vec3(0.55, 0.0, 0.0), vec3(1.0, 0.12, 0.12), rim);
 	COLOR = vec4(col, alpha);
 }
 """
-
 
 func _ready() -> void:
 	_build_ui()
@@ -74,6 +67,8 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _player == null or _camera == null:
 		return
+		
+	# --- Gestion de la barre de vie ---
 	var screen_pos := _camera.unproject_position(_player.global_position + WORLD_OFFSET)
 	_container.position = screen_pos - _container.size * 0.5
 
@@ -89,6 +84,21 @@ func _process(delta: float) -> void:
 			c.color = pulse_col
 	else:
 		_pulse_time = 0.0
+		
+	# --- Gestion du pointeur d'objectif ---
+	if guide_target != null and is_instance_valid(guide_target):
+		# Si la cible est derrière la caméra, on cache le curseur
+		if _camera.is_position_behind(guide_target.global_position):
+			_guide_icon.hide()
+		else:
+			var target_pos2d = _camera.unproject_position(guide_target.global_position)
+			var tex_size = _guide_icon.texture.get_size() if _guide_icon.texture else Vector2(32, 32)
+			
+			# Centre l'icône sur la cible
+			_guide_icon.position = target_pos2d - (tex_size / 2.0)
+			_guide_icon.show()
+	elif _guide_icon.visible:
+		_guide_icon.hide()
 
 
 # =============================================================
@@ -96,7 +106,7 @@ func _process(delta: float) -> void:
 # =============================================================
 
 func _build_ui() -> void:
-	# Vignette de dégât — plein écran, derrière tout le reste
+	# Vignette de dégât
 	var shader        := Shader.new()
 	shader.code        = DAMAGE_VIGNETTE_SHADER
 	_vignette_mat      = ShaderMaterial.new()
@@ -107,7 +117,16 @@ func _build_ui() -> void:
 	_vignette_rect.material     = _vignette_mat
 	add_child(_vignette_rect)
 
-	var total_w := BAR_WIDTH + 24.0   # espace pour label "HP" à gauche
+	# --- Création de l'icône de guidage ---
+	_guide_icon = TextureRect.new()
+	# /!\ Vérifiez que le chemin de votre image est bien le bon ici :
+	_guide_icon.texture = preload("res://ui_theme/png/cursor/cursor_pointer3D.png") 
+	_guide_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_guide_icon.hide()
+	add_child(_guide_icon)
+
+	# Conteneur HP
+	var total_w := BAR_WIDTH + 24.0   
 	var total_h := BAR_HEIGHT + 14.0
 
 	_container      = Control.new()
@@ -115,7 +134,7 @@ func _build_ui() -> void:
 	_container.size = Vector2(total_w, total_h)
 	add_child(_container)
 
-	# Label "HP" à gauche
+	# Label "HP"
 	var tag              := Label.new()
 	tag.text              = "HP"
 	tag.size              = Vector2(20.0, total_h)
@@ -174,21 +193,17 @@ func _build_ui() -> void:
 func _make_corners(origin: Vector2, size: Vector2, color: Color) -> Array[ColorRect]:
 	var result: Array[ColorRect] = []
 	var positions := [
-		# Coin haut-gauche
 		[origin,                                           Vector2(CORNER_LEN, CORNER_THK)],
 		[origin,                                           Vector2(CORNER_THK, CORNER_LEN)],
-		# Coin haut-droit
-		[origin + Vector2(size.x - CORNER_LEN, 0),        Vector2(CORNER_LEN, CORNER_THK)],
-		[origin + Vector2(size.x - CORNER_THK, 0),        Vector2(CORNER_THK, CORNER_LEN)],
-		# Coin bas-gauche
-		[origin + Vector2(0, size.y - CORNER_THK),        Vector2(CORNER_LEN, CORNER_THK)],
-		[origin + Vector2(0, size.y - CORNER_LEN),        Vector2(CORNER_THK, CORNER_LEN)],
-		# Coin bas-droit
+		[origin + Vector2(size.x - CORNER_LEN, 0),         Vector2(CORNER_LEN, CORNER_THK)],
+		[origin + Vector2(size.x - CORNER_THK, 0),         Vector2(CORNER_THK, CORNER_LEN)],
+		[origin + Vector2(0, size.y - CORNER_THK),         Vector2(CORNER_LEN, CORNER_THK)],
+		[origin + Vector2(0, size.y - CORNER_LEN),         Vector2(CORNER_THK, CORNER_LEN)],
 		[origin + Vector2(size.x - CORNER_LEN, size.y - CORNER_THK), Vector2(CORNER_LEN, CORNER_THK)],
 		[origin + Vector2(size.x - CORNER_THK, size.y - CORNER_LEN), Vector2(CORNER_THK, CORNER_LEN)],
 	]
 	for p in positions:
-		var r         := ColorRect.new()
+		var r         = ColorRect.new()
 		r.color        = color
 		r.position     = p[0]
 		r.size         = p[1]
@@ -225,7 +240,6 @@ func _on_hp_changed(new_hp: int) -> void:
 func _flash_damage_vignette() -> void:
 	if _vignette_mat == null:
 		return
-	# Interrompre un flash précédent si le joueur encaisse plusieurs coups
 	if _vignette_tween:
 		_vignette_tween.kill()
 	_vignette_mat.set_shader_parameter("intensity", 1.0)
