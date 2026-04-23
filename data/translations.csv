@@ -18,6 +18,7 @@ WAVE_CLEARED,Wave %d cleared!,Vague %d terminée !,¡Oleada %d completada!
 ALL_WAVES_CLEARED,Arena complete! Well done!,Arène terminée !\nBravo !,¡Arena completada!\n¡Bravo!
 WAVE_HUD,Wave 0 / 0,Vague 0 / 0,Oleada 0 / 0
 ENEMIES_HUD,Remaining enemies: 0,Ennemis restants : 0,Enemigos restantes: 0
+MISSION_ACCOMPLISHED,Mission accomplished! \nA door just opened...,Mission accomplie ! \nUne porte vient de s'ouvrir..,¡Misión cumplida! \nSe acaba de abrir una puerta.
 GAME OVER / UI,,,
 UI_DEATH_MSG,You are dead. Returning to wave 1...,Tu es mort.\nRetour à la vague 1...,Has muerto.\nVolviendo a la oleada 1...
 UI_GAME_OVER,GAME OVER,GAME OVER,FIN DE LA PARTIDA

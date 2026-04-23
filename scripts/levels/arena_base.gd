@@ -11,10 +11,10 @@ extends Node
 
 func _ready() -> void:
 	
-	#var locale = OS.get_locale_language()
-	#TranslationServer.set_locale(locale)
+	var locale = OS.get_locale_language()
+	TranslationServer.set_locale(locale)
 	
-	TranslationServer.set_locale("es") # Anglais pour le test
+	#TranslationServer.set_locale("es") # Espagnol pour le test
 	
 	_add_collision_recursive(self)
 
@@ -41,6 +41,9 @@ func _ready() -> void:
 	tutorial_manager.setup(player, panel, message_label, step_label)
 	tutorial_manager.tutorial_completed.connect(_on_tutorial_completed)
 	tutorial_manager.start()
+	
+	# --- Connexion de fin de niveau ---
+	wave_manager.all_waves_finished.connect(_on_waves_finished)
 
 
 func _on_tutorial_completed() -> void:
@@ -67,3 +70,14 @@ func _add_collision_recursive(node: Node) -> void:
 
 	for child in node.get_children():
 		_add_collision_recursive(child)
+		
+		
+# fin level
+
+func _on_waves_finished() -> void:
+	var exit_zone = $LevelExit 
+	exit_zone.activate()
+	
+	var message_label: Label = hud.get_node_or_null("%MessageLabel")
+	if message_label:
+		message_label.text = tr("MISSION_ACCOMPLISHED")
