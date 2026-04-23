@@ -5,6 +5,9 @@
 class_name WaveManager
 extends Node
 
+# --- NOUVEAU : Signal pour prévenir arena_base que tout est fini ---
+signal all_waves_finished
+
 # --- Structure d'une vague ---
 class WaveData:
 	var enemy_count: int
@@ -28,6 +31,7 @@ var _wave_label: Label    = null
 var _message_label: Label = null
 var _enemies_label: Label = null
 var _panel: Control       = null
+
 # --- État interne ----
 var _waves: Array[WaveData] = []
 var _current_wave: int = -1
@@ -37,8 +41,6 @@ var _spawn_positions: Array[Vector3] = []
 
 
 func _ready() -> void:
-	# Le WaveManager attend que arena_base appelle start()
-	# après la fin du tutoriel
 	pass
 
 
@@ -57,7 +59,6 @@ func start() -> void:
 func setup_waves(waves: Array[WaveData]) -> void:
 	_waves = waves
 
-## Appelé par arena_base.gd pour brancher les labels du HUD
 func setup_ui(wave_label: Label, message_label: Label, enemies_label: Label = null, panel: Control = null) -> void:
 	_wave_label = wave_label
 	_message_label = message_label
@@ -71,7 +72,7 @@ func setup_ui(wave_label: Label, message_label: Label, enemies_label: Label = nu
 
 func _start_wave(index: int) -> void:
 	if index >= _waves.size():
-		_on_all_waves_cleared()
+		_on_all_waves_cleared() # Appelle la bonne fonction
 		return
 
 	_current_wave = index
@@ -133,7 +134,6 @@ func setup_spawn_points(positions: Array[Vector3]) -> void:
 	
 
 func _get_spawn_positions() -> Array[Vector3]:
-	# Priorité aux positions passées en code, sinon on lit les NodePath de l'inspecteur
 	if not _spawn_positions.is_empty():
 		return _spawn_positions
 	var result: Array[Vector3] = []
@@ -167,9 +167,11 @@ func _on_player_died() -> void:
 	await get_tree().create_timer(2.5).timeout
 	get_tree().reload_current_scene()
 
-
+	
+# --- CORRECTION : C'est ici qu'on gère la fin dans ce script ---
 func _on_all_waves_cleared() -> void:
-	_show_message(tr("ALL_WAVES_CLEARED"))
+	# On émet le signal pour que arena_base sache que c'est fini
+	all_waves_finished.emit()
 
 
 # =============================================================
@@ -180,18 +182,15 @@ func _update_wave_label() -> void:
 	if _wave_label:
 		_wave_label.text = tr("HUD_WAVE_COUNT") % [_current_wave + 1, _waves.size()]
 
-
 func _show_message(msg: String) -> void:
 	if _panel:
 		_panel.visible = true
 	if _message_label:
 		_message_label.text = msg
 
-
 func _hide_message() -> void:
 	if _panel:
 		_panel.visible = false
-
 
 func _update_enemies_label() -> void:
 	if _enemies_label:
