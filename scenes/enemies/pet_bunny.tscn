@@ -1,0 +1,35 @@
+[gd_scene format=3 uid="uid://pet_bunny_scene01"]
+
+[ext_resource type="Script" path="res://scripts/enemies/types/PetBunny.gd" id="1_bunnyscr"]
+[ext_resource type="Script" path="res://scripts/enemies/components/WeaponBullet.gd" id="2_bulletscr"]
+[ext_resource type="PackedScene" uid="uid://bicbumfsqxj62" path="res://assets/models/enemies/animal-bunny.glb" id="3_bunnymdl"]
+[ext_resource type="PackedScene" uid="uid://cwm5m70quya5n" path="res://assets/models/weapons/blaster-c.glb" id="4_blastc"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_bunny01"]
+size = Vector3(2, 1.5, 1.5)
+
+[node name="PetBunny" type="CharacterBody3D"]
+collision_layer = 16
+collision_mask = 5
+script = ExtResource("1_bunnyscr")
+max_hp = 15
+move_speed = 4.5
+
+[node name="animal-bunny2" parent="." instance=ExtResource("3_bunnymdl")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0.4, 0)
+shape = SubResource("BoxShape3D_bunny01")
+
+[node name="WeaponMount" type="Node3D" parent="."]
+transform = Transform3D(-1, 8.742278e-08, 0, 8.742278e-08, 1, 8.742278e-08, 7.642742e-15, 8.742278e-08, -1, 0, 0.8, 0.1)
+
+[node name="WeaponBullet" type="Node3D" parent="WeaponMount"]
+script = ExtResource("2_bulletscr")
+fire_rate = 2.0
+shoot_range = 7.0
+damage = 7
+bullet_speed = 14.0
+
+[node name="blaster-c2" parent="WeaponMount" instance=ExtResource("4_blastc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16, 0)

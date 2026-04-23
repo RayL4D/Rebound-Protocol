@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://b44v6ngf5fiol"
-path="res://.godot/imported/character-f.glb-615e6c5c9b145c73431c55f6e6c9452e.scn"
+uid="uid://csqfwcd8m8s6i"
+path="res://.godot/imported/bullet-foam.glb-9165156930a180cf6b2a5ba8e6adca65.scn"
 
 [deps]
 
-source_file="res://assets/models/player/character-f.glb"
-dest_files=["res://.godot/imported/character-f.glb-615e6c5c9b145c73431c55f6e6c9452e.scn"]
+source_file="res://assets/models/weapons/bullet-foam.glb"
+dest_files=["res://.godot/imported/bullet-foam.glb-9165156930a180cf6b2a5ba8e6adca65.scn"]
 
 [params]
 
