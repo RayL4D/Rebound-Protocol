@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://plej8ebppvy7" path="res://scenes/enemies/enemy_placeholder.tscn" id="2_8327p"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_728gm"]
-size = Vector3(18.594662, 12.26712, 27.383635)
+size = Vector3(15.044784, 8.443489, 20.042828)
 
 [sub_resource type="Animation" id="Animation_h7gnp"]
 length = 0.001
@@ -48,7 +48,7 @@ tracks/2/keys = {
 
 [sub_resource type="Animation" id="Animation_mxcpi"]
 resource_name = "landing"
-length = 2.0
+length = 3.0
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
@@ -56,10 +56,10 @@ tracks/0/path = NodePath(".:position")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0, 2),
+"times": PackedFloat32Array(0, 3),
 "transitions": PackedFloat32Array(1.2613409, 4),
 "update": 0,
-"values": [Vector3(0, 50, 0), Vector3(0, -0.5, 0)]
+"values": [Vector3(0, 50, 0), Vector3(0, 1.5, 0)]
 }
 tracks/1/type = "value"
 tracks/1/imported = false
@@ -68,7 +68,7 @@ tracks/1/path = NodePath(".:rotation")
 tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/keys = {
-"times": PackedFloat32Array(0, 0.6333333, 1.4, 2),
+"times": PackedFloat32Array(0, 0.6333333, 1.4, 3),
 "transitions": PackedFloat32Array(1, 2.219139, 0.95950377, 1),
 "update": 0,
 "values": [Vector3(0, 0, 0), Vector3(0, 0.08726646, 0.17453292), Vector3(0, -0.10471976, 0.08726646), Vector3(0, 0, 0)]
@@ -132,10 +132,10 @@ tracks/0/path = NodePath(".:position")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.5, 1.2, 2.5),
+"times": PackedFloat32Array(0, 0.5, 1.2, 3),
 "transitions": PackedFloat32Array(1, 1, 2, 1),
 "update": 0,
-"values": [Vector3(0, 1, 0), Vector3(0, 1.2, 0), Vector3(5, 15, 0), Vector3(40, 80, -40)]
+"values": [Vector3(0, 1.5, 0), Vector3(0, 1.2, 0), Vector3(5, 15, 0), Vector3(40, 80, -40)]
 }
 tracks/1/type = "value"
 tracks/1/imported = false
@@ -144,7 +144,7 @@ tracks/1/path = NodePath(".:rotation")
 tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/keys = {
-"times": PackedFloat32Array(0, 1.2, 2.5),
+"times": PackedFloat32Array(0, 1.2, 3),
 "transitions": PackedFloat32Array(1, 2, 2),
 "update": 0,
 "values": [Vector3(0, 0, 0), Vector3(0, 0, 0.2617994), Vector3(0, 0, -0.34906584)]
@@ -231,15 +231,15 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 50, 0)
 sync_to_physics = false
 
 [node name="cargo_spawner" parent="Dropship_container" unique_id=1921082924 instance=ExtResource("1_h7gnp")]
-transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 0, -1, 0)
+transform = Transform3D(7, 0, 0, 0, 7, 0, 0, 0, 7, 13.953849, -3.5690575, 10.568766)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Dropship_container" unique_id=468432573]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.120646, 5.63356, 14.719762)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.288692, -0.94501877, 21.811527)
 shape = SubResource("BoxShape3D_728gm")
 
 [node name="Spawn_point" type="Marker3D" parent="Dropship_container" unique_id=281156709]
 unique_name_in_owner = true
-transform = Transform3D(14.999996, 0, 0, 0, 14.970611, -0.9384607, 0, 0.9384607, 14.970611, 30.928394, -1, -6.898552)
+transform = Transform3D(14.999996, 0, 0, 0, 14.970611, -0.9384607, 0, 0.9384607, 14.970611, 28.414036, -1, 8.093699)
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Dropship_container" unique_id=1012581515]
 unique_name_in_owner = true

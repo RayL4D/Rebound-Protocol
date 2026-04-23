@@ -1,10 +1,42 @@
-[gd_scene format=3 uid="uid://c7a5yullmt606"]
+[gd_scene format=3 uid="uid://chm01swb33150"]
 
 [ext_resource type="Script" uid="uid://cnc1o5a4j1cp0" path="res://scripts/ui/HUD.gd" id="1_kw0id"]
-[ext_resource type="FontFile" uid="uid://b21was6vhbavk" path="res://ui_theme/fonts/Kenney Future.ttf" id="2_atyv1"]
+[ext_resource type="FontFile" uid="uid://ci0o36dhvuhqf" path="res://ui_theme/fonts/Xolonium-Regular.ttf" id="2_atyv1"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_atyv1"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0.8509804, 1, 1)
+expand_margin_left = 5.0
+expand_margin_top = 5.0
+expand_margin_right = 5.0
+expand_margin_bottom = 5.0
+shadow_color = Color(0, 0, 0, 1)
+shadow_offset = Vector2(2, 2)
+
+[sub_resource type="LabelSettings" id="LabelSettings_rnyu1"]
+font = ExtResource("2_atyv1")
+font_size = 20
+font_color = Color(0, 0.8509804, 1, 1)
+outline_size = 2
+outline_color = Color(0, 0, 0, 1)
 
 [sub_resource type="LabelSettings" id="LabelSettings_6ll6g"]
 font = ExtResource("2_atyv1")
+font_size = 20
+font_color = Color(0, 0.8509804, 1, 1)
+outline_size = 2
+outline_color = Color(0, 0, 0, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_ig75s"]
+font = ExtResource("2_atyv1")
+font_size = 20
+font_color = Color(0, 0.8509804, 1, 1)
+outline_size = 2
+outline_color = Color(0, 0, 0, 1)
 
 [node name="HUD" type="CanvasLayer" unique_id=1994348935]
 script = ExtResource("1_kw0id")
@@ -14,49 +46,55 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_right = -1112.0
-offset_bottom = -608.0
+offset_right = -1.0
+offset_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-
-[node name="WaveLabel" type="Label" parent="WaveContainer" unique_id=355252361]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 1019.0
-offset_top = 14.0
-offset_right = 1177.0
-offset_bottom = 105.0
-text = "Vague 1 / 3"
-label_settings = SubResource("LabelSettings_6ll6g")
 
 [node name="MessageLabel" type="Label" parent="WaveContainer" unique_id=1425318128]
 unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 8
+anchors_preset = 5
 anchor_left = 0.5
-anchor_top = 0.5
 anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = 277.0
-offset_top = 164.0
-offset_right = 784.0
-offset_bottom = 411.0
+offset_left = -53.0
+offset_top = 127.0
+offset_right = 47.0
+offset_bottom = 156.0
 grow_horizontal = 2
-grow_vertical = 2
-text = " "
+theme_override_styles/normal = SubResource("StyleBoxFlat_atyv1")
+text = "Message"
+label_settings = SubResource("LabelSettings_rnyu1")
+horizontal_alignment = 1
 
-[node name="EnemiesLabel" type="Label" parent="WaveContainer" unique_id=1107192269]
-unique_name_in_owner = true
+[node name="GridContainer" type="GridContainer" parent="WaveContainer" unique_id=209939069]
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 987.0
-offset_top = 550.0
-offset_right = 1075.0
-offset_bottom = 599.0
+offset_left = -408.0
+offset_top = -50.0
 grow_horizontal = 0
 grow_vertical = 0
-text = "Ennemis : 0"
+columns = 3
+
+[node name="WaveLabel" type="Label" parent="WaveContainer/GridContainer" unique_id=355252361]
+unique_name_in_owner = true
+layout_mode = 2
+text = "WAVE_HUD"
+label_settings = SubResource("LabelSettings_6ll6g")
+horizontal_alignment = 2
+
+[node name="Separator" type="Label" parent="WaveContainer/GridContainer" unique_id=883040629]
+layout_mode = 2
+text = "-"
+label_settings = SubResource("LabelSettings_ig75s")
+horizontal_alignment = 1
+
+[node name="EnemiesLabel" type="Label" parent="WaveContainer/GridContainer" unique_id=1107192269]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ENEMIES_HUD"
+label_settings = SubResource("LabelSettings_ig75s")

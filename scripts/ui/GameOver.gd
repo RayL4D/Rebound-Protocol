@@ -80,17 +80,17 @@ func _process(delta: float) -> void:
 
 func show_game_over() -> void:
 	_accent_color   = COLOR_RED
-	_title.text     = "GAME OVER"
-	_subtitle.text  = "— system neutralized —"
-	_btn_retry.text = "[ RETRY ]"
+	_title.text     = tr("UI_GAME_OVER")
+	_subtitle.text  = tr("UI_SYS_NEUTRALIZED")
+	_btn_retry.text = tr("UI_RETRY")
 	_play_death_sequence()
 
 
 func show_victory() -> void:
 	_accent_color   = COLOR_GOLD
-	_title.text     = "VICTOIRE"
-	_subtitle.text  = "— threat neutralized —"
-	_btn_retry.text = "[ PLAY AGAIN ]"
+	_title.text     = tr("UI_VICTORY")
+	_subtitle.text  = tr("UI_THREAT_CLEARED")
+	_btn_retry.text = tr("UI_PLAY_AGAIN")
 	_play_death_sequence()
 
 
@@ -215,11 +215,11 @@ func _build_ui() -> void:
 	_panel.add_child(tip)
 
 	# Boutons
-	_btn_retry = _make_button("[ RETRY ]", Vector2(90.0, 163.0), Vector2(200.0, 38.0), true)
+	_btn_retry = _make_button(tr("UI_RETRY"), Vector2(90.0, 163.0), Vector2(200.0, 38.0), true)
 	_btn_retry.pressed.connect(_on_retry)
 	_panel.add_child(_btn_retry)
 
-	_btn_quit = _make_button("QUIT", Vector2(90.0, 210.0), Vector2(200.0, 30.0), false)
+	_btn_quit = _make_button(tr("UI_QUIT"), Vector2(90.0, 210.0), Vector2(200.0, 30.0), false)
 	_btn_quit.pressed.connect(_on_quit)
 	_panel.add_child(_btn_quit)
 

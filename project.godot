@@ -73,6 +73,10 @@ cam_orbit_right={
 ]
 }
 
+[internationalization]
+
+locale/translations=PackedStringArray("res://data/translations.en.translation", "res://data/translations.es.translation", "res://data/translations.fr.translation")
+
 [layer_names]
 
 3d_physics/layer_1="player"
