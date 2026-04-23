@@ -30,9 +30,9 @@ func _ready() -> void:
 	# --- Vagues ---
 	var waves: Array[WaveManager.WaveData] = [
 		WaveManager.WaveData.new(1, 1, ""),   # Ennemi test post-tuto
-		WaveManager.WaveData.new(1, 1, tr("WAVE_MSG_1")),
-		WaveManager.WaveData.new(2, 1, tr("WAVE_MSG_2")),
-		WaveManager.WaveData.new(3, 2, tr("WAVE_MSG_FINAL")),
+		#WaveManager.WaveData.new(1, 1, tr("WAVE_MSG_1")),
+		#WaveManager.WaveData.new(2, 1, tr("WAVE_MSG_2")),
+		#WaveManager.WaveData.new(3, 2, tr("WAVE_MSG_FINAL")),
 	]
 	wave_manager.setup_waves(waves)
 
