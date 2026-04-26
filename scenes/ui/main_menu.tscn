@@ -1,0 +1,146 @@
+[gd_scene format=3 uid="uid://csuqak0vnysy3"]
+
+[ext_resource type="FontFile" uid="uid://ci0o36dhvuhqf" path="res://ui_theme/fonts/Xolonium-Regular.ttf" id="1_fe2o3"]
+[ext_resource type="Script" uid="uid://cslwj027lc154" path="res://scripts/ui/main_menu.gd" id="1_x2yvf"]
+[ext_resource type="Texture2D" uid="uid://8fsbf2wk0gs4" path="res://assets/flags/fr.png" id="2_1g8jr"]
+[ext_resource type="Texture2D" uid="uid://2hgbu601c06j" path="res://assets/flags/gb.png" id="3_m1kxf"]
+[ext_resource type="Texture2D" uid="uid://484jakpexi5i" path="res://assets/flags/es.png" id="4_x2yvf"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_m1kxf"]
+font = ExtResource("1_fe2o3")
+font_size = 40
+outline_size = 5
+outline_color = Color(0, 0, 0, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_x2yvf"]
+font = ExtResource("1_fe2o3")
+font_size = 25
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fe2o3"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0.8509804, 1, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_btxxm"]
+font = ExtResource("1_fe2o3")
+
+[node name="MainMenu" type="Control" unique_id=385074101]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_x2yvf")
+
+[node name="Background" type="ColorRect" parent="." unique_id=826357317]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.16862746, 0.21176471, 0.25882354, 1)
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1978063754]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MainVBox" type="VBoxContainer" parent="CenterContainer" unique_id=1205480124]
+layout_mode = 2
+theme_override_constants/separation = 40
+
+[node name="TitlesVBox" type="VBoxContainer" parent="CenterContainer/MainVBox" unique_id=1858552731]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/MainVBox/TitlesVBox" unique_id=1684211249]
+layout_mode = 2
+text = "REBOUND PROTOCOL"
+label_settings = SubResource("LabelSettings_m1kxf")
+
+[node name="SubtitleLabel" type="Label" parent="CenterContainer/MainVBox/TitlesVBox" unique_id=2075017102]
+layout_mode = 2
+text = "MENU PRINCIPAL"
+label_settings = SubResource("LabelSettings_x2yvf")
+horizontal_alignment = 1
+
+[node name="ButtonsVBox" type="VBoxContainer" parent="CenterContainer/MainVBox" unique_id=485571946]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="BtnNewGame" type="Button" parent="CenterContainer/MainVBox/ButtonsVBox" unique_id=1104758097]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+theme_override_fonts/font = ExtResource("1_fe2o3")
+theme_override_styles/normal = SubResource("StyleBoxFlat_fe2o3")
+text = "NOUVELLE PARTIE"
+
+[node name="BtnContinue" type="Button" parent="CenterContainer/MainVBox/ButtonsVBox" unique_id=263472640]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+theme_override_fonts/font = ExtResource("1_fe2o3")
+theme_override_styles/normal = SubResource("StyleBoxFlat_fe2o3")
+text = "CONTINUER"
+
+[node name="BtnOptions" type="Button" parent="CenterContainer/MainVBox/ButtonsVBox" unique_id=354562449]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+theme_override_fonts/font = ExtResource("1_fe2o3")
+theme_override_styles/normal = SubResource("StyleBoxFlat_fe2o3")
+text = "OPTIONS"
+
+[node name="BtnQuit" type="Button" parent="CenterContainer/MainVBox/ButtonsVBox" unique_id=2088006039]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+theme_override_fonts/font = ExtResource("1_fe2o3")
+theme_override_styles/normal = SubResource("StyleBoxFlat_fe2o3")
+text = "QUITTER"
+
+[node name="LanguageVBox" type="VBoxContainer" parent="CenterContainer/MainVBox" unique_id=27905456]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="BtnToggleLanguage" type="Button" parent="CenterContainer/MainVBox/LanguageVBox" unique_id=1348657508]
+layout_mode = 2
+text = "CHANGER DE LANGUE"
+
+[node name="FlagsContainer" type="HBoxContainer" parent="CenterContainer/MainVBox/LanguageVBox" unique_id=1417399851]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="BtnFlagFR" type="Button" parent="CenterContainer/MainVBox/LanguageVBox/FlagsContainer" unique_id=158772699]
+layout_mode = 2
+icon = ExtResource("2_1g8jr")
+
+[node name="BtnFlagEN" type="Button" parent="CenterContainer/MainVBox/LanguageVBox/FlagsContainer" unique_id=330460723]
+layout_mode = 2
+icon = ExtResource("3_m1kxf")
+
+[node name="BtnFlagES" type="Button" parent="CenterContainer/MainVBox/LanguageVBox/FlagsContainer" unique_id=1244643085]
+layout_mode = 2
+icon = ExtResource("4_x2yvf")
+
+[node name="VersionLabel" type="Label" parent="." unique_id=483318798]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -61.0
+offset_top = -26.0
+offset_right = -13.0
+offset_bottom = -3.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "v. 1.0"
+label_settings = SubResource("LabelSettings_btxxm")
