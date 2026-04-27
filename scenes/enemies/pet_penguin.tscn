@@ -1,0 +1,34 @@
+[gd_scene format=3 uid="uid://vro4mka6qubf"]
+
+[ext_resource type="Script" uid="uid://dtug7d674qw2g" path="res://scripts/enemies/types/PetPenguin.gd" id="1_penguinscr"]
+[ext_resource type="Script" uid="uid://ctgsruby2erwx" path="res://scripts/enemies/components/WeaponBullet.gd" id="2_bulletscr"]
+[ext_resource type="PackedScene" uid="uid://c7kgvwh2q8p1f" path="res://assets/models/enemies/animal-penguin.glb" id="3_penguinmdl"]
+[ext_resource type="PackedScene" uid="uid://cmkxy52jryr0q" path="res://assets/models/weapons/blaster-d.glb" id="4_blastd"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_penguin01"]
+size = Vector3(2, 1.5, 1.5)
+
+[node name="PetPenguin" type="CharacterBody3D" unique_id=621364231]
+collision_layer = 16
+collision_mask = 5
+script = ExtResource("1_penguinscr")
+max_hp = 35
+move_speed = 7.0
+
+[node name="animal-penguin2" parent="." unique_id=1734171562 instance=ExtResource("3_penguinmdl")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=386297018]
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0.4, 0)
+shape = SubResource("BoxShape3D_penguin01")
+
+[node name="WeaponBullet" type="Node3D" parent="." unique_id=1191229090]
+script = ExtResource("2_bulletscr")
+bullet_speed = 9.0
+fire_rate = 3.5
+shoot_range = 15.0
+damage = 8
+
+[node name="WeaponMount" type="Node3D" parent="." unique_id=1489206159]
+
+[node name="blaster-d2" parent="WeaponMount" unique_id=1020050789 instance=ExtResource("4_blastd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16, 0)

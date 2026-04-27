@@ -1,0 +1,27 @@
+[gd_scene format=3 uid="uid://plej8ebppvy7"]
+
+[ext_resource type="Script" uid="uid://blqkbdblb6g2w" path="res://scripts/enemies/EnemyPlaceholder.gd" id="1"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_1"]
+radius = 0.4
+height = 1.6
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
+radius = 0.4
+height = 1.6
+
+[node name="EnemyPlaceholder" type="CharacterBody3D" unique_id=2034265161]
+collision_layer = 16
+script = ExtResource("1")
+move_speed = 4.0
+stop_distance = 10.0
+shoot_range = 20.0
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=898549163]
+mesh = SubResource("CapsuleMesh_1")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1593431972]
+shape = SubResource("CapsuleShape3D_1")
+
+[node name="ShootTimer" type="Timer" parent="." unique_id=948854218]
+wait_time = 2.0

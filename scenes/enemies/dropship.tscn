@@ -1,0 +1,280 @@
+[gd_scene format=3 uid="uid://dh1hioalq5p7"]
+
+[ext_resource type="PackedScene" uid="uid://c6lrvtxy730e8" path="res://assets/models/environments/tutorial_and_first_level/craft_cargoA.glb" id="1_h7gnp"]
+[ext_resource type="Script" uid="uid://ccwocm6erpl82" path="res://scripts/enemies/dropship.gd" id="1_mxcpi"]
+[ext_resource type="PackedScene" uid="uid://plej8ebppvy7" path="res://scenes/enemies/enemy_placeholder.tscn" id="2_8327p"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_728gm"]
+size = Vector3(15.044784, 8.443489, 20.042828)
+
+[sub_resource type="Animation" id="Animation_h7gnp"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(0, 50, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(0, 0, 0)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Cargo_dust_container/Cargo_dust_01:emitting")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [true]
+}
+
+[sub_resource type="Animation" id="Animation_mxcpi"]
+resource_name = "landing"
+length = 3.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 3),
+"transitions": PackedFloat32Array(1.2613409, 4),
+"update": 0,
+"values": [Vector3(0, 50, 0), Vector3(0, 1.5, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.6333333, 1.4, 3),
+"transitions": PackedFloat32Array(1, 2.219139, 0.95950377, 1),
+"update": 0,
+"values": [Vector3(0, 0, 0), Vector3(0, 0.08726646, 0.17453292), Vector3(0, -0.10471976, 0.08726646), Vector3(0, 0, 0)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Cargo_dust_container/Cargo_dust_01:emitting")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 1, 2),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 1,
+"values": [false, true, false]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Cargo_dust_container/Cargo_dust_03:emitting")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 1, 2),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 1,
+"values": [false, true, false]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Cargo_dust_container/Cargo_dust_02:emitting")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 1, 2),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 1,
+"values": [false, true, false]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("Cargo_dust_container/Cargo_dust_04:emitting")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0, 1, 2),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 1,
+"values": [false, true, false]
+}
+
+[sub_resource type="Animation" id="Animation_8327p"]
+resource_name = "takeoff"
+length = 3.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5, 1.2, 3),
+"transitions": PackedFloat32Array(1, 1, 2, 1),
+"update": 0,
+"values": [Vector3(0, 1.5, 0), Vector3(0, 1.2, 0), Vector3(5, 15, 0), Vector3(40, 80, -40)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 1.2, 3),
+"transitions": PackedFloat32Array(1, 2, 2),
+"update": 0,
+"values": [Vector3(0, 0, 0), Vector3(0, 0, 0.2617994), Vector3(0, 0, -0.34906584)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Cargo_dust_container/Cargo_dust_01:emitting")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 1.2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [true, false]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Cargo_dust_container/Cargo_dust_02:emitting")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0, 1.2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [true, false]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("Cargo_dust_container/Cargo_dust_03:emitting")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0, 1.2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [true, false]
+}
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("Cargo_dust_container/Cargo_dust_04:emitting")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0, 1.2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [true, false]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_8327p"]
+_data = {
+&"RESET": SubResource("Animation_h7gnp"),
+&"landing": SubResource("Animation_mxcpi"),
+&"takeoff": SubResource("Animation_8327p")
+}
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_8327p"]
+emission_shape_scale = Vector3(0, 1, 1)
+direction = Vector3(1, -0.5, 1)
+spread = 180.0
+initial_velocity_min = 8.0
+initial_velocity_max = 12.0
+gravity = Vector3(0, -0.5, 0)
+scale_min = 2.0
+scale_max = 4.0
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_728gm"]
+albedo_color = Color(0.48713833, 0.3916089, 0.2584099, 1)
+billboard_mode = 1
+
+[sub_resource type="QuadMesh" id="QuadMesh_1hj7y"]
+material = SubResource("StandardMaterial3D_728gm")
+
+[node name="Dropship" type="Node3D" unique_id=1404871699]
+script = ExtResource("1_mxcpi")
+mob_scene = ExtResource("2_8327p")
+
+[node name="Dropship_container" type="AnimatableBody3D" parent="." unique_id=252405661]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 50, 0)
+sync_to_physics = false
+
+[node name="cargo_spawner" parent="Dropship_container" unique_id=1921082924 instance=ExtResource("1_h7gnp")]
+transform = Transform3D(7, 0, 0, 0, 7, 0, 0, 0, 7, 13.953849, -3.5690575, 10.568766)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Dropship_container" unique_id=468432573]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.288692, -0.94501877, 21.811527)
+shape = SubResource("BoxShape3D_728gm")
+
+[node name="Spawn_point" type="Marker3D" parent="Dropship_container" unique_id=281156709]
+unique_name_in_owner = true
+transform = Transform3D(14.999996, 0, 0, 0, 14.970611, -0.9384607, 0, 0.9384607, 14.970611, 28.414036, -1, 8.093699)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="Dropship_container" unique_id=1012581515]
+unique_name_in_owner = true
+libraries/ = SubResource("AnimationLibrary_8327p")
+
+[node name="Cargo_dust_container" type="Node3D" parent="Dropship_container" unique_id=1110729133]
+unique_name_in_owner = true
+
+[node name="Cargo_dust_01" type="GPUParticles3D" parent="Dropship_container/Cargo_dust_container" unique_id=595386944]
+transform = Transform3D(0.9760321, -0.18381664, -0.11650479, -0.12412961, -0.030493962, -0.99179816, 0.1787563, 0.9824878, -0.05258014, 38.69, -4.8, 25.033)
+amount = 50
+sub_emitter = NodePath(".")
+process_material = SubResource("ParticleProcessMaterial_8327p")
+draw_pass_1 = SubResource("QuadMesh_1hj7y")
+
+[node name="Cargo_dust_02" type="GPUParticles3D" parent="Dropship_container/Cargo_dust_container" unique_id=1678303876]
+transform = Transform3D(0.9760321, -0.18381664, -0.11650479, -0.12412961, -0.030493962, -0.99179816, 0.1787563, 0.9824878, -0.05258014, 29.919, -4.8, 10.911)
+emitting = false
+amount = 50
+sub_emitter = NodePath(".")
+process_material = SubResource("ParticleProcessMaterial_8327p")
+draw_pass_1 = SubResource("QuadMesh_1hj7y")
+
+[node name="Cargo_dust_03" type="GPUParticles3D" parent="Dropship_container/Cargo_dust_container" unique_id=1264148814]
+transform = Transform3D(0.9760321, -0.18381664, -0.11650479, -0.12412961, -0.030493962, -0.99179816, 0.1787563, 0.9824878, -0.05258014, 21.319, -4.8, 25.549)
+emitting = false
+amount = 50
+sub_emitter = NodePath(".")
+process_material = SubResource("ParticleProcessMaterial_8327p")
+draw_pass_1 = SubResource("QuadMesh_1hj7y")
+
+[node name="Cargo_dust_04" type="GPUParticles3D" parent="Dropship_container/Cargo_dust_container" unique_id=1821458720]
+transform = Transform3D(0.9760321, -0.18381664, -0.11650479, -0.12412961, -0.030493962, -0.99179816, 0.1787563, 0.9824878, -0.05258014, 29.747, -4.8, 32.99)
+emitting = false
+amount = 50
+sub_emitter = NodePath(".")
+process_material = SubResource("ParticleProcessMaterial_8327p")
+draw_pass_1 = SubResource("QuadMesh_1hj7y")
