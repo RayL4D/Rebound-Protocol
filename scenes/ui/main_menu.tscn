@@ -9,15 +9,34 @@
 [sub_resource type="LabelSettings" id="LabelSettings_m1kxf"]
 font = ExtResource("1_fe2o3")
 font_size = 40
-outline_size = 5
-outline_color = Color(0, 0, 0, 1)
+outline_size = 3
+shadow_color = Color(0, 0, 0, 1)
+shadow_offset = Vector2(4, 4)
 
 [sub_resource type="LabelSettings" id="LabelSettings_x2yvf"]
 font = ExtResource("1_fe2o3")
 font_size = 25
+outline_size = 3
+shadow_color = Color(0, 0, 0, 1)
+shadow_offset = Vector2(4, 4)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fe2o3"]
 bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0.8509804, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_uhagc"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_x2yvf"]
+bg_color = Color(0.12156863, 0.3372549, 0.36862746, 0)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
@@ -55,7 +74,7 @@ grow_vertical = 2
 
 [node name="MainVBox" type="VBoxContainer" parent="CenterContainer" unique_id=1205480124]
 layout_mode = 2
-theme_override_constants/separation = 40
+theme_override_constants/separation = 50
 
 [node name="TitlesVBox" type="VBoxContainer" parent="CenterContainer/MainVBox" unique_id=1858552731]
 layout_mode = 2
@@ -67,7 +86,7 @@ label_settings = SubResource("LabelSettings_m1kxf")
 
 [node name="SubtitleLabel" type="Label" parent="CenterContainer/MainVBox/TitlesVBox" unique_id=2075017102]
 layout_mode = 2
-text = "MENU PRINCIPAL"
+text = "UI_MAIN_MENU"
 label_settings = SubResource("LabelSettings_x2yvf")
 horizontal_alignment = 1
 
@@ -78,30 +97,42 @@ theme_override_constants/separation = 15
 [node name="BtnNewGame" type="Button" parent="CenterContainer/MainVBox/ButtonsVBox" unique_id=1104758097]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("1_fe2o3")
 theme_override_styles/normal = SubResource("StyleBoxFlat_fe2o3")
-text = "NOUVELLE PARTIE"
+theme_override_styles/hover = SubResource("StyleBoxFlat_uhagc")
+text = "UI_NEW_GAME"
 
 [node name="BtnContinue" type="Button" parent="CenterContainer/MainVBox/ButtonsVBox" unique_id=263472640]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("1_fe2o3")
 theme_override_styles/normal = SubResource("StyleBoxFlat_fe2o3")
-text = "CONTINUER"
+theme_override_styles/hover = SubResource("StyleBoxFlat_uhagc")
+text = "UI_CONTINUE"
 
 [node name="BtnOptions" type="Button" parent="CenterContainer/MainVBox/ButtonsVBox" unique_id=354562449]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("1_fe2o3")
 theme_override_styles/normal = SubResource("StyleBoxFlat_fe2o3")
-text = "OPTIONS"
+theme_override_styles/hover = SubResource("StyleBoxFlat_uhagc")
+text = "UI_OPTIONS"
 
 [node name="BtnQuit" type="Button" parent="CenterContainer/MainVBox/ButtonsVBox" unique_id=2088006039]
 layout_mode = 2
 theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("1_fe2o3")
 theme_override_styles/normal = SubResource("StyleBoxFlat_fe2o3")
-text = "QUITTER"
+theme_override_styles/hover = SubResource("StyleBoxFlat_uhagc")
+text = "UI_LEAVE"
 
 [node name="LanguageVBox" type="VBoxContainer" parent="CenterContainer/MainVBox" unique_id=27905456]
 layout_mode = 2
@@ -109,7 +140,13 @@ theme_override_constants/separation = 10
 
 [node name="BtnToggleLanguage" type="Button" parent="CenterContainer/MainVBox/LanguageVBox" unique_id=1348657508]
 layout_mode = 2
-text = "CHANGER DE LANGUE"
+theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("1_fe2o3")
+theme_override_styles/normal = SubResource("StyleBoxFlat_x2yvf")
+theme_override_styles/hover = SubResource("StyleBoxFlat_uhagc")
+text = "UI_CHANGE_LANGUAGE"
 
 [node name="FlagsContainer" type="HBoxContainer" parent="CenterContainer/MainVBox/LanguageVBox" unique_id=1417399851]
 visible = false
@@ -136,10 +173,10 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -61.0
-offset_top = -26.0
-offset_right = -13.0
-offset_bottom = -3.0
+offset_left = -71.0
+offset_top = -37.0
+offset_right = -23.0
+offset_bottom = -14.0
 grow_horizontal = 0
 grow_vertical = 0
 text = "v. 1.0"

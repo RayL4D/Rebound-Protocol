@@ -57,5 +57,7 @@ func _on_toggle_language_pressed() -> void:
 
 func _change_language(locale: String) -> void:
 	TranslationServer.set_locale(locale)
+	SceneManager.current_lang = locale
 	flags_container.hide()
-	print("Langue changée pour : ", locale)
+	
+	print("Langue stockée globalement : ", SceneManager.current_lang)

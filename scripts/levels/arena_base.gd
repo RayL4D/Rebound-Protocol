@@ -11,8 +11,7 @@ extends Node
 
 func _ready() -> void:
 	
-	var locale = OS.get_locale_language()
-	TranslationServer.set_locale(locale)
+	TranslationServer.set_locale(SceneManager.current_lang)
 	
 	#TranslationServer.set_locale("es") # Espagnol pour le test
 	
