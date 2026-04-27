@@ -103,11 +103,11 @@ func _build_main_panel() -> Control:
 	inner.add_theme_constant_override("separation", 20)
 	panel.add_child(inner)
 
-	_add_title(inner, tr("PAUSE_TITLE"))
+	_add_title(inner, "PAUSE_TITLE")
 	inner.add_child(HSeparator.new())
-	inner.add_child(_make_button(tr("PAUSE_RESUME"),   _resume))
-	inner.add_child(_make_button(tr("PAUSE_SETTINGS"), _show_settings_panel))
-	inner.add_child(_make_button(tr("PAUSE_QUIT_MENU"), _quit_to_menu))
+	inner.add_child(_make_button("PAUSE_RESUME",   _resume))
+	inner.add_child(_make_button("PAUSE_SETTINGS", _show_settings_panel))
+	inner.add_child(_make_button("PAUSE_QUIT_MENU",  _quit_to_menu))
 
 	return center
 
@@ -131,14 +131,14 @@ func _build_settings_panel() -> Control:
 	inner.add_theme_constant_override("separation", 18)
 	panel.add_child(inner)
 
-	_add_title(inner, tr("SETTINGS_TITLE"))
+	_add_title(inner, "SETTINGS_TITLE")
 	inner.add_child(HSeparator.new())
 
 	# Audio
-	_add_section_label(inner, tr("SETTINGS_SECTION_AUDIO"))
-	_volume_slider = _add_slider(inner, tr("SETTINGS_MASTER_VOLUME"), 0.0, 100.0, 100.0)
-	_music_slider  = _add_slider(inner, tr("SETTINGS_MUSIC"),         0.0, 100.0, 100.0)
-	_sfx_slider    = _add_slider(inner, tr("SETTINGS_SFX"),           0.0, 100.0, 100.0)
+	_add_section_label(inner, "SETTINGS_SECTION_AUDIO")
+	_volume_slider = _add_slider(inner, "SETTINGS_MASTER_VOLUME", 0.0, 100.0, 100.0)
+	_music_slider  = _add_slider(inner, "SETTINGS_MUSIC",         0.0, 100.0, 100.0)
+	_sfx_slider    = _add_slider(inner, "SETTINGS_SFX",           0.0, 100.0, 100.0)
 
 	_volume_slider.value_changed.connect(_on_master_changed)
 	_music_slider.value_changed.connect(_on_music_changed)
@@ -147,18 +147,18 @@ func _build_settings_panel() -> Control:
 	inner.add_child(HSeparator.new())
 
 	# Affichage
-	_add_section_label(inner, tr("SETTINGS_SECTION_DISPLAY"))
-	_fullscreen_check = _add_check(inner, tr("SETTINGS_FULLSCREEN"))
+	_add_section_label(inner, "SETTINGS_SECTION_DISPLAY")
+	_fullscreen_check = _add_check(inner, "SETTINGS_FULLSCREEN")
 	_fullscreen_check.toggled.connect(_on_fullscreen_toggled)
 
 	inner.add_child(HSeparator.new())
 
 	# Langue
-	_add_section_label(inner, tr("SETTINGS_SECTION_LANGUAGE"))
+	_add_section_label(inner, "SETTINGS_SECTION_LANGUAGE")
 	_add_language_buttons(inner)
 
 	# Bouton retour (hors panneau)
-	vbox.add_child(_make_button(tr("SETTINGS_BACK"), _show_main_panel))
+	vbox.add_child(_make_button("SETTINGS_BACK", _show_main_panel))
 
 	# Charger les valeurs sauvegardées
 	_load_settings_into_panel()

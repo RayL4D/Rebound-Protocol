@@ -78,16 +78,16 @@ func _build_ui() -> void:
 	panel.add_child(inner)
 
 	# --- Titre ---
-	_add_title(inner, tr("SETTINGS_TITLE"))
+	_add_title(inner, "SETTINGS_TITLE")
 
 	# --- Séparateur ---
 	inner.add_child(HSeparator.new())
 
 	# --- Section Audio ---
-	_add_section_label(inner, tr("SETTINGS_SECTION_AUDIO"))
-	_volume_slider = _add_slider(inner, tr("SETTINGS_MASTER_VOLUME"), 0.0, 100.0, 100.0)
-	_music_slider  = _add_slider(inner, tr("SETTINGS_MUSIC"),         0.0, 100.0, 100.0)
-	_sfx_slider    = _add_slider(inner, tr("SETTINGS_SFX"),           0.0, 100.0, 100.0)
+	_add_section_label(inner, "SETTINGS_SECTION_AUDIO")
+	_volume_slider = _add_slider(inner, "SETTINGS_MASTER_VOLUME", 0.0, 100.0, 100.0)
+	_music_slider  = _add_slider(inner, "SETTINGS_MUSIC",         0.0, 100.0, 100.0)
+	_sfx_slider    = _add_slider(inner, "SETTINGS_SFX",           0.0, 100.0, 100.0)
 
 	_volume_slider.value_changed.connect(_on_master_volume_changed)
 	_music_slider.value_changed.connect(_on_music_volume_changed)
@@ -97,19 +97,19 @@ func _build_ui() -> void:
 	inner.add_child(HSeparator.new())
 
 	# --- Section Affichage ---
-	_add_section_label(inner, tr("SETTINGS_SECTION_DISPLAY"))
-	_fullscreen_check = _add_check(inner, tr("SETTINGS_FULLSCREEN"))
+	_add_section_label(inner, "SETTINGS_SECTION_DISPLAY")
+	_fullscreen_check = _add_check(inner, "SETTINGS_FULLSCREEN")
 	_fullscreen_check.toggled.connect(_on_fullscreen_toggled)
 
 	# --- Séparateur ---
 	inner.add_child(HSeparator.new())
 
 	# --- Section Langue ---
-	_add_section_label(inner, tr("SETTINGS_SECTION_LANGUAGE"))
+	_add_section_label(inner, "SETTINGS_SECTION_LANGUAGE")
 	_add_language_buttons(inner)
 
 	# --- Bouton retour (hors du panneau) ---
-	vbox.add_child(_make_button(tr("SETTINGS_BACK"), _on_back_pressed))
+	vbox.add_child(_make_button("SETTINGS_BACK", _on_back_pressed))
 
 
 # =============================================================
