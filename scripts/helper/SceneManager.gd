@@ -2,6 +2,7 @@ extends Node
 
 var loading_screen_scene = preload("res://scenes/ui/loading_screen.tscn")
 var loading_screen_instance = null
+var current_lang: String = "fr"
 
 func load_level(target_scene_path: String):
 	# 1. Afficher l'écran de chargement
