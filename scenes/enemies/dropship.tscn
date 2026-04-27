@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dh1hioalq5p7"]
 
 [ext_resource type="PackedScene" uid="uid://c6lrvtxy730e8" path="res://assets/models/environments/tutorial_and_first_level/craft_cargoA.glb" id="1_h7gnp"]
-[ext_resource type="Script" uid="uid://ccwocm6erpl82" path="res://scripts/enemies/dropship.gd" id="1_mxcpi"]
+[ext_resource type="Script" uid="uid://ccwocm6erpl82" path="res://scripts/enemies/Dropship.gd" id="1_mxcpi"]
 [ext_resource type="PackedScene" uid="uid://plej8ebppvy7" path="res://scenes/enemies/enemy_placeholder.tscn" id="2_8327p"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_728gm"]
