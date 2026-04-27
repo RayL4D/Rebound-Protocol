@@ -110,7 +110,7 @@ func _create_laser() -> void:
 	get_tree().current_scene.add_child(_reticle_root)
 
 	# Directions des 4 bras : droite, gauche, avant, arrière
-	var offsets := [
+	var _offsets := [
 		Vector3( 1, 0,  0),
 		Vector3(-1, 0,  0),
 		Vector3( 0, 0,  1),

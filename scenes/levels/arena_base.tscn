@@ -17,6 +17,7 @@
 [ext_resource type="PackedScene" uid="uid://plej8ebppvy7" path="res://scenes/enemies/enemy_placeholder.tscn" id="13_srw3s"]
 [ext_resource type="PackedScene" uid="uid://chm01swb33150" path="res://scenes/ui/HUD.tscn" id="14_srw3s"]
 [ext_resource type="PackedScene" uid="uid://pbrlw8kcrlq4" path="res://scenes/ui/game_over.tscn" id="15_tm1id"]
+[ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="29_pausemnu"]
 [ext_resource type="Script" uid="uid://c8iuwrbemhmo6" path="res://scripts/levels/wave_manager.gd" id="16_wvmgr"]
 [ext_resource type="PackedScene" uid="uid://b2hehayj3ft7e" path="res://scenes/levels/zones/level_exit.tscn" id="17_djr2x"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/pet_cat.tscn" id="20_8iijb"]
@@ -1445,3 +1446,4 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6.7714443)
 
 [node name="PetPenguin" parent="." unique_id=1314001912 instance=ExtResource("28_8yrtu")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 11.861677)
+[node name="PauseMenu" parent="." unique_id=999001234 instance=ExtResource("29_pausemnu")]
