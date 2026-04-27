@@ -106,7 +106,17 @@ func _physics_process(delta: float) -> void:
 	_handle_jump()       # Après gravity : overrride velocity.y si saut demandé
 	_handle_camera_orbit(delta)
 	_handle_movement()
-	_rotate_toward_mouse(delta)
+
+	move_and_slide()
+
+	# Spring arm mis à jour AVANT _rotate_toward_mouse : le raycast souris
+	# utilise ainsi l'orientation de caméra du frame courant (et non du précédent).
+	spring_arm.global_position    = global_position + Vector3(0, 0.9, 0)
+	spring_arm.rotation_degrees.x = _cam_pitch
+	spring_arm.rotation_degrees.y = _cam_yaw
+	spring_arm.spring_length      = lerp(spring_arm.spring_length, _target_zoom, 10.0 * delta)
+
+	_rotate_toward_mouse()
 
 	# Déclenche l'animation de parade dès l'appui sur SPACE
 	if Input.is_action_just_pressed("parry"):
@@ -114,12 +124,6 @@ func _physics_process(delta: float) -> void:
 		var pb := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
 		pb.travel("parry")
 
-	move_and_slide()
-
-	spring_arm.global_position    = global_position + Vector3(0, 0.9, 0)
-	spring_arm.rotation_degrees.x = _cam_pitch
-	spring_arm.rotation_degrees.y = _cam_yaw
-	spring_arm.spring_length      = lerp(spring_arm.spring_length, _target_zoom, 10.0 * delta)
 	robot_model.position.x = 0.0
 	robot_model.position.z = 0.0
 	# robot_model.position.y est géré par _update_lean + l'offset éditeur
@@ -250,7 +254,7 @@ func _handle_movement() -> void:
 # ROTATION VERS LA SOURIS
 # =============================================================
 
-func _rotate_toward_mouse(delta: float) -> void:
+func _rotate_toward_mouse() -> void:
 	var mouse_pos     := get_viewport().get_mouse_position()
 	var ray_origin    := camera.project_ray_origin(mouse_pos)
 	var ray_direction := camera.project_ray_normal(mouse_pos)
@@ -274,12 +278,9 @@ func _rotate_toward_mouse(delta: float) -> void:
 	if look_dir.length_squared() < 0.01:
 		return
 
-	var target_angle := atan2(look_dir.x, look_dir.z)
-	robot_model.rotation.y = rotate_toward(
-		robot_model.rotation.y,
-		target_angle,
-		rotation_speed * delta
-	)
+	# Assigner directement en global_rotation.y (espace monde),
+	# identique à ce que fait le bouclier — pas de lag, pas d'offset.
+	robot_model.global_rotation.y = atan2(look_dir.x, look_dir.z)
 
 
 # =============================================================
