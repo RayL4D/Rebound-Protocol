@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://cm05qh6na0cdt"]
 
-[ext_resource type="Script" uid="uid://bx13mlegst6j4" path="res://scripts/enemies/BulletReflected.gd" id="1"]
+[ext_resource type="Script" uid="uid://bx13mlegst6j4" path="res://scripts/projectiles/BulletReflected.gd" id="1"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
 albedo_color = Color(1, 0.5019608, 0, 1)

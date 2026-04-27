@@ -47,7 +47,9 @@ func _run_tutorial() -> void:
 	# Étape 1 : Mouvement
 	_moved = false
 	_show(1, tr("TUTO_STEP_1"))
-	while not _moved: await get_tree().process_frame
+	while not _moved:
+		if not is_inside_tree(): return
+		await get_tree().process_frame
 	_show(1, tr("TUTO_PERFECT"))
 	await _pause(1.0)
 
@@ -58,14 +60,18 @@ func _run_tutorial() -> void:
 	# Étape 3 : Saut
 	_jumped = false
 	_show(3, tr("TUTO_STEP_3"))
-	while not _jumped: await get_tree().process_frame
+	while not _jumped:
+		if not is_inside_tree(): return
+		await get_tree().process_frame
 	_show(3, tr("TUTO_GOOD_JOB"))
 	await _pause(1.0)
 
 	# Étape 4 : Parade
 	_parried = false
 	_show(4, tr("TUTO_STEP_4"))
-	while not _parried: await get_tree().process_frame
+	while not _parried:
+		if not is_inside_tree(): return
+		await get_tree().process_frame
 	_show(4, tr("TUTO_EXCELLENT"))
 	await _pause(1.0)
 
