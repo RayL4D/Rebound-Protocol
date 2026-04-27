@@ -33,6 +33,19 @@ var _vignette_tween: Tween         = null
 var _guide_icon: TextureRect = null
 var guide_target: Node3D = null
 
+# --- Barre HP du boss -------------------------------------------
+var _boss_bar_container: Control  = null
+var _boss_bar_bg:        ColorRect = null
+var _boss_bar_fill:      ColorRect = null
+var _boss_name_label:    Label     = null
+var _boss_hp_label:      Label     = null
+var _boss_max_hp:        int       = 1
+var _boss_target_fill:   float     = 1.0
+var _boss_current_fill:  float     = 1.0
+
+const BOSS_BAR_WIDTH  := 320.0
+const BOSS_BAR_HEIGHT := 14.0
+
 const DAMAGE_VIGNETTE_SHADER := """
 shader_type canvas_item;
 uniform float intensity : hint_range(0.0, 1.0) = 0.0;
@@ -67,7 +80,18 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _player == null or _camera == null:
 		return
-		
+
+	# --- Barre HP du boss (interpolée) ---
+	if _boss_bar_container != null and _boss_bar_container.visible:
+		_boss_current_fill = lerp(_boss_current_fill, _boss_target_fill, 10.0 * delta)
+		_boss_bar_fill.size.x = BOSS_BAR_WIDTH * _boss_current_fill
+		var col: Color
+		if _boss_current_fill > 0.5:
+			col = Color(1.0, 0.2, 0.2).lerp(Color(1.0, 0.55, 0.0), (_boss_current_fill - 0.5) * 2.0)
+		else:
+			col = Color(0.5, 0.0, 0.8).lerp(Color(1.0, 0.2, 0.2), _boss_current_fill * 2.0)
+		_boss_bar_fill.color = col
+
 	# --- Gestion de la barre de vie ---
 	var screen_pos := _camera.unproject_position(_player.global_position + WORLD_OFFSET)
 	_container.position = screen_pos - _container.size * 0.5
@@ -257,3 +281,97 @@ func _on_player_died() -> void:
 
 func _update_label(hp: int) -> void:
 	_hp_label.text = "%d/%d  " % [hp, _player.max_hp]
+
+
+# =============================================================
+# BARRE HP DU BOSS
+# =============================================================
+
+func _build_boss_bar() -> void:
+	var panel_h := BOSS_BAR_HEIGHT + 36.0
+
+	_boss_bar_container = Control.new()
+	_boss_bar_container.name = "BossHPContainer"
+	_boss_bar_container.size = Vector2(BOSS_BAR_WIDTH + 20.0, panel_h)
+	# Centrer horizontalement, ancrer en bas
+	_boss_bar_container.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	_boss_bar_container.anchor_top    = 1.0
+	_boss_bar_container.anchor_bottom = 1.0
+	_boss_bar_container.offset_top    = -panel_h - 18.0
+	_boss_bar_container.offset_bottom = -18.0
+	_boss_bar_container.mouse_filter  = Control.MOUSE_FILTER_IGNORE
+	add_child(_boss_bar_container)
+
+	# Nom du boss
+	_boss_name_label = Label.new()
+	_boss_name_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	_boss_name_label.size = Vector2(BOSS_BAR_WIDTH + 20.0, 20.0)
+	_boss_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_boss_name_label.add_theme_font_size_override("font_size", 12)
+	_boss_name_label.add_theme_color_override("font_color", COLOR_CYAN)
+	_boss_name_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.9))
+	_boss_name_label.add_theme_constant_override("outline_size", 4)
+	_boss_bar_container.add_child(_boss_name_label)
+
+	var bar_y := 22.0
+	var bar_x := 10.0
+
+	# Fond de la barre
+	_boss_bar_bg = ColorRect.new()
+	_boss_bar_bg.color    = Color(0.0, 0.05, 0.1, 0.9)
+	_boss_bar_bg.position = Vector2(bar_x, bar_y)
+	_boss_bar_bg.size     = Vector2(BOSS_BAR_WIDTH, BOSS_BAR_HEIGHT)
+	_boss_bar_container.add_child(_boss_bar_bg)
+
+	# Remplissage
+	_boss_bar_fill = ColorRect.new()
+	_boss_bar_fill.color    = Color(1.0, 0.2, 0.2)
+	_boss_bar_fill.position = Vector2(bar_x, bar_y)
+	_boss_bar_fill.size     = Vector2(BOSS_BAR_WIDTH, BOSS_BAR_HEIGHT)
+	_boss_bar_container.add_child(_boss_bar_fill)
+
+	# Bordure décorative
+	for corner in _make_corners(
+		Vector2(bar_x - 2.0, bar_y - 2.0),
+		Vector2(BOSS_BAR_WIDTH + 4.0, BOSS_BAR_HEIGHT + 4.0),
+		COLOR_CYAN
+	):
+		_boss_bar_container.add_child(corner)
+
+	# Label HP
+	_boss_hp_label = Label.new()
+	_boss_hp_label.position = Vector2(bar_x, bar_y)
+	_boss_hp_label.size     = Vector2(BOSS_BAR_WIDTH, BOSS_BAR_HEIGHT)
+	_boss_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_boss_hp_label.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	_boss_hp_label.add_theme_font_size_override("font_size", 9)
+	_boss_hp_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	_boss_hp_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.9))
+	_boss_hp_label.add_theme_constant_override("outline_size", 3)
+	_boss_bar_container.add_child(_boss_hp_label)
+
+	_boss_bar_container.hide()
+
+
+func show_boss_bar(boss_name: String, max_hp: int) -> void:
+	if _boss_bar_container == null:
+		_build_boss_bar()
+	_boss_max_hp = max_hp
+	_boss_target_fill  = 1.0
+	_boss_current_fill = 1.0
+	_boss_name_label.text = boss_name
+	_boss_hp_label.text   = "%d / %d" % [max_hp, max_hp]
+	_boss_bar_fill.size.x = BOSS_BAR_WIDTH
+	_boss_bar_container.show()
+
+
+func update_boss_hp(current_hp: int, max_hp: int) -> void:
+	if _boss_bar_container == null:
+		return
+	_boss_target_fill   = float(current_hp) / float(max_hp)
+	_boss_hp_label.text = "%d / %d" % [current_hp, max_hp]
+
+
+func hide_boss_bar() -> void:
+	if _boss_bar_container != null:
+		_boss_bar_container.hide()
