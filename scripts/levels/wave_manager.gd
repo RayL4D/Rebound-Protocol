@@ -114,7 +114,7 @@ func _spawn_dropship(pos: Vector3, enemy_count: int) -> void:
 		push_error("WaveManager : dropship_scene non assigné !")
 		return
 
-	var ship: Dropship = dropship_scene.instantiate()
+	var ship: dropship = dropship_scene.instantiate()
 	ship.mob_scene = _current_wave_data.enemy_scene if _current_wave_data.enemy_scene else enemy_scene
 	ship.spawn_count = enemy_count
 	ship.enemy_died_callback = _on_enemy_died

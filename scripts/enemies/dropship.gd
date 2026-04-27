@@ -2,7 +2,7 @@
 # Dropship.gd — Vaisseau de transport de troupes
 # Auteur : Kevin SIDER
 # =============================================================
-class_name Dropship
+class_name dropship
 extends Node3D
 
 @export var mob_scene: PackedScene # import de la scène de l'ennemie dans l'inspecteur
