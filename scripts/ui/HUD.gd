@@ -1,5 +1,6 @@
 # =============================================================
 # HUD.gd — Interface joueur (barre de vie holographique + Pointeur)
+# Auteur : Rayan LADRAIT & Kevin SIDER
 # =============================================================
 extends CanvasLayer
 

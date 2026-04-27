@@ -1,11 +1,10 @@
 # =============================================================
 # WaveManager.gd — Gestionnaire de vagues générique
-# Rebound Protocol · Conventions : snake_case vars, PascalCase class
+# Auteur : Kevin SIDER
 # =============================================================
 class_name WaveManager
 extends Node
 
-# --- NOUVEAU : Signal pour prévenir arena_base que tout est fini ---
 signal all_waves_finished
 
 # --- Structure d'une vague ---
@@ -66,13 +65,9 @@ func setup_ui(wave_label: Label, message_label: Label, enemies_label: Label = nu
 	_panel = panel
 
 
-# =============================================================
-# LOGIQUE DE VAGUES
-# =============================================================
-
 func _start_wave(index: int) -> void:
 	if index >= _waves.size():
-		_on_all_waves_cleared() # Appelle la bonne fonction
+		_on_all_waves_cleared()
 		return
 
 	_current_wave = index
@@ -144,10 +139,6 @@ func _get_spawn_positions() -> Array[Vector3]:
 	return result
 
 
-# =============================================================
-# CALLBACKS
-# =============================================================
-
 func _on_enemy_died() -> void:
 	_enemies_alive -= 1
 	_update_enemies_label()
@@ -168,7 +159,6 @@ func _on_player_died() -> void:
 	get_tree().reload_current_scene()
 
 	
-# --- CORRECTION : C'est ici qu'on gère la fin dans ce script ---
 func _on_all_waves_cleared() -> void:
 	# On émet le signal pour que arena_base sache que c'est fini
 	all_waves_finished.emit()

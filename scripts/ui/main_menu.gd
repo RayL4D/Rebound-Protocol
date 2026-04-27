@@ -1,3 +1,8 @@
+# =============================================================
+# main_menu.gd — Interface joueur (Menu principal)
+# Auteur : Kevin SIDER
+# =============================================================
+class_name main_menu
 extends Control
 
 # Boutons du menu principal
@@ -22,13 +27,11 @@ func _ready():
 	# Connexion du bouton pour dérouler les langues
 	btn_toggle_language.pressed.connect(_on_toggle_language_pressed)
 	
-	# Connexions des drapeaux
 	btn_flag_fr.pressed.connect(func(): _change_language("fr"))
 	btn_flag_en.pressed.connect(func(): _change_language("en"))
 	btn_flag_es.pressed.connect(func(): _change_language("es"))
 
 func _on_new_game_pressed():
-	# Charge le tutoriel
 	SceneManager.load_level("res://scenes/levels/arena_base.tscn")
 
 func _on_quit_pressed():
@@ -41,5 +44,4 @@ func _change_language(locale: String):
 	TranslationServer.set_locale(locale)
 	SceneManager.current_lang = locale
 	flags_container.hide()
-	
 	print("Langue stockée globalement : ", SceneManager.current_lang)

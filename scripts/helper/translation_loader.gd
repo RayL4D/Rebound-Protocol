@@ -1,3 +1,8 @@
+# =============================================================
+# translation_loader.gd — Permet d'importer les traductions présentes sur le google sheets
+# Auteur : Kevin SIDER
+# =============================================================
+
 @tool
 extends EditorScript
 

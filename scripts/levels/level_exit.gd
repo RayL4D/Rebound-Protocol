@@ -1,3 +1,7 @@
+# =============================================================
+# level_exit.gd — Sortie de scène
+# Auteur : Kevin SIDER
+# =============================================================
 extends Area3D
 
 @export_file("*.tscn") var next_scene: String = "res://scenes/levels/arena_base.tscn"
@@ -22,4 +26,5 @@ func activate():
 
 func _on_body_entered(body: Node3D):
 	if body is Player: 
-		SceneManager.load_level("res://scenes/levels/arena_base.tscn")
+		# load le prochain niveau
+		SceneManager.load_level("res://scenes/levels/arena_base.tscn") # a modifier 

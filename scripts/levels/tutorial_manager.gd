@@ -1,3 +1,7 @@
+# =============================================================
+# tutorial_manager.gd — Gère le tutoriel et ses objectifs
+# Auteur : Kevin SIDER
+# =============================================================
 class_name TutorialManager
 extends Node
 

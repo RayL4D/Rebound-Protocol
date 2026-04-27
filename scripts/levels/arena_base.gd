@@ -1,6 +1,6 @@
 # =============================================================
 # arena_base.gd — Arène tutoriel / arène de base
-# Rebound Protocol · Conventions : snake_case vars, PascalCase class
+# Auteur : Kevin SIDER
 # =============================================================
 extends Node
 
@@ -11,9 +11,8 @@ extends Node
 
 func _ready() -> void:
 	
+	# Définition de la langue utilisée dans le niveau
 	TranslationServer.set_locale(SceneManager.current_lang)
-	
-	#TranslationServer.set_locale("es") # Espagnol pour le test
 	
 	_add_collision_recursive(self)
 
@@ -28,10 +27,10 @@ func _ready() -> void:
 
 	# --- Vagues ---
 	var waves: Array[WaveManager.WaveData] = [
-		WaveManager.WaveData.new(1, 1, ""),   # Ennemi test post-tuto
-		#WaveManager.WaveData.new(1, 1, tr("WAVE_MSG_1")),
-		#WaveManager.WaveData.new(2, 1, tr("WAVE_MSG_2")),
-		#WaveManager.WaveData.new(3, 2, tr("WAVE_MSG_FINAL")),
+		WaveManager.WaveData.new(1, 1, ""),   # Ennemi post-tuto
+		WaveManager.WaveData.new(1, 1, tr("WAVE_MSG_1")),
+		WaveManager.WaveData.new(2, 1, tr("WAVE_MSG_2")),
+		WaveManager.WaveData.new(3, 2, tr("WAVE_MSG_FINAL")),
 	]
 	wave_manager.setup_waves(waves)
 
@@ -41,17 +40,12 @@ func _ready() -> void:
 	tutorial_manager.tutorial_completed.connect(_on_tutorial_completed)
 	tutorial_manager.start()
 	
-	# --- Connexion de fin de niveau ---
 	wave_manager.all_waves_finished.connect(_on_waves_finished)
 
 
 func _on_tutorial_completed() -> void:
 	wave_manager.start()
 
-
-# =============================================================
-# COLLISION DÉCOR
-# =============================================================
 
 func _add_collision_recursive(node: Node) -> void:
 	if node is CharacterBody3D:
@@ -70,8 +64,6 @@ func _add_collision_recursive(node: Node) -> void:
 	for child in node.get_children():
 		_add_collision_recursive(child)
 		
-		
-# fin level
 
 func _on_waves_finished() -> void:
 	var exit_zone = $LevelExit 
