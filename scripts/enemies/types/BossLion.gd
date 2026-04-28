@@ -29,8 +29,55 @@ signal boss_hp_changed(current_hp: int, max_hp: int)
 # --- Seuil de transition de phase (50 % HP) -------------------
 const PHASE2_THRESHOLD := 0.5
 
+# --- Shader agressif activé à la phase 2 ----------------------
+const BOSS_SHADER_CODE := """
+shader_type spatial;
+render_mode blend_mix, depth_draw_opaque, cull_back, diffuse_burley, specular_schlick_ggx;
+
+uniform sampler2D albedo_tex : source_color, filter_nearest, repeat_enable;
+uniform float darkness    : hint_range(0.0, 1.0) = 0.28;
+uniform float tint_amount : hint_range(0.0, 1.0) = 0.50;
+uniform vec3  tint_color                         = vec3(0.9, 0.15, 0.04);
+uniform float rim_power   : hint_range(0.5, 8.0) = 2.5;
+uniform float rim_amount  : hint_range(0.0, 2.0) = 0.8;
+uniform vec3  rim_color                          = vec3(1.0, 0.08, 0.0);
+
+void fragment() {
+	vec4 tex = texture(albedo_tex, UV);
+	vec3 col = tex.rgb * (1.0 - darkness);
+	col = mix(col, col * tint_color, tint_amount);
+	ALBEDO    = col;
+	ROUGHNESS = 0.7;
+	SPECULAR  = 0.25;
+}
+
+void light() {
+	float ndotv = clamp(dot(NORMAL, VIEW), 0.0, 1.0);
+	float rim   = pow(1.0 - ndotv, rim_power);
+	DIFFUSE_LIGHT += rim_color * rim * rim_amount * ATTENUATION;
+}
+"""
+
 # --- Distance de combat (s'arrête et orbite) ------------------
 @export var combat_distance: float = 7.0
+
+# --- Charge (phase 2 uniquement) ------------------------------
+enum ChargeState { IDLE, WINDUP, CHARGING, ATTACKING, RECOVERING }
+
+const CHARGE_SPEED     := 15.0   # vitesse de charge (px/s)
+const WINDUP_DURATION  := 0.45   # pause avant de foncer (telegraphe)
+const CHARGE_DURATION  := 0.80   # durée max de la charge
+const MELEE_RANGE      := 1.8    # distance pour déclencher l'attaque
+const MELEE_DAMAGE     := 18
+const ATTACK_DURATION  := 0.85   # durée de l'animation "eat"
+const RECOVER_DURATION := 0.70   # pause après la charge
+const CHARGE_CD_MIN    := 3.5    # cooldown min entre deux charges
+const CHARGE_CD_MAX    := 6.0    # cooldown max entre deux charges
+
+var _charge_state: ChargeState = ChargeState.IDLE
+var _charge_dir:   Vector3     = Vector3.ZERO
+var _charge_timer: float       = 0.0
+var _charge_cd:    float       = 3.0   # premier délai avant charge
 
 # --- État interne ---------------------------------------------
 var _phase: int = 1
@@ -91,27 +138,115 @@ func _on_ready() -> void:
 
 
 # =============================================================
-# MOUVEMENT — approche jusqu'à combat_distance, puis orbite
+# MOUVEMENT
 # =============================================================
 
-func _update_movement(_delta: float) -> void:
+func _update_movement(delta: float) -> void:
 	if player == null:
 		return
+	if _phase == 1:
+		_move_orbit(delta)
+	else:
+		_move_phase2(delta)
 
+
+# Phase 1 : approche jusqu'à combat_distance, puis orbite
+func _move_orbit(_delta: float) -> void:
 	var to_player := player.global_position - global_position
-	to_player.y = 0.0
-	var dist := to_player.length()
+	to_player.y   = 0.0
+	var dist      := to_player.length()
 
 	if dist > combat_distance:
-		# Foncer vers le joueur
-		var dir := to_player.normalized()
-		velocity.x = dir.x * move_speed
-		velocity.z = dir.z * move_speed
+		var dir    := to_player.normalized()
+		velocity.x  = dir.x * move_speed
+		velocity.z  = dir.z * move_speed
 	else:
-		# Déplacement orbital (strafe latéral)
 		var lateral := to_player.normalized().rotated(Vector3.UP, PI * 0.5)
-		velocity.x = lateral.x * move_speed * 0.4
-		velocity.z = lateral.z * move_speed * 0.4
+		velocity.x   = lateral.x * move_speed * 0.4
+		velocity.z   = lateral.z * move_speed * 0.4
+
+
+# Phase 2 : orbite + charge de taureau périodique
+func _move_phase2(delta: float) -> void:
+	match _charge_state:
+
+		ChargeState.IDLE:
+			_move_orbit(delta)
+			_charge_cd -= delta
+			if _charge_cd <= 0.0:
+				_begin_windup()
+
+		ChargeState.WINDUP:
+			# S'arrête et vise le joueur — telegraphe la charge
+			velocity.x = 0.0
+			velocity.z = 0.0
+			_charge_timer -= delta
+			if _charge_timer <= 0.0:
+				_begin_charge()
+
+		ChargeState.CHARGING:
+			velocity.x = _charge_dir.x * CHARGE_SPEED
+			velocity.z = _charge_dir.z * CHARGE_SPEED
+			_charge_timer -= delta
+
+			# Contact mêlée ?
+			var dist := (player.global_position - global_position)
+			dist.y    = 0.0
+			if dist.length() <= MELEE_RANGE:
+				_begin_attack()
+				return
+
+			if _charge_timer <= 0.0:
+				_begin_recover()
+
+		ChargeState.ATTACKING:
+			velocity.x = 0.0
+			velocity.z = 0.0
+			_charge_timer -= delta
+			if _charge_timer <= 0.0:
+				_begin_recover()
+
+		ChargeState.RECOVERING:
+			velocity.x = 0.0
+			velocity.z = 0.0
+			_charge_timer -= delta
+			if _charge_timer <= 0.0:
+				_charge_state = ChargeState.IDLE
+				_charge_cd    = randf_range(CHARGE_CD_MIN, CHARGE_CD_MAX)
+				_gesture_active = false
+
+
+# --- Transitions d'état ----------------------------------------
+
+func _begin_windup() -> void:
+	_charge_state = ChargeState.WINDUP
+	_charge_timer = WINDUP_DURATION
+	# Verrouille la direction au moment du windup
+	var to_player := player.global_position - global_position
+	to_player.y   = 0.0
+	_charge_dir   = to_player.normalized()
+
+
+func _begin_charge() -> void:
+	_charge_state = ChargeState.CHARGING
+	_charge_timer = CHARGE_DURATION
+
+
+func _begin_attack() -> void:
+	_charge_state   = ChargeState.ATTACKING
+	_charge_timer   = ATTACK_DURATION
+	_gesture_active = true
+	if _anim_player:
+		_anim_player.play("eat")
+	# Dégâts au joueur si méthode disponible
+	if player.has_method("take_damage"):
+		player.take_damage(MELEE_DAMAGE)
+
+
+func _begin_recover() -> void:
+	_charge_state   = ChargeState.RECOVERING
+	_charge_timer   = RECOVER_DURATION
+	_gesture_active = false
 
 
 # =============================================================
@@ -140,6 +275,22 @@ func _enter_phase2() -> void:
 		weapon_bullet.deactivate()
 	if weapon_shotgun:
 		weapon_shotgun.activate(player)
+
+	# Appliquer le look agressif sur le modèle du lion
+	if _model != null:
+		_apply_phase2_shader(_model)
+
+
+func _apply_phase2_shader(node: Node) -> void:
+	if node is MeshInstance3D:
+		var shader := Shader.new()
+		shader.code = BOSS_SHADER_CODE
+		var mat := ShaderMaterial.new()
+		mat.shader = shader
+		mat.set_shader_parameter("albedo_tex", _enemy_texture)
+		(node as MeshInstance3D).set_surface_override_material(0, mat)
+	for child in node.get_children():
+		_apply_phase2_shader(child)
 
 
 # =============================================================
@@ -170,3 +321,4 @@ func _summon_dogs() -> void:
 		var radius := randf_range(2.0, 4.0)
 		var offset := Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
 		dog.global_position = global_position + offset
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
