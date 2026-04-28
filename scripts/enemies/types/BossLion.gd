@@ -40,6 +40,7 @@ var _phase2_triggered: bool = false
 @onready var weapon_bullet:  WeaponBullet  = $WeaponMountRight/WeaponBullet
 @onready var weapon_shotgun: WeaponShotgun = $WeaponMountLeft/WeaponShotgun
 @onready var summon_timer:   Timer         = $SummonTimer
+@onready var _health_bar:    BossHealthBar = $BossHealthBar
 
 # --- Scène des chiens invoqués --------------------------------
 var dog_scene: PackedScene = preload("res://scenes/enemies/pet_dog.tscn")
@@ -74,6 +75,11 @@ func _on_ready() -> void:
 		weapon_bullet.activate(player)
 	if weapon_shotgun:
 		weapon_shotgun.deactivate()
+
+	# Barre de vie 3D
+	if _health_bar:
+		boss_hp_changed.connect(_health_bar.update_hp)
+		_health_bar.setup(tr("BOSS_LION_NAME"), max_hp)
 
 	# Timer d'invocation
 	if summon_timer:

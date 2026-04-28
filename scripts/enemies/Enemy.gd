@@ -199,8 +199,48 @@ func _update_animation() -> void:
 
 func take_damage(amount: int) -> void:
 	current_hp = max(0, current_hp - amount)
+	_spawn_damage_number(amount)
 	if current_hp <= 0:
 		_die()
+
+
+func _spawn_damage_number(amount: int) -> void:
+	if not is_inside_tree():
+		return
+
+	var node := Node3D.new()
+	node.position = global_position + Vector3(randf_range(-0.3, 0.3), 1.5, randf_range(-0.3, 0.3))
+	get_tree().current_scene.add_child(node)
+
+	# Couleur selon l'intensité du coup
+	var col: Color
+	if amount >= 20:
+		col = Color(1.0, 0.35, 0.0)   # orange — gros dégât
+	elif amount >= 10:
+		col = Color(1.0, 0.9, 0.1)    # jaune — dégât normal
+	else:
+		col = Color(1.0, 1.0, 1.0)    # blanc — dégât faible
+
+	var label := Label3D.new()
+	label.text             = str(amount)
+	label.billboard        = BaseMaterial3D.BILLBOARD_ENABLED
+	label.font_size        = 52 + mini(amount, 20) * 2   # taille dynamique
+	label.modulate         = col
+	label.outline_size     = 7
+	label.outline_modulate = Color(0.0, 0.0, 0.0, 1.0)
+	label.no_depth_test    = true
+	node.add_child(label)
+
+	# Montée
+	var tween := node.create_tween()
+	tween.tween_property(node, "position:y", node.position.y + 2.2, 1.0)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(node.queue_free)
+
+	# Disparition
+	var fade := node.create_tween()
+	fade.tween_interval(0.25)
+	fade.tween_property(label, "modulate:a", 0.0, 0.75)
 
 
 func _die() -> void:
