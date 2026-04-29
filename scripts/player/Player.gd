@@ -52,6 +52,30 @@ var _target_zoom:      float = 8.0    # Initialisé depuis le SpringArm dans _re
 # --- Mobile : direction du joystick droit (espace caméra) --------
 var _joystick_aim_dir: Vector2 = Vector2.ZERO
 
+# --- Cache pré-slide pour le stomp --------------------------------
+# move_and_slide() modifie velocity.y quand on atterrit → on sauvegarde
+# la valeur AVANT pour pouvoir vérifier la vitesse de chute réelle.
+var _pre_slide_velocity_y: float = 0.0
+
+# --- Stomp -------------------------------------------------------
+const STOMP_DAMAGE:         int   = 25
+const STOMP_FALL_THRESHOLD: float = -4.0   # vitesse Y min pour déclencher
+const STOMP_BOUNCE:         float = 7.0    # rebond vertical après stomp
+var   _stomp_hit_this_jump: bool  = false  # 1 stomp max par mise en l'air — reset à l'atterrissage sol
+
+# --- Dash-bouclier -----------------------------------------------
+const DASH_SPEED:     float = 20.0
+const DASH_DURATION:  float = 0.20   # secondes
+const DASH_COOLDOWN:  float = 1.20   # secondes
+const DASH_DAMAGE:    int   = 12
+const DASH_KNOCKBACK: float = 9.0
+
+var _is_dashing:           bool  = false
+var _dash_timer:           float = 0.0
+var _dash_cooldown_timer:  float = 0.0
+var _dash_dir:             Vector3 = Vector3.ZERO
+var _dash_hit_enemies:     Array  = []   # ennemis déjà touchés dans ce dash
+
 # Gravité récupérée depuis les paramètres projet Godot
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
@@ -70,6 +94,11 @@ func _ready() -> void:
 	spring_arm.set_as_top_level(true)
 	add_to_group("player")
 	_apply_texture_recursive(robot_model)
+
+	# Ajouter le layer des ennemis (16 = layer 5) au collision mask
+	# pour que move_and_slide() détecte les collisions avec eux
+	# (nécessaire pour le stomp et le dash-bouclier).
+	collision_mask |= 16
 
 	_model_base_scale = robot_model.scale      # Mémoriser la scale réelle du modèle
 	_model_base_y     = robot_model.position.y # Mémoriser le Y offset configuré dans l'éditeur
@@ -106,11 +135,26 @@ func _physics_process(delta: float) -> void:
 		return
 
 	_apply_gravity(delta)
-	_handle_jump()       # Après gravity : overrride velocity.y si saut demandé
+	_handle_jump()
 	_handle_camera_orbit(delta)
 	_handle_movement()
+	_handle_dash(delta)
+
+	# Sauvegarder velocity.y avant toute modification (stomp / snap)
+	_pre_slide_velocity_y = velocity.y
+
+	# Stomp : raycast AVANT move_and_slide() pour que le rebond soit appliqué
+	# en amont — Jolt Physics ne retourne pas toujours les CharacterBody3D
+	# dans get_slide_collision() lors d'atterrissages successifs sur le même ennemi.
+	_check_stomp()
+
+	# Désactiver le snap sol si le joueur remonte (saut, rebond stomp…)
+	if velocity.y > 0.0:
+		floor_snap_length = 0.0
 
 	move_and_slide()
+
+	_check_dash_hits()
 
 	# Spring arm mis à jour AVANT _rotate_toward_mouse : le raycast souris
 	# utilise ainsi l'orientation de caméra du frame courant (et non du précédent).
@@ -179,7 +223,9 @@ func _handle_camera_orbit(delta: float) -> void:
 # =============================================================
 
 func _apply_gravity(delta: float) -> void:
-	if is_on_floor():
+	if is_on_floor() and velocity.y <= 0.0:
+		# Sol : annuler uniquement si le joueur ne remonte pas déjà
+		# (un stomp ou un saut vient de fixer velocity.y > 0 → ne pas l'écraser)
 		velocity.y = 0.0
 	elif velocity.y < 0.0:
 		# Chute : gravité renforcée pour éviter le flottement
@@ -194,15 +240,29 @@ func _handle_jump() -> void:
 
 	if Input.is_action_just_pressed("jump") and on_floor:
 		velocity.y        = jump_force
-		floor_snap_length = 0.0   # Laisser le sol pour de vrai
+		floor_snap_length = 0.0
 		_squash_stretch_jump()
 	elif on_floor and not _was_on_floor:
-		floor_snap_length = 0.3   # Rétablir le snap à l'atterrissage
-		_squash_stretch_land()
+		floor_snap_length = 0.3
+		# Recharger le stomp seulement si on atterrit sur le sol réel,
+		# pas sur la tête d'un ennemi.
+		if not _standing_on_enemy():
+			_stomp_hit_this_jump = false
+			_squash_stretch_land()
 	elif on_floor:
 		floor_snap_length = 0.3
 
 	_was_on_floor = on_floor
+
+
+# Retourne true si la surface sous le joueur (collisions du frame précédent)
+# est la tête d'un ennemi plutôt que le sol de la géométrie.
+func _standing_on_enemy() -> bool:
+	for i in get_slide_collision_count():
+		var col := get_slide_collision(i)
+		if col.get_normal().y > 0.5 and col.get_collider() is Enemy:
+			return true
+	return false
 
 
 # Tilt du modèle selon la vélocité verticale — donne l'impression d'un arc
@@ -331,6 +391,121 @@ func _update_animation() -> void:
 		playback.travel("idle")
 
 
+
+
+# =============================================================
+# STOMP (saut écrasant)
+# =============================================================
+
+# Détecte un ennemi sous le joueur via raycast et applique le rebond
+# AVANT move_and_slide() — évite les problèmes de Jolt Physics qui ne retourne
+# pas toujours les CharacterBody3D dans get_slide_collision() lors d'atterrissages
+# successifs sur le même ennemi.
+func _check_stomp() -> void:
+	# Pas assez de vitesse descendante → pas un stomp
+	if _pre_slide_velocity_y > STOMP_FALL_THRESHOLD:
+		return
+
+	# Raycast vers le bas depuis le centre du joueur (layer 16 = ennemis uniquement)
+	var space := get_world_3d().direct_space_state
+	var query  := PhysicsRayQueryParameters3D.create(
+		global_position,
+		global_position + Vector3.DOWN * 1.2,
+		16
+	)
+	query.exclude = [self]
+	var hit := space.intersect_ray(query)
+
+	if hit.is_empty():
+		return
+
+	var body = hit.get("collider")
+	if not (body is Enemy):
+		return
+
+	var enemy := body as Enemy
+	if enemy.stomp_immune:
+		return
+
+	# Rebond — toujours actif, permet de rebondir sur le même ennemi
+	velocity.y = STOMP_BOUNCE
+
+	# Dégâts uniquement au premier contact depuis le dernier atterrissage sol
+	if not _stomp_hit_this_jump:
+		_stomp_hit_this_jump = true
+		enemy.stomp_squish()
+		enemy.take_damage(STOMP_DAMAGE)
+
+
+# =============================================================
+# DASH-BOUCLIER
+# =============================================================
+
+# Gère le cooldown, détecte l'appui Shift et pilote le dash.
+# Appelé AVANT move_and_slide() pour que le dash soit actif ce frame.
+func _handle_dash(delta: float) -> void:
+	# Tick du cooldown
+	if _dash_cooldown_timer > 0.0:
+		_dash_cooldown_timer -= delta
+
+	# Dash en cours : décompte la durée et écrase velocity horizontale.
+	# NOTE : appelé APRÈS _handle_movement(), donc cet override est définitif.
+	if _is_dashing:
+		_dash_timer -= delta
+		if _dash_timer <= 0.0:
+			_is_dashing = false
+			_dash_hit_enemies.clear()
+		else:
+			velocity.x = _dash_dir.x * DASH_SPEED
+			velocity.z = _dash_dir.z * DASH_SPEED
+		return  # Pendant le dash on n'accepte pas de nouveau déclenchement
+
+	# Déclenchement : touche dash pressée + cooldown écoulé
+	if Input.is_action_just_pressed("dash") and _dash_cooldown_timer <= 0.0:
+		_start_dash()
+
+
+# Initialise la direction et les timers du dash.
+func _start_dash() -> void:
+	# Direction prioritaire : mouvement clavier/joystick courant
+	var input_x: float = Input.get_axis("move_left", "move_right")
+	var input_z: float = Input.get_axis("move_forward", "move_backward")
+	var input_v := Vector2(input_x, input_z)
+
+	var cb        := camera.global_transform.basis
+	var cam_fwd   := -Vector3(cb.z.x, 0.0, cb.z.z).normalized()
+	var cam_right :=  Vector3(cb.x.x, 0.0, cb.x.z).normalized()
+
+	if input_v.length_squared() > 0.04:
+		# Dash dans la direction de l'input relatif à la caméra
+		_dash_dir = (cam_right * input_v.x - cam_fwd * input_v.y).normalized()
+	else:
+		# Aucun input → dash dans la direction du regard du modèle
+		_dash_dir = -robot_model.global_transform.basis.z
+
+	_dash_dir.y  = 0.0
+	_dash_dir    = _dash_dir.normalized()
+
+	_is_dashing           = true
+	_dash_timer           = DASH_DURATION
+	_dash_cooldown_timer  = DASH_COOLDOWN
+	_dash_hit_enemies.clear()
+
+
+# Détecte les ennemis touchés pendant le dash via les collisions de move_and_slide().
+func _check_dash_hits() -> void:
+	if not _is_dashing:
+		return
+
+	for i in get_slide_collision_count():
+		var col  := get_slide_collision(i)
+		var body := col.get_collider()
+		if body is Enemy and not _dash_hit_enemies.has(body):
+			var enemy := body as Enemy
+			_dash_hit_enemies.append(enemy)
+			enemy.take_damage(DASH_DAMAGE)
+			# Knockback dans la direction du dash
+			enemy.apply_knockback(_dash_dir, DASH_KNOCKBACK)
 
 
 # =============================================================

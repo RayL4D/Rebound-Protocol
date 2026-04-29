@@ -113,6 +113,9 @@ func _setup_model() -> void:
 # =============================================================
 
 func _on_ready() -> void:
+	# Mini-boss : immunisé au stomp du joueur
+	stomp_immune = true
+
 	if player == null:
 		push_warning("BossLion : joueur introuvable.")
 		return
