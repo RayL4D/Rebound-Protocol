@@ -23,6 +23,9 @@ extends CharacterBody3D
 #   Boss final   → 1.8+  (imposant)
 @export var model_scale: float = 0.55
 
+# Immunité au stomp (mini-boss, boss) — à activer dans les sous-classes
+@export var stomp_immune: bool = false
+
 # Offset Y du modèle pour corriger les modèles dont le pivot
 # n'est pas centré sur les pieds. Ajuste dans l'inspector
 # jusqu'à ce que le pet repose bien sur le sol.
@@ -246,3 +249,55 @@ func _spawn_damage_number(amount: int) -> void:
 func _die() -> void:
 	enemy_died.emit()
 	queue_free()
+
+
+# =============================================================
+# SOURCES DE DÉGÂTS ALTERNATIVES
+# =============================================================
+
+# Appelé par Player quand il atterrit dessus (stomp).
+# Anime un écrasement visuel + flash blanc.
+func stomp_squish() -> void:
+	if _model == null:
+		return
+	var orig := _model.scale
+	# Aplatissement immédiat
+	_model.scale = Vector3(orig.x * 1.5, orig.y * 0.15, orig.z * 1.5)
+	# Flash blanc sur tous les MeshInstance3D
+	_flash_white()
+	# Retour élastique à l'échelle normale
+	var tw := create_tween()
+	tw.tween_property(_model, "scale", orig, 0.35) \
+		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+
+# Impulsion horizontale (knockback dash-bouclier).
+func apply_knockback(direction: Vector3, force: float) -> void:
+	direction.y = 0.0
+	if direction.length_squared() < 0.001:
+		return
+	velocity.x += direction.normalized().x * force
+	velocity.z += direction.normalized().z * force
+
+
+# Flash blanc rapide sur le modèle (réutilisé par stomp + dash).
+func _flash_white() -> void:
+	if _model == null:
+		return
+	var meshes: Array[MeshInstance3D] = []
+	_collect_meshes(_model, meshes)
+	for mesh in meshes:
+		var orig_mat := mesh.get_surface_override_material(0)
+		var white    := StandardMaterial3D.new()
+		white.albedo_color = Color(1.0, 1.0, 1.0)
+		mesh.set_surface_override_material(0, white)
+		var tw := create_tween()
+		tw.tween_interval(0.08)
+		tw.tween_callback(func(): mesh.set_surface_override_material(0, orig_mat))
+
+
+func _collect_meshes(node: Node, out: Array[MeshInstance3D]) -> void:
+	if node is MeshInstance3D:
+		out.append(node as MeshInstance3D)
+	for child in node.get_children():
+		_collect_meshes(child, out)
