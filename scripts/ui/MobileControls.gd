@@ -15,8 +15,17 @@ extends CanvasLayer
 
 var _player: Player = null
 
+# Mettre à true uniquement pour tester les joysticks sur PC en développement
+const DEBUG_FORCE_MOBILE := false
+
 
 func _ready() -> void:
+	# OS.has_feature("mobile") = true uniquement sur Android / iOS (build exporté)
+	# On supprime le nœud entier sur toute autre plateforme sauf debug
+	if not DEBUG_FORCE_MOBILE and not OS.has_feature("mobile"):
+		queue_free()
+		return
+
 	_player = get_tree().get_first_node_in_group("player") as Player
 	if _player == null:
 		push_warning("MobileControls: joueur introuvable.")

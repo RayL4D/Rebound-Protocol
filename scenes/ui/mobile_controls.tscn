@@ -1,52 +1,38 @@
-[gd_scene load_steps=3 format=3 uid="uid://mobile_ctrl_01"]
+[gd_scene format=3 uid="uid://df24nylblu4vu"]
 
 [ext_resource type="PackedScene" uid="uid://dmr0fcamx7t56" path="res://addons/virtual_joystick/virtual_joystick_scene.tscn" id="1_joyscene"]
-[ext_resource type="Script" path="res://scripts/ui/MobileControls.gd" id="2_script"]
+[ext_resource type="Script" uid="uid://nwedla8ibw6g" path="res://scripts/ui/MobileControls.gd" id="2_script"]
 
-[node name="MobileControls" type="CanvasLayer"]
+[node name="MobileControls" type="CanvasLayer" unique_id=1449797109]
 layer = 10
 script = ExtResource("2_script")
 
-; ---------------------------------------------------------------
-; JOYSTICK GAUCHE — Déplacement
-; Zone : moitié gauche, 55 % bas de l'écran
-; ---------------------------------------------------------------
-[node name="LeftJoystick" parent="." instance=ExtResource("1_joyscene")]
-anchor_left = 0.0
+[node name="LeftJoystick" parent="." unique_id=645362733 instance=ExtResource("1_joyscene")]
+anchors_preset = -1
 anchor_top = 0.45
 anchor_right = 0.45
-anchor_bottom = 1.0
-offset_left = 0.0
 offset_top = 0.0
 offset_right = 0.0
 offset_bottom = 0.0
 grow_horizontal = 2
 grow_vertical = 2
 clampzone_size = 110.0
-joystick_mode = 0
-visibility_mode = 0
-use_input_actions = true
+visibility_mode = 1
 action_left = "move_left"
 action_right = "move_right"
 action_up = "move_forward"
 action_down = "move_backward"
 
-; ---------------------------------------------------------------
-; JOYSTICK DROIT — Visée bouclier
-; Zone : moitié droite, 55 % bas de l'écran
-; ---------------------------------------------------------------
-[node name="RightJoystick" parent="." instance=ExtResource("1_joyscene")]
+[node name="RightJoystick" parent="." unique_id=1523875788 instance=ExtResource("1_joyscene")]
+anchors_preset = -1
 anchor_left = 0.55
 anchor_top = 0.45
 anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 0.0
 offset_top = 0.0
 offset_right = 0.0
 offset_bottom = 0.0
 grow_horizontal = 2
 grow_vertical = 2
 clampzone_size = 110.0
-joystick_mode = 0
-visibility_mode = 0
+visibility_mode = 1
 use_input_actions = false
