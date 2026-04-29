@@ -75,6 +75,8 @@ var _dash_timer:           float = 0.0
 var _dash_cooldown_timer:  float = 0.0
 var _dash_dir:             Vector3 = Vector3.ZERO
 var _dash_hit_enemies:     Array  = []   # ennemis déjà touchés dans ce dash
+var _dash_ghost_timer:     float = 0.0   # timer pour l'espacement des afterimages
+const DASH_GHOST_INTERVAL: float = 0.04  # une afterimage toutes les 40 ms
 
 # Gravité récupérée depuis les paramètres projet Godot
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -406,20 +408,24 @@ func _check_stomp() -> void:
 	if _pre_slide_velocity_y > STOMP_FALL_THRESHOLD:
 		return
 
-	# Raycast vers le bas depuis le centre du joueur (layer 16 = ennemis uniquement)
+	# Sphere cast aux pieds du joueur (layer 16 = ennemis uniquement).
+	# Plus robuste qu'un rayon unique : couvre les bords et coins de l'ennemi
+	# même si le joueur n'est pas parfaitement centré au-dessus.
 	var space := get_world_3d().direct_space_state
-	var query  := PhysicsRayQueryParameters3D.create(
-		global_position,
-		global_position + Vector3.DOWN * 1.2,
-		16
-	)
-	query.exclude = [self]
-	var hit := space.intersect_ray(query)
+	var sphere := SphereShape3D.new()
+	sphere.radius = 0.4  # Légèrement plus large que la capsule du joueur (r=0.25)
 
-	if hit.is_empty():
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape          = sphere
+	query.transform      = Transform3D(Basis.IDENTITY, global_position + Vector3.DOWN * 0.9)
+	query.collision_mask = 16
+	query.exclude        = [get_rid()]
+
+	var results := space.intersect_shape(query, 1)
+	if results.is_empty():
 		return
 
-	var body = hit.get("collider")
+	var body = results[0].get("collider")
 	if not (body is Enemy):
 		return
 
@@ -458,6 +464,11 @@ func _handle_dash(delta: float) -> void:
 		else:
 			velocity.x = _dash_dir.x * DASH_SPEED
 			velocity.z = _dash_dir.z * DASH_SPEED
+			# Afterimages périodiques pendant le dash
+			_dash_ghost_timer -= delta
+			if _dash_ghost_timer <= 0.0:
+				_dash_ghost_timer = DASH_GHOST_INTERVAL
+				_spawn_dash_ghost()
 		return  # Pendant le dash on n'accepte pas de nouveau déclenchement
 
 	# Déclenchement : touche dash pressée + cooldown écoulé
@@ -477,19 +488,78 @@ func _start_dash() -> void:
 	var cam_right :=  Vector3(cb.x.x, 0.0, cb.x.z).normalized()
 
 	if input_v.length_squared() > 0.04:
-		# Dash dans la direction de l'input relatif à la caméra
 		_dash_dir = (cam_right * input_v.x - cam_fwd * input_v.y).normalized()
 	else:
-		# Aucun input → dash dans la direction du regard du modèle
 		_dash_dir = -robot_model.global_transform.basis.z
 
 	_dash_dir.y  = 0.0
 	_dash_dir    = _dash_dir.normalized()
 
-	_is_dashing           = true
-	_dash_timer           = DASH_DURATION
-	_dash_cooldown_timer  = DASH_COOLDOWN
+	_is_dashing          = true
+	_dash_timer          = DASH_DURATION
+	_dash_cooldown_timer = DASH_COOLDOWN
+	_dash_ghost_timer    = 0.0
 	_dash_hit_enemies.clear()
+
+	_dash_fx_start()
+
+
+# Effets visuels au déclenchement du dash.
+func _dash_fx_start() -> void:
+	# 1. Étirement du modèle dans la direction du dash (squash & stretch)
+	var b := _model_base_scale
+	var tw := create_tween()
+	tw.tween_property(robot_model, "scale",
+		Vector3(b.x * 0.65, b.y * 0.65, b.z * 1.55), 0.06)
+	tw.tween_property(robot_model, "scale", b, DASH_DURATION + 0.12) \
+		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+	# 2. Bump de FOV de la caméra (sensation de vitesse)
+	var orig_fov := camera.fov
+	var tw_fov   := create_tween()
+	tw_fov.tween_property(camera, "fov", orig_fov + 18.0, 0.06)
+	tw_fov.tween_property(camera, "fov", orig_fov,         DASH_DURATION + 0.15) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+	# 3. Première afterimage immédiate
+	_spawn_dash_ghost()
+
+
+# Crée une afterimage fantôme à la position courante du joueur.
+func _spawn_dash_ghost() -> void:
+	if not is_inside_tree():
+		return
+
+	# Matériau partagé pour toutes les meshes de ce fantôme (fade simultané)
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color  = Color(0.45, 0.85, 1.0, 0.55)
+	mat.transparency  = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode  = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.no_depth_test = true
+
+	# Conteneur positionné dans la scène (ne suit plus le joueur)
+	var container := Node3D.new()
+	get_tree().current_scene.add_child(container)
+	_ghost_meshes_recursive(robot_model, container, mat)
+
+	# Fondu en 0.25 s puis libération
+	var tw := container.create_tween()
+	tw.tween_property(mat, "albedo_color:a", 0.0, 0.25) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_callback(container.queue_free)
+
+
+# Duplique récursivement chaque MeshInstance3D du modèle avec sa transform globale.
+func _ghost_meshes_recursive(node: Node, container: Node3D, mat: StandardMaterial3D) -> void:
+	if node is MeshInstance3D:
+		var src   := node as MeshInstance3D
+		var ghost := MeshInstance3D.new()
+		ghost.mesh              = src.mesh
+		ghost.global_transform  = src.global_transform
+		ghost.set_surface_override_material(0, mat)
+		container.add_child(ghost)
+	for child in node.get_children():
+		_ghost_meshes_recursive(child, container, mat)
 
 
 # Détecte les ennemis touchés pendant le dash via les collisions de move_and_slide().
