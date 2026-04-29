@@ -49,6 +49,9 @@ var _cam_yaw:          float = 0.0    # Yaw courant (interpolé)
 var _target_snap_yaw:  float = 0.0    # Yaw cible (multiple de 90°, accumule sans modulo)
 var _target_zoom:      float = 8.0    # Initialisé depuis le SpringArm dans _ready
 
+# --- Mobile : direction du joystick droit (espace caméra) --------
+var _joystick_aim_dir: Vector2 = Vector2.ZERO
+
 # Gravité récupérée depuis les paramètres projet Godot
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
@@ -255,6 +258,18 @@ func _handle_movement() -> void:
 # =============================================================
 
 func _rotate_toward_mouse() -> void:
+	# --- Joystick mobile prioritaire ---
+	if _joystick_aim_dir.length_squared() > 0.04:
+		var cb        := camera.global_transform.basis
+		var cam_right := Vector3(cb.x.x, 0.0, cb.x.z).normalized()
+		var cam_fwd   := -Vector3(cb.z.x, 0.0, cb.z.z).normalized()
+		var world_dir := cam_right * _joystick_aim_dir.x - cam_fwd * _joystick_aim_dir.y
+		world_dir.y   = 0.0
+		if world_dir.length_squared() > 0.01:
+			robot_model.global_rotation.y = atan2(world_dir.x, world_dir.z)
+		return
+
+	# --- Souris (desktop) ---
 	var mouse_pos     := get_viewport().get_mouse_position()
 	var ray_origin    := camera.project_ray_origin(mouse_pos)
 	var ray_direction := camera.project_ray_normal(mouse_pos)

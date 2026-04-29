@@ -24,6 +24,10 @@ SceneManager="*uid://g3qi87qjs1bv"
 window/size/viewport_width=1139
 window/size/mode=2
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/virtual_joystick/plugin.cfg")
+
 [input]
 
 move_left={
@@ -83,6 +87,11 @@ pause={
 ]
 }
 
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+pointing/emulate_mouse_from_touch=false
+
 [internationalization]
 
 locale/translations=PackedStringArray("res://data/translations.en.translation", "res://data/translations.es.translation", "res://data/translations.fr.translation")
@@ -100,3 +109,4 @@ locale/translations=PackedStringArray("res://data/translations.en.translation", 
 [rendering]
 
 rendering_device/driver.windows="d3d12"
+textures/vram_compression/import_etc2_astc=true

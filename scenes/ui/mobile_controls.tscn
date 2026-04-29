@@ -1,0 +1,52 @@
+[gd_scene load_steps=3 format=3 uid="uid://mobile_ctrl_01"]
+
+[ext_resource type="PackedScene" uid="uid://dmr0fcamx7t56" path="res://addons/virtual_joystick/virtual_joystick_scene.tscn" id="1_joyscene"]
+[ext_resource type="Script" path="res://scripts/ui/MobileControls.gd" id="2_script"]
+
+[node name="MobileControls" type="CanvasLayer"]
+layer = 10
+script = ExtResource("2_script")
+
+; ---------------------------------------------------------------
+; JOYSTICK GAUCHE — Déplacement
+; Zone : moitié gauche, 55 % bas de l'écran
+; ---------------------------------------------------------------
+[node name="LeftJoystick" parent="." instance=ExtResource("1_joyscene")]
+anchor_left = 0.0
+anchor_top = 0.45
+anchor_right = 0.45
+anchor_bottom = 1.0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 2
+clampzone_size = 110.0
+joystick_mode = 0
+visibility_mode = 0
+use_input_actions = true
+action_left = "move_left"
+action_right = "move_right"
+action_up = "move_forward"
+action_down = "move_backward"
+
+; ---------------------------------------------------------------
+; JOYSTICK DROIT — Visée bouclier
+; Zone : moitié droite, 55 % bas de l'écran
+; ---------------------------------------------------------------
+[node name="RightJoystick" parent="." instance=ExtResource("1_joyscene")]
+anchor_left = 0.55
+anchor_top = 0.45
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 2
+clampzone_size = 110.0
+joystick_mode = 0
+visibility_mode = 0
+use_input_actions = false
