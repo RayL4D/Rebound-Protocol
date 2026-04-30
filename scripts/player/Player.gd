@@ -47,6 +47,7 @@ var _rmb_held:         bool  = false
 var _cam_pitch:        float = -60.0  # Initialisé depuis le SpringArm dans _ready
 var _cam_yaw:          float = 0.0    # Yaw courant (interpolé)
 var _target_snap_yaw:  float = 0.0    # Yaw cible (multiple de 90°, accumule sans modulo)
+var _target_pitch:     float = -60.0  # Pitch cible (interpolé vers _cam_pitch)
 var _target_zoom:      float = 8.0    # Initialisé depuis le SpringArm dans _ready
 
 # --- Mobile : direction du joystick droit (espace caméra) --------
@@ -56,6 +57,28 @@ var _joystick_aim_dir: Vector2 = Vector2.ZERO
 # move_and_slide() modifie velocity.y quand on atterrit → on sauvegarde
 # la valeur AVANT pour pouvoir vérifier la vitesse de chute réelle.
 var _pre_slide_velocity_y: float = 0.0
+
+# --- Mobile jump flag --------------------------------------------
+# Posé par MobileControls._on_jump_pressed() entre deux physics frames.
+# Consommé (reset) au début de _handle_jump() — évite tout problème de timing
+# avec is_action_just_pressed qui peut rater un frame via parse_input_event.
+var _mobile_jump_requested: bool = false
+
+## Appelé par JumpButton quand le bouton JUMP est pressé.
+func request_jump() -> void:
+	_mobile_jump_requested = true
+
+# --- Mobile parry flag -------------------------------------------
+var _mobile_parry_requested: bool = false
+
+## Appelé par ParryButton quand le bouton PARRY est pressé.
+func request_parry() -> void:
+	_mobile_parry_requested = true
+	# Notifier le ParryTimer directement — bypasse Input.is_action_just_pressed
+	# qui ne voit pas les appuis mobiles.
+	var s := shield as Shield
+	if s != null and s.parry_timer != null:
+		s.parry_timer.notify_mobile_press()
 
 # --- Stomp -------------------------------------------------------
 const STOMP_DAMAGE:         int   = 25
@@ -84,6 +107,8 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 # --- Signaux -----------------------------------------------------
 signal player_died
 signal hp_changed(new_hp: int)
+signal jumped          # Émis à chaque saut (clavier ET mobile)
+signal parried         # Émis à chaque appui parade (clavier ET mobile)
 
 
 # =============================================================
@@ -134,6 +159,13 @@ func _apply_texture_recursive(node: Node) -> void:
 
 func _physics_process(delta: float) -> void:
 	if is_dead:
+		# Garder la caméra orientée et en place pendant l'animation de mort.
+		# spring_arm.collision_mask est déjà à 0 (fixé dans _die()),
+		# donc le bras ne se raccourcit pas même si le mesh bouge.
+		_handle_camera_orbit(delta)
+		spring_arm.global_position    = global_position + Vector3(0, 0.9, 0)
+		spring_arm.rotation_degrees.x = _cam_pitch
+		spring_arm.rotation_degrees.y = _cam_yaw
 		return
 
 	_apply_gravity(delta)
@@ -167,9 +199,12 @@ func _physics_process(delta: float) -> void:
 
 	_rotate_toward_mouse()
 
-	# Déclenche l'animation de parade dès l'appui sur SPACE
-	if Input.is_action_just_pressed("parry"):
+	# Déclenche l'animation de parade (clavier/gamepad ou bouton mobile)
+	var mobile_parry := _mobile_parry_requested
+	_mobile_parry_requested = false
+	if Input.is_action_just_pressed("parry") or mobile_parry:
 		_parry_requested = true
+		parried.emit()
 		var pb := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
 		pb.travel("parry")
 
@@ -199,8 +234,8 @@ func _input(event: InputEvent) -> void:
 
 	# Pitch de la caméra avec clic droit maintenu (vertical seulement)
 	if event is InputEventMouseMotion and _rmb_held:
-		_cam_pitch -= event.relative.y * cam_sensitivity
-		_cam_pitch  = clamp(_cam_pitch, cam_pitch_min, cam_pitch_max)
+		_target_pitch -= event.relative.y * cam_sensitivity
+		_target_pitch  = clamp(_target_pitch, cam_pitch_min, cam_pitch_max)
 
 	# Orbite par snap de 90° — détection ici pour éviter la répétition du held
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -215,9 +250,10 @@ func _input(event: InputEvent) -> void:
 # =============================================================
 
 func _handle_camera_orbit(delta: float) -> void:
-	# Interpolation fluide vers l'angle cible (multiple de 90°)
-	# On accumule sans modulo pour éviter les sauts 359° → 0°
-	_cam_yaw = lerp(_cam_yaw, _target_snap_yaw, 10.0 * delta)
+	# Interpolation fluide vers les angles cibles
+	# Le yaw accumule sans modulo pour éviter les sauts 359° → 0°
+	_cam_yaw   = lerp(_cam_yaw,   _target_snap_yaw, 10.0 * delta)
+	_cam_pitch = lerp(_cam_pitch, _target_pitch,    10.0 * delta)
 
 
 # =============================================================
@@ -238,11 +274,14 @@ func _apply_gravity(delta: float) -> void:
 
 
 func _handle_jump() -> void:
-	var on_floor := is_on_floor()
+	var on_floor    := is_on_floor()
+	var mobile_jump := _mobile_jump_requested
+	_mobile_jump_requested = false   # consommé immédiatement, même si le saut échoue
 
-	if Input.is_action_just_pressed("jump") and on_floor:
+	if (Input.is_action_just_pressed("jump") or mobile_jump) and on_floor:
 		velocity.y        = jump_force
 		floor_snap_length = 0.0
+		jumped.emit()
 		_squash_stretch_jump()
 	elif on_floor and not _was_on_floor:
 		floor_snap_length = 0.3
@@ -634,9 +673,15 @@ func _die() -> void:
 		_iframe_tween = null
 	robot_model.visible = true
 
+	# Figer le spring arm à sa longueur courante et désactiver sa détection
+	# de collision : sans ça, le mesh de l'animation de mort entre en collision
+	# avec le bras, qui se raccourcit à zéro et met la caméra dans le corps.
+	spring_arm.spring_length  = _target_zoom
+	spring_arm.collision_mask = 0
+
 	# Déclenché ici directement car _physics_process retourne immédiatement
 	# quand is_dead est true — _update_animation() ne serait jamais appelée.
 	var playback := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
 	playback.travel("die")
 	player_died.emit()
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+                                                                                                                                                                   

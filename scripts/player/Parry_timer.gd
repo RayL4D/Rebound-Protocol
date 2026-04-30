@@ -111,3 +111,12 @@ func is_on_cooldown() -> bool:
 
 func get_last_resolved_state() -> ParryState:
 	return _last_resolved
+
+
+## Appelé par Player.request_parry() sur mobile — équivalent à
+## is_action_just_pressed("parry") mais sans passer par l'Input singleton.
+func notify_mobile_press() -> void:
+	if _cooldown_timer > 0.0:
+		return
+	_parry_pressed    = true
+	_parry_press_time = _get_time()
