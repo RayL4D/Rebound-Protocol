@@ -107,6 +107,8 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 # --- Signaux -----------------------------------------------------
 signal player_died
 signal hp_changed(new_hp: int)
+signal jumped          # Émis à chaque saut (clavier ET mobile)
+signal parried         # Émis à chaque appui parade (clavier ET mobile)
 
 
 # =============================================================
@@ -157,6 +159,13 @@ func _apply_texture_recursive(node: Node) -> void:
 
 func _physics_process(delta: float) -> void:
 	if is_dead:
+		# Garder la caméra orientée et en place pendant l'animation de mort.
+		# spring_arm.collision_mask est déjà à 0 (fixé dans _die()),
+		# donc le bras ne se raccourcit pas même si le mesh bouge.
+		_handle_camera_orbit(delta)
+		spring_arm.global_position    = global_position + Vector3(0, 0.9, 0)
+		spring_arm.rotation_degrees.x = _cam_pitch
+		spring_arm.rotation_degrees.y = _cam_yaw
 		return
 
 	_apply_gravity(delta)
@@ -195,6 +204,7 @@ func _physics_process(delta: float) -> void:
 	_mobile_parry_requested = false
 	if Input.is_action_just_pressed("parry") or mobile_parry:
 		_parry_requested = true
+		parried.emit()
 		var pb := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
 		pb.travel("parry")
 
@@ -271,6 +281,7 @@ func _handle_jump() -> void:
 	if (Input.is_action_just_pressed("jump") or mobile_jump) and on_floor:
 		velocity.y        = jump_force
 		floor_snap_length = 0.0
+		jumped.emit()
 		_squash_stretch_jump()
 	elif on_floor and not _was_on_floor:
 		floor_snap_length = 0.3
@@ -662,8 +673,15 @@ func _die() -> void:
 		_iframe_tween = null
 	robot_model.visible = true
 
+	# Figer le spring arm à sa longueur courante et désactiver sa détection
+	# de collision : sans ça, le mesh de l'animation de mort entre en collision
+	# avec le bras, qui se raccourcit à zéro et met la caméra dans le corps.
+	spring_arm.spring_length  = _target_zoom
+	spring_arm.collision_mask = 0
+
 	# Déclenché ici directement car _physics_process retourne immédiatement
 	# quand is_dead est true — _update_animation() ne serait jamais appelée.
 	var playback := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
 	playback.travel("die")
 	player_died.emit()
+                                                                                                                                                                   

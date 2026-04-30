@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://4f33c2777370" path="res://scripts/ui/ParryButton.gd" id="4_parryscript"]
 [ext_resource type="Script" uid="uid://6x3rn2lodt1b" path="res://scripts/ui/DashButton.gd" id="5_wj250"]
 [ext_resource type="Script" uid="uid://qjttx84a6hqx" path="res://scripts/ui/ZoomButton.gd" id="6_zoombtnscript"]
+[ext_resource type="Script" uid="uid://pfa7vu4qhcr2" path="res://scripts/ui/SettingsButton.gd" id="7_settingsbtnscript"]
 
 [node name="MobileControls" type="CanvasLayer" unique_id=1449797109]
 layer = 10
@@ -100,9 +101,9 @@ anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -164.0
-offset_top = 100.0
+offset_top = 120.0
 offset_right = -84.0
-offset_bottom = 180.0
+offset_bottom = 200.0
 grow_horizontal = 0
 script = ExtResource("6_zoombtnscript")
 
@@ -113,9 +114,22 @@ anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -164.0
-offset_top = 190.0
+offset_top = 210.0
 offset_right = -84.0
-offset_bottom = 270.0
+offset_bottom = 290.0
 grow_horizontal = 0
 script = ExtResource("6_zoombtnscript")
 zoom_in = false
+
+[node name="SettingsButton" type="Control" parent="." unique_id=512900001]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -164.0
+offset_top = 16.0
+offset_right = -74.0
+offset_bottom = 106.0
+grow_horizontal = 0
+script = ExtResource("7_settingsbtnscript")
