@@ -1,0 +1,67 @@
+[gd_scene format=3 uid="uid://cnqylnjxoolj0"]
+
+[ext_resource type="Script" uid="uid://1thb4n301mk" path="res://scripts/enemies/types/BossLion.gd" id="1_lionscr"]
+[ext_resource type="Script" uid="uid://ctgsruby2erwx" path="res://scripts/enemies/components/WeaponBullet.gd" id="2_bulletscr"]
+[ext_resource type="Script" uid="uid://2yhjo5vqeyen" path="res://scripts/enemies/components/WeaponShotgun.gd" id="3_shotgunscr"]
+[ext_resource type="PackedScene" uid="uid://c66tatlw2omu" path="res://assets/models/enemies/animal-lion.glb" id="4_lionmdl"]
+[ext_resource type="PackedScene" uid="uid://ct75y22qt5321" path="res://assets/models/weapons/blaster-l.glb" id="5_ewl4o"]
+[ext_resource type="PackedScene" uid="uid://cdssfpb0nboc" path="res://assets/models/weapons/blaster-e.glb" id="6_blaste"]
+[ext_resource type="Script" uid="uid://f8fkmgxc8vv5" path="res://scripts/ui/BossHealthBar.gd" id="7_bossbar"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_lion01"]
+size = Vector3(2.5, 2.2, 2)
+
+[node name="BossLion" type="CharacterBody3D" unique_id=881234567]
+collision_layer = 16
+collision_mask = 5
+script = ExtResource("1_lionscr")
+max_hp = 200
+model_scale = 1.4
+
+[node name="animal-lion2" parent="." unique_id=2054353663 instance=ExtResource("4_lionmdl")]
+
+[node name="body" parent="animal-lion2/animal-lion/root" parent_id_path=PackedInt32Array(2054353663, 1842175803) index="1" unique_id=1848596230]
+transform = Transform3D(0.9824088, 0.17322516, 0.069756456, -0.17364816, 0.9848077, -4.656613e-10, -0.0686967, -0.01211308, 0.9975641, 1.573182e-08, 0.18124998, -3.8083503e-08)
+
+[node name="tail" parent="animal-lion2/animal-lion/root/body" index="0" unique_id=658870890]
+transform = Transform3D(0.9396926, -0.34202015, 0, 0.34202015, 0.9396926, 0, 0, 0, 1, 0, 0.6375, -0.54839337)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=883456789]
+transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 0, 0.6, 0)
+shape = SubResource("BoxShape3D_lion01")
+
+[node name="WeaponMountRight" type="Node3D" parent="." unique_id=884567890]
+transform = Transform3D(-3, 2.6226834e-07, -4.5298742e-07, 2.6226832e-07, 3, 2.6226834e-07, 4.5298745e-07, 2.6226832e-07, -3, 0.4, 2.447, 2.292)
+
+[node name="WeaponBullet" type="Node3D" parent="WeaponMountRight" unique_id=885678901]
+transform = Transform3D(1, -1.010379e-15, 4.2632564e-14, 1.3200472e-14, 1, 0, 0, -2.1316282e-14, 1, 0.53953636, -0.4525817, 5.9604645e-08)
+script = ExtResource("2_bulletscr")
+bullet_speed = 12.0
+fire_rate = 0.6
+shoot_range = 14.0
+damage = 20
+
+[node name="blaster-l2" parent="WeaponMountRight" unique_id=187298570 instance=ExtResource("5_ewl4o")]
+transform = Transform3D(1, -1.010379e-15, 4.2632564e-14, 1.3200472e-14, 1, 0, 0, -2.1316282e-14, 1, -0.25093484, -0.54699457, 0.68758905)
+
+[node name="WeaponMountLeft" type="Node3D" parent="." unique_id=884567891]
+transform = Transform3D(-3, 2.6226834e-07, -2.6226832e-07, 2.6226832e-07, 3, 2.6226832e-07, 2.6226834e-07, 2.6226832e-07, -3, -1.2727667, 1.2367511, 2.101629)
+
+[node name="WeaponShotgun" type="Node3D" parent="WeaponMountLeft" unique_id=887890123]
+transform = Transform3D(1, 5.373162e-16, 2.1316282e-14, 2.1853596e-14, 1, 0, 0, -2.1316282e-14, 1, -0.7276925, -0.037149817, 0.09562838)
+script = ExtResource("3_shotgunscr")
+bullet_count = 5
+spread_angle_deg = 40.0
+fire_rate = 0.8
+damage = 12
+
+[node name="blaster-e2" parent="WeaponMountLeft" unique_id=888901234 instance=ExtResource("6_blaste")]
+transform = Transform3D(1, 6.6814974e-22, 0, 6.6814974e-22, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="SummonTimer" type="Timer" parent="." unique_id=889012345]
+wait_time = 10.0
+
+[node name="BossHealthBar" type="Node3D" parent="." unique_id=890123456]
+script = ExtResource("7_bossbar")
+
+[editable path="animal-lion2"]

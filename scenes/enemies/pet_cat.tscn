@@ -1,0 +1,37 @@
+[gd_scene format=3 uid="uid://pet_cat_scene01"]
+
+[ext_resource type="Script" path="res://scripts/enemies/types/PetCat.gd" id="1_catscr"]
+[ext_resource type="Script" path="res://scripts/enemies/components/WeaponBurst.gd" id="2_burstscr"]
+[ext_resource type="PackedScene" uid="uid://cic0q7cv0joit" path="res://assets/models/enemies/animal-cat.glb" id="3_catmdl"]
+[ext_resource type="PackedScene" uid="uid://260meo7lxfbd" path="res://assets/models/weapons/blaster-b.glb" id="4_blastb"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_cat01"]
+size = Vector3(2, 1.5, 1.5)
+
+[node name="PetCat" type="CharacterBody3D"]
+collision_layer = 16
+collision_mask = 5
+script = ExtResource("1_catscr")
+max_hp = 25
+move_speed = 3.0
+
+[node name="animal-cat2" parent="." instance=ExtResource("3_catmdl")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0.4, 0)
+shape = SubResource("BoxShape3D_cat01")
+
+[node name="WeaponMount" type="Node3D" parent="."]
+transform = Transform3D(-1, 8.742278e-08, 0, 8.742278e-08, 1, 8.742278e-08, 7.642742e-15, 8.742278e-08, -1, 0, 0.8, 0.1)
+
+[node name="WeaponBurst" type="Node3D" parent="WeaponMount"]
+script = ExtResource("2_burstscr")
+burst_count = 3
+burst_interval = 0.12
+burst_cooldown = 2.2
+bullet_speed = 12.0
+shoot_range = 9.0
+damage = 8
+
+[node name="blaster-b2" parent="WeaponMount" instance=ExtResource("4_blastb")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16, 0)

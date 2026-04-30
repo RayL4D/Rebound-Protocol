@@ -1,0 +1,38 @@
+[gd_scene format=3 uid="uid://pet_crab_scene01"]
+
+[ext_resource type="Script" path="res://scripts/enemies/types/PetCrab.gd" id="1_crabscr"]
+[ext_resource type="Script" path="res://scripts/enemies/components/WeaponBullet.gd" id="2_bulletscr"]
+[ext_resource type="PackedScene" uid="uid://cfuvdaepe3dja" path="res://assets/models/enemies/animal-crab.glb" id="3_crabmdl"]
+[ext_resource type="PackedScene" uid="uid://cyfs1marji25b" path="res://assets/models/weapons/blaster-j.glb" id="4_blastj"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_crab01"]
+size = Vector3(2, 1.5, 1.5)
+
+[node name="PetCrab" type="CharacterBody3D"]
+collision_layer = 16
+collision_mask = 5
+script = ExtResource("1_crabscr")
+max_hp = 80
+move_speed = 1.5
+stop_distance = 3.5
+shield_cooldown = 8.0
+shield_duration = 3.0
+
+[node name="animal-crab2" parent="." instance=ExtResource("3_crabmdl")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0.4, 0)
+shape = SubResource("BoxShape3D_crab01")
+
+[node name="WeaponMount" type="Node3D" parent="."]
+transform = Transform3D(-1, 8.742278e-08, 0, 8.742278e-08, 1, 8.742278e-08, 7.642742e-15, 8.742278e-08, -1, 0, 0.8, 0.1)
+
+[node name="WeaponBullet" type="Node3D" parent="WeaponMount"]
+script = ExtResource("2_bulletscr")
+fire_rate = 0.6
+shoot_range = 6.0
+damage = 20
+bullet_speed = 7.0
+
+[node name="blaster-j2" parent="WeaponMount" instance=ExtResource("4_blastj")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16, 0)

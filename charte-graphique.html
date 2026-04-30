@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rebound Protocol — Charte Graphique</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #080C17;
+    color: #E2EAF4;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    padding: 40px 32px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #00D4FF;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    color: #5A7A99;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    margin-bottom: 48px;
+  }
+
+  h2 {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #5A7A99;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #1A2540;
+  }
+
+  section { margin-bottom: 48px; }
+
+  /* ---- Swatches ---- */
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .swatch {
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .swatch-color {
+    height: 72px;
+    display: flex;
+    align-items: flex-end;
+    padding: 8px;
+  }
+
+  .swatch-hex {
+    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    opacity: 0.7;
+  }
+
+  .swatch-info {
+    background: #0F1826;
+    padding: 10px 12px;
+  }
+
+  .swatch-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #C8D8E8;
+    margin-bottom: 2px;
+  }
+
+  .swatch-usage {
+    font-size: 11px;
+    color: #4A6580;
+    line-height: 1.4;
+  }
+
+  /* ---- Typographie ---- */
+  .type-demo {
+    background: #0D1525;
+    border-radius: 10px;
+    padding: 24px;
+    border: 1px solid #1A2540;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .type-row {
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #1A2540;
+  }
+
+  .type-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+  .type-label {
+    font-size: 10px;
+    color: #3A5570;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    min-width: 110px;
+    flex-shrink: 0;
+  }
+
+  .type-sample { font-weight: 400; }
+
+  /* ---- Contraste ---- */
+  .contrast-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+  }
+
+  .contrast-card {
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid rgba(255,255,255,0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .contrast-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    opacity: 0.5;
+    margin-bottom: 6px;
+  }
+
+  .contrast-sample { font-size: 15px; font-weight: 600; }
+  .contrast-sub    { font-size: 12px; opacity: 0.75; }
+  .contrast-tag    { font-size: 10px; margin-top: 8px; opacity: 0.45; font-family: monospace; }
+
+  /* ---- Éléments de jeu ---- */
+  .game-elements {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+  }
+
+  .game-card {
+    background: #0D1525;
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid #1A2540;
+  }
+
+  .game-card-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #3A5570;
+    margin-bottom: 12px;
+  }
+
+  .game-pill {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+
+  .game-bar-label {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  .game-bar {
+    height: 8px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    position: relative;
+    background: #1A2540;
+  }
+
+  .game-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+  }
+
+  /* ---- À éviter ---- */
+  .avoid-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .avoid-card {
+    border-radius: 8px;
+    padding: 16px;
+    border: 2px solid #FF3B3B44;
+    background: #120A0A;
+    position: relative;
+  }
+
+  .avoid-card::before {
+    content: '✕ À éviter';
+    position: absolute;
+    top: -1px;
+    right: 12px;
+    font-size: 10px;
+    color: #FF3B3B;
+    background: #120A0A;
+    padding: 0 6px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transform: translateY(-50%);
+  }
+
+  .avoid-sample { font-size: 14px; margin-bottom: 6px; }
+  .avoid-reason { font-size: 11px; color: #FF3B3B; opacity: 0.7; }
+
+  /* ---- Divider ---- */
+  .divider {
+    border: none;
+    border-top: 1px solid #1A2540;
+    margin: 0 0 48px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Rebound Protocol</h1>
+<p class="subtitle">Charte Graphique · Palette de Couleurs · v1.0</p>
+
+<!-- ==================== FOND & STRUCTURE ==================== -->
+<section>
+  <h2>Fonds & Structure</h2>
+  <div class="swatches">
+    <div class="swatch">
+      <div class="swatch-color" style="background:#080C17">
+        <span class="swatch-hex" style="color:#fff">#080C17</span>
+      </div>
+      <div class="swatch-info">
+        <div class="swatch-name">Abysse</div>
+        <div class="swatch-usage">Fond principal de toutes les scènes UI & menus</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#0D1525">
+        <span class="swatch-hex" style="color:#fff">#0D1525</span>
+      </div>
+      <div class="swatch-info">
+        <div class="swatch-name">Profond</div>
+        <div class="swatch-usage">Fond de cards, panneaux, HUD</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#1A2540">
+        <span class="swatch-hex" style="color:#fff">#1A2540</span>
+      </div>
+      <div class="swatch-info">
+        <div class="swatch-name">Surface</div>
+        <div class="swatch-usage">Bordures, séparateurs, inputs</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#243050">
+        <span class="swatch-hex" style="color:#fff">#243050</span>
+      </div>
+      <div class="swatch-info">
+        <div class="swatch-name">Surbrillance</div>
+        <div class="swatch-usage">Hover, sélection, focus</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== COULEURS D'ACCENTUATION ==================== -->
+<section>
+  <h2>Couleurs d'Accentuation</h2>
+  <div class="swatches">
+    <div class="swatch">
+      <div class="swatch-color" style="background:#00D4FF">
+        <span class="swatch-hex" style="color:#003344">#00D4FF</span>
+      </div>
+      <div class="swatch-info">
+        <div class="swatch-name">Cyan Plasma</div>
+        <div class="swatch-usage">Couleur principale : bouclier, UI active, titres, liens</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#0090BB">
+        <span class="swatch-hex" style="color:#fff">#0090BB</span>
+      </div>
+      <div class="swatch-info">
+        <div class="swatch-name">Cyan Profond</div>
+        <div class="swatch-usage">Variante sombre du cyan : boutons au repos, icônes secondaires</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#FFB400">
+        <span class="swatch-hex" style="color:#3A2A00">#FFB400</span>
+      </div>
+      <div class="swatch-info">
+        <div class="swatch-name">Or Critique</div>
+        <div class="swatch-usage">Parade critique, récompenses, objets rares, boss</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#FF5C2B">
+        <span class="swatch-hex" style="color:#fff">#FF5C2B</span>
+      </div>
+      <div class="swatch-info">
+        <div class="swatch-name">Orange Danger</div>
+        <div class="swatch-usage">Avertissements, mortier, zone de danger</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#FF2D55">
+        <span class="swatch-hex" style="color:#fff">#FF2D55</span>
+      </div>
+      <div class="swatch-info">
+        <div class="swatch-name">Rouge Critique</div>
+        <div class="swatch-usage">Dégâts joueur, vignette, HP bas, game over</div>
+      </div>
+    </div>
+    <div class="swatch">
+      <div class="swatch-color" style="background:#22C55E">
+        <span class="swatch-hex" style="color:#001A0A">#22C55E</span>
+      </div>
+      <div class="swatch-info">
+        <div class="swatch-name">Vert Vitalité</div>
+        <div class="swatch-usage">HP joueur, soins, effets positifs</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== TYPOGRAPHIE ==================== -->
+<section>
+  <h2>Typographie & Textes</h2>
+  <div class="type-demo">
+    <div class="type-row">
+      <span class="type-label">Titre H1</span>
+      <span class="type-sample" style="color:#00D4FF; font-size:26px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase">REBOUND PROTOCOL</span>
+    </div>
+    <div class="type-row">
+      <span class="type-label">Titre H2</span>
+      <span class="type-sample" style="color:#E2EAF4; font-size:18px; font-weight:600; letter-spacing:0.04em">Vague 3 — Mini-Boss</span>
+    </div>
+    <div class="type-row">
+      <span class="type-label">Corps principal</span>
+      <span class="type-sample" style="color:#C8D8E8; font-size:14px">Le bouclier absorbe les balles ennemies. Cliquez au bon moment pour les renvoyer.</span>
+    </div>
+    <div class="type-row">
+      <span class="type-label">Secondaire / Hint</span>
+      <span class="type-sample" style="color:#5A7A99; font-size:13px">Clic gauche pour parer · Q / E pour pivoter la caméra</span>
+    </div>
+    <div class="type-row">
+      <span class="type-label">Label technique</span>
+      <span class="type-sample" style="color:#3A8FAA; font-size:11px; text-transform:uppercase; letter-spacing:0.2em; font-family:monospace">WAVE_03 · ARENA_BASE · HP 72/100</span>
+    </div>
+    <div class="type-row">
+      <span class="type-label">Chiffre HUD</span>
+      <span class="type-sample" style="color:#FFB400; font-size:32px; font-weight:700; font-family:'Courier New', monospace">×3</span>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CONTRASTES VALIDÉS ==================== -->
+<section>
+  <h2>Associations Contrastes Validées</h2>
+  <div class="contrast-grid">
+    <div class="contrast-card" style="background:#080C17">
+      <div class="contrast-label">Texte sur fond principal</div>
+      <div class="contrast-sample" style="color:#E2EAF4">Texte principal</div>
+      <div class="contrast-sub"   style="color:#5A7A99">Texte secondaire</div>
+      <div class="contrast-tag">#E2EAF4 sur #080C17</div>
+    </div>
+    <div class="contrast-card" style="background:#080C17">
+      <div class="contrast-label">Accent sur fond principal</div>
+      <div class="contrast-sample" style="color:#00D4FF">Cyan Plasma</div>
+      <div class="contrast-sub"   style="color:#0090BB">Cyan Profond</div>
+      <div class="contrast-tag">#00D4FF sur #080C17</div>
+    </div>
+    <div class="contrast-card" style="background:#0D1525">
+      <div class="contrast-label">Card / panneau HUD</div>
+      <div class="contrast-sample" style="color:#E2EAF4">Titre card</div>
+      <div class="contrast-sub"   style="color:#5A7A99">Description</div>
+      <div class="contrast-tag">#E2EAF4 sur #0D1525</div>
+    </div>
+    <div class="contrast-card" style="background:#1A2540">
+      <div class="contrast-label">Éléments sur surface</div>
+      <div class="contrast-sample" style="color:#E2EAF4">Label</div>
+      <div class="contrast-sub"   style="color:#00D4FF">Valeur active</div>
+      <div class="contrast-tag">#E2EAF4 sur #1A2540</div>
+    </div>
+    <div class="contrast-card" style="background:#00D4FF; border-color:#00D4FF">
+      <div class="contrast-label" style="color:#003344">Bouton primaire</div>
+      <div class="contrast-sample" style="color:#080C17; font-size:13px">COMMENCER</div>
+      <div class="contrast-tag" style="color:#003344">#080C17 sur #00D4FF</div>
+    </div>
+    <div class="contrast-card" style="background:#FF2D55; border-color:#FF2D55">
+      <div class="contrast-label" style="color:#fff8">Alerte dégâts</div>
+      <div class="contrast-sample" style="color:#fff">−20 HP</div>
+      <div class="contrast-tag" style="color:#fff8">#FFFFFF sur #FF2D55</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== ÉLÉMENTS DE JEU ==================== -->
+<section>
+  <h2>Éléments Spécifiques au Jeu</h2>
+  <div class="game-elements">
+
+    <div class="game-card">
+      <div class="game-card-title">États de parade</div>
+      <div>
+        <span class="game-pill" style="background:#1A2540; color:#5A7A99">ABSORB</span><br>
+        <span style="font-size:10px; color:#3A5570">Balle absorbée — pas de clic</span>
+      </div>
+      <br>
+      <div>
+        <span class="game-pill" style="background:#1A2540; color:#E2EAF4">STANDARD</span><br>
+        <span style="font-size:10px; color:#3A5570">Parade réussie — clic détecté</span>
+      </div>
+      <br>
+      <div>
+        <span class="game-pill" style="background:#332200; color:#FFB400; border:1px solid #FFB400">✦ CRITICAL</span><br>
+        <span style="font-size:10px; color:#3A5570">Timing parfait — flash or</span>
+      </div>
+    </div>
+
+    <div class="game-card">
+      <div class="game-card-title">Barres de statut</div>
+      <div class="game-bar-label" style="color:#22C55E">HP Joueur</div>
+      <div class="game-bar"><div class="game-bar-fill" style="width:72%; background:#22C55E"></div></div>
+      <div class="game-bar-label" style="color:#FF2D55">HP Joueur (critique)</div>
+      <div class="game-bar"><div class="game-bar-fill" style="width:18%; background:#FF2D55"></div></div>
+      <div class="game-bar-label" style="color:#FF5C2B">HP Ennemi</div>
+      <div class="game-bar"><div class="game-bar-fill" style="width:55%; background:#FF5C2B"></div></div>
+      <div class="game-bar-label" style="color:#FFB400">HP Boss</div>
+      <div class="game-bar"><div class="game-bar-fill" style="width:40%; background:linear-gradient(90deg,#FF5C2B,#FFB400)"></div></div>
+    </div>
+
+    <div class="game-card">
+      <div class="game-card-title">Indicateurs ennemis</div>
+      <div style="display:flex; flex-direction:column; gap:10px">
+        <div style="padding:8px 12px; border-radius:6px; background:#FF5C2B22; border-left:3px solid #FF5C2B">
+          <div style="color:#FF5C2B; font-size:12px; font-weight:600">⚠ Zone mortier</div>
+          <div style="color:#5A7A99; font-size:10px">Orange → rouge à l'impact</div>
+        </div>
+        <div style="padding:8px 12px; border-radius:6px; background:#FF2D5522; border-left:3px solid #FF2D55">
+          <div style="color:#FF2D55; font-size:12px; font-weight:600">● Bullet ennemie</div>
+          <div style="color:#5A7A99; font-size:10px">Rouge vif, traçante sombre</div>
+        </div>
+        <div style="padding:8px 12px; border-radius:6px; background:#00D4FF22; border-left:3px solid #00D4FF">
+          <div style="color:#00D4FF; font-size:12px; font-weight:600">◈ Bullet renvoyée</div>
+          <div style="color:#5A7A99; font-size:10px">Cyan plasma / or si critique</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="game-card">
+      <div class="game-card-title">Rareté des objets (roguelite)</div>
+      <div style="display:flex; flex-direction:column; gap:8px">
+        <div style="display:flex; align-items:center; gap:8px">
+          <div style="width:10px;height:10px;border-radius:50%;background:#C8D8E8;flex-shrink:0"></div>
+          <span style="color:#C8D8E8; font-size:12px; font-weight:600">Commun</span>
+          <span style="color:#3A5570; font-size:10px">#C8D8E8</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px">
+          <div style="width:10px;height:10px;border-radius:50%;background:#22C55E;flex-shrink:0"></div>
+          <span style="color:#22C55E; font-size:12px; font-weight:600">Peu commun</span>
+          <span style="color:#3A5570; font-size:10px">#22C55E</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px">
+          <div style="width:10px;height:10px;border-radius:50%;background:#00D4FF;flex-shrink:0"></div>
+          <span style="color:#00D4FF; font-size:12px; font-weight:600">Rare</span>
+          <span style="color:#3A5570; font-size:10px">#00D4FF</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px">
+          <div style="width:10px;height:10px;border-radius:50%;background:#A855F7;flex-shrink:0"></div>
+          <span style="color:#A855F7; font-size:12px; font-weight:600">Épique</span>
+          <span style="color:#3A5570; font-size:10px">#A855F7</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px">
+          <div style="width:10px;height:10px;border-radius:50%;background:#FFB400;flex-shrink:0"></div>
+          <span style="color:#FFB400; font-size:12px; font-weight:600">Légendaire</span>
+          <span style="color:#3A5570; font-size:10px">#FFB400</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ==================== À ÉVITER ==================== -->
+<section>
+  <h2>Associations à Éviter</h2>
+  <div class="avoid-grid">
+    <div class="avoid-card">
+      <div class="avoid-sample" style="color:#aaa; background:#888; display:inline-block; padding:2px 8px; border-radius:4px">Texte gris sur fond gris</div>
+      <div class="avoid-reason">Contraste insuffisant — illisible</div>
+    </div>
+    <div class="avoid-card">
+      <div class="avoid-sample" style="color:#fff; background:#444; display:inline-block; padding:2px 8px; border-radius:4px">Blanc sur gris neutre</div>
+      <div class="avoid-reason">Pas assez de contraste, terne — utilise le fond #080C17</div>
+    </div>
+    <div class="avoid-card">
+      <div class="avoid-sample" style="color:#0090BB">Cyan profond sur fond sombre</div>
+      <div class="avoid-reason">Trop peu de contraste pour du texte corps — réserve au cyan vif #00D4FF</div>
+    </div>
+    <div class="avoid-card">
+      <div class="avoid-sample" style="color:#22C55E; background:#001A0A; padding:2px 8px; border-radius:4px">Vert sur fond quasi-noir vert</div>
+      <div class="avoid-reason">Le vert ne doit pas être utilisé comme couleur UI générale — HP uniquement</div>
+    </div>
+    <div class="avoid-card">
+      <div class="avoid-sample" style="color:#FF2D55; background:#FF5C2B22; padding:2px 8px; border-radius:4px">Rouge sur fond orange</div>
+      <div class="avoid-reason">Deux couleurs chaudes ensemble — confusion de priorité visuelle</div>
+    </div>
+    <div class="avoid-card">
+      <div class="avoid-sample" style="color:#FFB400; background:#332200; padding:2px 8px; border-radius:4px">Or sur tous les éléments</div>
+      <div class="avoid-reason">L'or est réservé au CRITICAL et légendaire — ne pas diluer son impact</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== RÉSUMÉ RAPIDE ==================== -->
+<section>
+  <h2>Résumé — Règles à retenir</h2>
+  <div style="background:#0D1525; border-radius:10px; padding:24px; border:1px solid #1A2540; display:flex; flex-direction:column; gap:12px">
+    <div style="display:flex; gap:12px; align-items:flex-start">
+      <span style="color:#00D4FF; font-size:16px; flex-shrink:0">→</span>
+      <span style="color:#C8D8E8"><strong style="color:#00D4FF">Texte principal</strong> toujours sur fond #080C17 ou #0D1525 — jamais sur couleur d'accentuation sauf boutons.</span>
+    </div>
+    <div style="display:flex; gap:12px; align-items:flex-start">
+      <span style="color:#00D4FF; font-size:16px; flex-shrink:0">→</span>
+      <span style="color:#C8D8E8"><strong style="color:#FFB400">L'or #FFB400</strong> est exclusivement réservé au CRITICAL et aux objets légendaires.</span>
+    </div>
+    <div style="display:flex; gap:12px; align-items:flex-start">
+      <span style="color:#00D4FF; font-size:16px; flex-shrink:0">→</span>
+      <span style="color:#C8D8E8"><strong style="color:#FF2D55">Le rouge #FF2D55</strong> = danger joueur (dégâts, mort). <strong style="color:#FF5C2B">L'orange #FF5C2B</strong> = danger zone (mortier, avertissement).</span>
+    </div>
+    <div style="display:flex; gap:12px; align-items:flex-start">
+      <span style="color:#00D4FF; font-size:16px; flex-shrink:0">→</span>
+      <span style="color:#C8D8E8"><strong style="color:#22C55E">Le vert #22C55E</strong> est réservé aux HP et aux effets de soin — pas utilisé ailleurs.</span>
+    </div>
+    <div style="display:flex; gap:12px; align-items:flex-start">
+      <span style="color:#00D4FF; font-size:16px; flex-shrink:0">→</span>
+      <span style="color:#C8D8E8">Les <strong style="color:#C8D8E8">couleurs de rareté</strong> (gris→vert→cyan→violet→or) suivent le standard roguelite pour que les joueurs les reconnaissent instinctivement.</span>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

@@ -1,0 +1,34 @@
+[gd_scene format=3 uid="uid://ubnnx67erpeq"]
+
+[ext_resource type="Script" uid="uid://svq0dgubkjnl" path="res://scripts/enemies/types/PetCow.gd" id="1_cowscr"]
+[ext_resource type="Script" uid="uid://2yhjo5vqeyen" path="res://scripts/enemies/components/WeaponShotgun.gd" id="2_shotgunscr"]
+[ext_resource type="PackedScene" uid="uid://bel0mc1kmgsxh" path="res://assets/models/enemies/animal-cow.glb" id="3_cowmdl"]
+[ext_resource type="PackedScene" uid="uid://ct75y22qt5321" path="res://assets/models/weapons/blaster-l.glb" id="4_blastl"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_cow01"]
+size = Vector3(2, 1.5, 1.5)
+
+[node name="PetCow" type="CharacterBody3D" unique_id=1156179715]
+collision_layer = 16
+collision_mask = 5
+script = ExtResource("1_cowscr")
+max_hp = 35
+move_speed = 2.2
+
+[node name="animal-cow2" parent="." unique_id=510808657 instance=ExtResource("3_cowmdl")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1828598604]
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0.4, 0)
+shape = SubResource("BoxShape3D_cow01")
+
+[node name="WeaponMount" type="Node3D" parent="." unique_id=1467579048]
+transform = Transform3D(-1, 8.742278e-08, 0, 8.742278e-08, 1, 8.742278e-08, 7.642742e-15, 8.742278e-08, -1, 0, 0.8, 0)
+
+[node name="WeaponShotgun" type="Node3D" parent="WeaponMount" unique_id=2027221337]
+script = ExtResource("2_shotgunscr")
+bullet_speed = 8.0
+fire_rate = 0.5
+shoot_range = 7.0
+
+[node name="blaster-l2" parent="WeaponMount" unique_id=948977259 instance=ExtResource("4_blastl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16, 0)

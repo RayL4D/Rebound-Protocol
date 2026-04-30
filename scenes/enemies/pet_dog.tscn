@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://b2oxmnlr28vu"]
+
+[ext_resource type="Script" path="res://scripts/enemies/types/PetDog.gd" id="1_bexsh"]
+[ext_resource type="Script" uid="uid://ctgsruby2erwx" path="res://scripts/enemies/components/WeaponBullet.gd" id="2_boyjv"]
+[ext_resource type="PackedScene" uid="uid://co3cjly100bno" path="res://assets/models/enemies/animal-dog.glb" id="2_i6pi7"]
+[ext_resource type="PackedScene" uid="uid://qem2neepmxw3" path="res://assets/models/weapons/blaster-a.glb" id="4_kn80r"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_72y31"]
+size = Vector3(2, 1.5, 1.5)
+
+[node name="PetDog" type="CharacterBody3D" unique_id=437757490]
+collision_layer = 16
+collision_mask = 5
+script = ExtResource("1_bexsh")
+max_hp = 20
+move_speed = 2.5
+
+[node name="animal-dog2" parent="." unique_id=1352683536 instance=ExtResource("2_i6pi7")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1296372810]
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0.4, 0)
+shape = SubResource("BoxShape3D_72y31")
+
+[node name="WeaponMount" type="Node3D" parent="." unique_id=1587660172]
+transform = Transform3D(-1, 8.742278e-08, 0, 8.742278e-08, 1, 8.742278e-08, 7.642742e-15, 8.742278e-08, -1, 0, 0.8, 0.1)
+
+[node name="WeaponBullet" type="Node3D" parent="WeaponMount" unique_id=1071951884]
+script = ExtResource("2_boyjv")
+shoot_range = 8.0
+
+[node name="blaster-a2" parent="WeaponMount" unique_id=110874343 instance=ExtResource("4_kn80r")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16369629, 0)
