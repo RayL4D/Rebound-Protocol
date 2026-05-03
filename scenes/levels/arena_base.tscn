@@ -18,6 +18,17 @@
 [ext_resource type="PackedScene" uid="uid://chm01swb33150" path="res://scenes/ui/HUD.tscn" id="14_srw3s"]
 [ext_resource type="PackedScene" uid="uid://pbrlw8kcrlq4" path="res://scenes/ui/game_over.tscn" id="15_tm1id"]
 [ext_resource type="Script" uid="uid://c8iuwrbemhmo6" path="res://scripts/levels/wave_manager.gd" id="16_wvmgr"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/pet_cat.tscn" id="20_8iijb"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/pet_fox.tscn" id="21_dyu6h"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/pet_bunny.tscn" id="22_lj50e"]
+[ext_resource type="PackedScene" uid="uid://ubnnx67erpeq" path="res://scenes/enemies/pet_cow.tscn" id="23_cugfp"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/pet_panda.tscn" id="24_p6da7"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/pet_crab.tscn" id="25_au5km"]
+[ext_resource type="PackedScene" uid="uid://b2oxmnlr28vu" path="res://scenes/enemies/pet_dog.tscn" id="25_cugfp"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/pet_beaver.tscn" id="26_8yrtu"]
+[ext_resource type="PackedScene" uid="uid://7wauf7cfba3u" path="res://scenes/enemies/pet_monkey.tscn" id="26_p6da7"]
+[ext_resource type="PackedScene" uid="uid://dajdjjps15wxw" path="res://scenes/enemies/pet_koala.tscn" id="27_au5km"]
+[ext_resource type="PackedScene" uid="uid://8c3fp8pbliug" path="res://scenes/enemies/pet_penguin.tscn" id="28_8yrtu"]
 [ext_resource type="PackedScene" uid="uid://b2hehayj3ft7e" path="res://scenes/levels/zones/level_exit.tscn" id="17_djr2x"]
 [ext_resource type="PackedScene" uid="uid://b2oxmnlr28vu" path="res://scenes/enemies/pet_dog.tscn" id="22_8iijb"]
 [ext_resource type="PackedScene" uid="uid://df24nylblu4vu" path="res://scenes/ui/mobile_controls.tscn" id="22_dyu6h"]
@@ -1395,7 +1406,7 @@ transform = Transform3D(5.6521845, 0, 4.1295066, 0, 7, 0, -4.1295066, 0, 5.65218
 transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -48.390343, -0.5, -13.552826)
 
 [node name="Player" parent="." unique_id=222719199 instance=ExtResource("12_idjjk")]
-transform = Transform3D(-0.40747008, 0, -0.9132187, 0, 1, 0, 0.9132187, 0, -0.40747008, -28.00249, 0.38722527, -26.176981)
+transform = Transform3D(0.34688687, 0, 0.9379073, 0, 1, 0, -0.9379073, 0, 0.34688687, -28.00249, 0.38722527, -26.176981)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1587413322]
 transform = Transform3D(1, 0, 0, 0, -0.53931475, 0.8421044, 0, -0.8421044, -0.53931475, 0, 0, 0)
@@ -1409,7 +1420,34 @@ transform = Transform3D(0.3659166, 0, 0.9306477, 0, 1, 0, -0.9306477, 0, 0.36591
 
 [node name="GameOver" parent="." unique_id=892376385 instance=ExtResource("15_tm1id")]
 
-[node name="PauseMenu" parent="." unique_id=999001234 instance=ExtResource("29_pausemnu")]
+[node name="PetCat" parent="." unique_id=1086200248 instance=ExtResource("20_8iijb")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 16.382004)
+
+[node name="PetFox" parent="." unique_id=1782554325 instance=ExtResource("21_dyu6h")]
+
+[node name="PetBunny" parent="." unique_id=654068287 instance=ExtResource("22_lj50e")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.1905007, 0, 13.329693)
+
+[node name="PetCow" parent="." unique_id=441439967 instance=ExtResource("23_cugfp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.507702, 0, 7.2906094)
+
+[node name="PetPanda" parent="." unique_id=425175561 instance=ExtResource("24_p6da7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.405733, 0, 15.318726)
+
+[node name="PetCrab" parent="." unique_id=636765062 instance=ExtResource("25_au5km")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.067233, 0, 5.8237743)
+
+[node name="PetBeaver" parent="." unique_id=373662214 instance=ExtResource("26_8yrtu")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.610998, 0, 9.517904)
+
+[node name="PetDog" parent="." unique_id=437757490 instance=ExtResource("25_cugfp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.771176, 0, 0)
+
+[node name="PetMonkey" parent="." unique_id=1311152199 instance=ExtResource("26_p6da7")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.927581, 0, 0)
+
+[node name="PetKoala" parent="." unique_id=587489644 instance=ExtResource("27_au5km")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6.7714443)
 
 [node name="MobileControls" parent="." unique_id=246116136 instance=ExtResource("22_dyu6h")]
 

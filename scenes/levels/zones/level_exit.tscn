@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://b2hehayj3ft7e"]
 
-[ext_resource type="Script" uid="uid://5x8po4pdvkxj" path="res://scripts/levels/level_exit.gd" id="1_80rfq"]
+[ext_resource type="Script" uid="uid://5x8po4pdvkxj" path="res://scripts/levels/zones/level_exit.gd" id="1_80rfq"]
 [ext_resource type="Texture2D" uid="uid://b4g1i85803qpq" path="res://ui_theme/png/cursor/cursor_pointer3D.png" id="2_6ab03"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_6ab03"]

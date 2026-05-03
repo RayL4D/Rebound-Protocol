@@ -1,0 +1,112 @@
+[gd_scene format=3 uid="uid://bk14aw3kobgpm"]
+
+[ext_resource type="Script" uid="uid://vn6kfcnbsw8a" path="res://scripts/levels/zones/instant_exit.gd" id="1_h18m8"]
+[ext_resource type="Texture2D" uid="uid://b4g1i85803qpq" path="res://ui_theme/png/cursor/cursor_pointer3D.png" id="1_o6v2b"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_h18m8"]
+size = Vector3(3.052208, 3.0622559, 0.6731262)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_80rfq"]
+albedo_color = Color(18.892157, 18.892157, 18.892157, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_gpv4n"]
+material = SubResource("StandardMaterial3D_80rfq")
+size = Vector3(3, 3, 0)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_o6v2b"]
+albedo_color = Color(18.892157, 18.892157, 18.892157, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_h18m8"]
+material = SubResource("StandardMaterial3D_o6v2b")
+top_radius = 1.5
+height = 0.001
+
+[sub_resource type="Animation" id="Animation_agokr"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("ArrowPivot/Sprite3D:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(0.030884624, 1.9817233, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("ArrowPivot/Sprite3D:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(-7.769448e-08, -3.1415925, 2.6653447)]
+}
+
+[sub_resource type="Animation" id="Animation_6bulu"]
+resource_name = "direction_animation"
+length = 4.0
+loop_mode = 2
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("ArrowPivot/Sprite3D:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 2, 4),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector3(0.030884624, 1.9817233, 0), Vector3(0.030884624, 2.3377168, 0), Vector3(0.030884624, 1.9817233, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("ArrowPivot/Sprite3D:rotation")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(-7.769448e-08, -3.1415925, 2.6653447)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_xqna2"]
+_data = {
+&"RESET": SubResource("Animation_agokr"),
+&"direction_animation": SubResource("Animation_6bulu")
+}
+
+[node name="Instant_exit" type="Area3D" unique_id=882866086]
+script = ExtResource("1_h18m8")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=42472318]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.007968903, 0.025024414, 0.24266052)
+shape = SubResource("BoxShape3D_h18m8")
+
+[node name="GuideTarget" type="Marker3D" parent="." unique_id=535887219]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.21416986, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=2054332960]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.008865714, -0.032667637, 0.04934454)
+mesh = SubResource("BoxMesh_gpv4n")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="." unique_id=1533355037]
+transform = Transform3D(1, 0, 0, 0, -0.019232323, -0.99981505, 0, 0.99981505, -0.019232323, 0, 1.6001364, 0.026498795)
+mesh = SubResource("CylinderMesh_h18m8")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=922719862]
+libraries/ = SubResource("AnimationLibrary_xqna2")
+
+[node name="ArrowPivot" type="Node3D" parent="." unique_id=1101234176]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0.24089515)
+
+[node name="Sprite3D" type="Sprite3D" parent="ArrowPivot" unique_id=243041040]
+transform = Transform3D(1.7774425, 0.9168957, -3.019916e-07, 0.9168957, -1.7774425, 1.5538896e-07, -1.9714862e-07, -2.7654485e-07, -2, 0.030884624, 1.9817233, 0)
+texture = ExtResource("1_o6v2b")
