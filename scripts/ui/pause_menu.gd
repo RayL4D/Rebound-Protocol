@@ -75,10 +75,11 @@ func _resume() -> void:
 # =============================================================
 
 func _build_ui() -> void:
-	# Fond assombri plein écran
+	# Fond assombri plein écran (IGNORE pour ne pas bloquer les clics sur les boutons)
 	var overlay := ColorRect.new()
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	overlay.color = COLOR_BG
+	overlay.color        = COLOR_BG
+	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(overlay)
 
 	_panel_main     = _build_main_panel()
@@ -403,6 +404,7 @@ func _make_button(label_text: String, callback: Callable) -> Button:
 	var btn := Button.new()
 	btn.text                   = label_text
 	btn.custom_minimum_size    = Vector2(220, 44)
+	btn.process_mode           = Node.PROCESS_MODE_WHEN_PAUSED  # reçoit le touch/clic pendant la pause
 	if _font:
 		btn.add_theme_font_override("font", _font)
 	btn.add_theme_font_size_override("font_size", 18)

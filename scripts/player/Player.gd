@@ -202,7 +202,11 @@ func _physics_process(delta: float) -> void:
 	# Déclenche l'animation de parade (clavier/gamepad ou bouton mobile)
 	var mobile_parry := _mobile_parry_requested
 	_mobile_parry_requested = false
-	if Input.is_action_just_pressed("parry") or mobile_parry:
+	# Sur mobile, on n'accepte QUE le bouton dédié (mobile_parry).
+	# is_action_just_pressed("parry") est ignoré car "Emulate Mouse From Touch"
+	# le déclencherait sur chaque tap d'écran (parry = left mouse button).
+	var keyboard_parry := Input.is_action_just_pressed("parry") and not OS.has_feature("mobile")
+	if keyboard_parry or mobile_parry:
 		_parry_requested = true
 		parried.emit()
 		var pb := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
