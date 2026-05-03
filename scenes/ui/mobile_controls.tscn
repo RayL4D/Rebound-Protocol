@@ -1,0 +1,135 @@
+[gd_scene format=3 uid="uid://bxss4q4q2p5dq"]
+
+[ext_resource type="PackedScene" uid="uid://dmr0fcamx7t56" path="res://addons/virtual_joystick/virtual_joystick_scene.tscn" id="1_joyscene"]
+[ext_resource type="Script" uid="uid://nwedla8ibw6g" path="res://scripts/ui/MobileControls.gd" id="2_script"]
+[ext_resource type="Script" uid="uid://da7fgofgyky11" path="res://scripts/ui/JumpButton.gd" id="3_jumpscript"]
+[ext_resource type="Script" uid="uid://4f33c2777370" path="res://scripts/ui/ParryButton.gd" id="4_parryscript"]
+[ext_resource type="Script" uid="uid://6x3rn2lodt1b" path="res://scripts/ui/DashButton.gd" id="5_wj250"]
+[ext_resource type="Script" uid="uid://qjttx84a6hqx" path="res://scripts/ui/ZoomButton.gd" id="6_zoombtnscript"]
+[ext_resource type="Script" uid="uid://pfa7vu4qhcr2" path="res://scripts/ui/SettingsButton.gd" id="7_settingsbtnscript"]
+
+[node name="MobileControls" type="CanvasLayer" unique_id=1449797109]
+layer = 10
+script = ExtResource("2_script")
+
+[node name="LeftJoystick" parent="." unique_id=645362733 instance=ExtResource("1_joyscene")]
+anchors_preset = -1
+anchor_top = 0.45
+anchor_right = 0.45
+offset_left = -260.0
+offset_top = 0.0
+offset_right = -172.54999
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 2
+pressed_color = Color(0.74509805, 0.74509805, 0.74509805, 1)
+clampzone_size = 110.0
+visibility_mode = 1
+action_left = "move_left"
+action_right = "move_right"
+action_up = "move_forward"
+action_down = "move_backward"
+
+[node name="RightJoystick" parent="." unique_id=1523875788 instance=ExtResource("1_joyscene")]
+anchors_preset = -1
+anchor_left = 0.55
+anchor_top = 0.45
+anchor_right = 1.0
+offset_left = 173.54999
+offset_top = 0.0
+offset_right = 261.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 2
+pressed_color = Color(0.74509805, 0.74509805, 0.74509805, 1)
+clampzone_size = 110.0
+visibility_mode = 1
+use_input_actions = false
+
+[node name="JumpButton" type="Control" parent="." unique_id=2029961154]
+custom_minimum_size = Vector2(126, 126)
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -645.0
+offset_top = -510.0
+offset_right = -470.0
+offset_bottom = -335.0
+grow_horizontal = 0
+grow_vertical = 0
+script = ExtResource("3_jumpscript")
+
+[node name="ParryButton" type="Control" parent="." unique_id=293804997]
+custom_minimum_size = Vector2(126, 126)
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -496.0
+offset_top = -641.0
+offset_right = -321.0
+offset_bottom = -466.0
+grow_horizontal = 0
+grow_vertical = 0
+script = ExtResource("4_parryscript")
+
+[node name="DashButton" type="Control" parent="." unique_id=891505385]
+custom_minimum_size = Vector2(126, 126)
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -659.0
+offset_top = -311.0
+offset_right = -484.0
+offset_bottom = -136.0
+grow_horizontal = 0
+grow_vertical = 0
+script = ExtResource("5_wj250")
+
+[node name="ZoomInButton" type="Control" parent="." unique_id=371820001]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -164.0
+offset_top = 120.0
+offset_right = -84.0
+offset_bottom = 200.0
+grow_horizontal = 0
+script = ExtResource("6_zoombtnscript")
+
+[node name="ZoomOutButton" type="Control" parent="." unique_id=371820002]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -164.0
+offset_top = 210.0
+offset_right = -84.0
+offset_bottom = 290.0
+grow_horizontal = 0
+script = ExtResource("6_zoombtnscript")
+zoom_in = false
+
+[node name="SettingsButton" type="Control" parent="." unique_id=512900001]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -164.0
+offset_top = 16.0
+offset_right = -74.0
+offset_bottom = 106.0
+grow_horizontal = 0
+script = ExtResource("7_settingsbtnscript")

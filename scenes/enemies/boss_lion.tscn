@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://c66tatlw2omu" path="res://assets/models/enemies/animal-lion.glb" id="4_lionmdl"]
 [ext_resource type="PackedScene" uid="uid://ct75y22qt5321" path="res://assets/models/weapons/blaster-l.glb" id="5_ewl4o"]
 [ext_resource type="PackedScene" uid="uid://cdssfpb0nboc" path="res://assets/models/weapons/blaster-e.glb" id="6_blaste"]
+[ext_resource type="Script" uid="uid://f8fkmgxc8vv5" path="res://scripts/ui/BossHealthBar.gd" id="7_bossbar"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_lion01"]
 size = Vector3(2.5, 2.2, 2)
@@ -17,7 +18,13 @@ script = ExtResource("1_lionscr")
 max_hp = 200
 model_scale = 1.4
 
-[node name="animal-lion2" parent="." unique_id=882345678 instance=ExtResource("4_lionmdl")]
+[node name="animal-lion2" parent="." unique_id=2054353663 instance=ExtResource("4_lionmdl")]
+
+[node name="body" parent="animal-lion2/animal-lion/root" parent_id_path=PackedInt32Array(2054353663, 1842175803) index="1" unique_id=1848596230]
+transform = Transform3D(0.9824088, 0.17322516, 0.069756456, -0.17364816, 0.9848077, -4.656613e-10, -0.0686967, -0.01211308, 0.9975641, 1.573182e-08, 0.18124998, -3.8083503e-08)
+
+[node name="tail" parent="animal-lion2/animal-lion/root/body" index="0" unique_id=658870890]
+transform = Transform3D(0.9396926, -0.34202015, 0, 0.34202015, 0.9396926, 0, 0, 0, 1, 0, 0.6375, -0.54839337)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=883456789]
 transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 0, 0.6, 0)
@@ -52,4 +59,9 @@ damage = 12
 transform = Transform3D(1, 6.6814974e-22, 0, 6.6814974e-22, 1, 0, 0, 0, 1, 0, 0, 0)
 
 [node name="SummonTimer" type="Timer" parent="." unique_id=889012345]
-wait_time = 20.0
+wait_time = 10.0
+
+[node name="BossHealthBar" type="Node3D" parent="." unique_id=890123456]
+script = ExtResource("7_bossbar")
+
+[editable path="animal-lion2"]

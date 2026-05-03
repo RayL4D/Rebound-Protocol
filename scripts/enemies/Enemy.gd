@@ -23,6 +23,9 @@ extends CharacterBody3D
 #   Boss final   → 1.8+  (imposant)
 @export var model_scale: float = 0.55
 
+# Immunité au stomp (mini-boss, boss) — à activer dans les sous-classes
+@export var stomp_immune: bool = false
+
 # Offset Y du modèle pour corriger les modèles dont le pivot
 # n'est pas centré sur les pieds. Ajuste dans l'inspector
 # jusqu'à ce que le pet repose bien sur le sol.
@@ -199,10 +202,102 @@ func _update_animation() -> void:
 
 func take_damage(amount: int) -> void:
 	current_hp = max(0, current_hp - amount)
+	_spawn_damage_number(amount)
 	if current_hp <= 0:
 		_die()
+
+
+func _spawn_damage_number(amount: int) -> void:
+	if not is_inside_tree():
+		return
+
+	var node := Node3D.new()
+	node.position = global_position + Vector3(randf_range(-0.3, 0.3), 1.5, randf_range(-0.3, 0.3))
+	get_tree().current_scene.add_child(node)
+
+	# Couleur selon l'intensité du coup
+	var col: Color
+	if amount >= 20:
+		col = Color(1.0, 0.35, 0.0)   # orange — gros dégât
+	elif amount >= 10:
+		col = Color(1.0, 0.9, 0.1)    # jaune — dégât normal
+	else:
+		col = Color(1.0, 1.0, 1.0)    # blanc — dégât faible
+
+	var label := Label3D.new()
+	label.text             = str(amount)
+	label.billboard        = BaseMaterial3D.BILLBOARD_ENABLED
+	label.font_size        = 52 + mini(amount, 20) * 2   # taille dynamique
+	label.modulate         = col
+	label.outline_size     = 7
+	label.outline_modulate = Color(0.0, 0.0, 0.0, 1.0)
+	label.no_depth_test    = true
+	node.add_child(label)
+
+	# Montée
+	var tween := node.create_tween()
+	tween.tween_property(node, "position:y", node.position.y + 2.2, 1.0)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(node.queue_free)
+
+	# Disparition
+	var fade := node.create_tween()
+	fade.tween_interval(0.25)
+	fade.tween_property(label, "modulate:a", 0.0, 0.75)
 
 
 func _die() -> void:
 	enemy_died.emit()
 	queue_free()
+
+
+# =============================================================
+# SOURCES DE DÉGÂTS ALTERNATIVES
+# =============================================================
+
+# Appelé par Player quand il atterrit dessus (stomp).
+# Anime un écrasement visuel + flash blanc.
+func stomp_squish() -> void:
+	if _model == null:
+		return
+	var orig := _model.scale
+	# Aplatissement immédiat
+	_model.scale = Vector3(orig.x * 1.5, orig.y * 0.15, orig.z * 1.5)
+	# Flash blanc sur tous les MeshInstance3D
+	_flash_white()
+	# Retour élastique à l'échelle normale
+	var tw := create_tween()
+	tw.tween_property(_model, "scale", orig, 0.35) \
+		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+
+# Impulsion horizontale (knockback dash-bouclier).
+func apply_knockback(direction: Vector3, force: float) -> void:
+	direction.y = 0.0
+	if direction.length_squared() < 0.001:
+		return
+	velocity.x += direction.normalized().x * force
+	velocity.z += direction.normalized().z * force
+
+
+# Flash blanc rapide sur le modèle (réutilisé par stomp + dash).
+func _flash_white() -> void:
+	if _model == null:
+		return
+	var meshes: Array[MeshInstance3D] = []
+	_collect_meshes(_model, meshes)
+	for mesh in meshes:
+		var orig_mat := mesh.get_surface_override_material(0)
+		var white    := StandardMaterial3D.new()
+		white.albedo_color = Color(1.0, 1.0, 1.0)
+		mesh.set_surface_override_material(0, white)
+		var tw := create_tween()
+		tw.tween_interval(0.08)
+		tw.tween_callback(func(): mesh.set_surface_override_material(0, orig_mat))
+
+
+func _collect_meshes(node: Node, out: Array[MeshInstance3D]) -> void:
+	if node is MeshInstance3D:
+		out.append(node as MeshInstance3D)
+	for child in node.get_children():
+		_collect_meshes(child, out)
