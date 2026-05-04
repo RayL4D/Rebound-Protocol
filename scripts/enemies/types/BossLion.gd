@@ -292,6 +292,9 @@ func _apply_phase2_shader(node: Node) -> void:
 		mat.shader = shader
 		mat.set_shader_parameter("albedo_tex", _enemy_texture)
 		(node as MeshInstance3D).set_surface_override_material(0, mat)
+		# Mettre à jour _orig_mats pour que _flash_hit restaure le shader
+		# de phase 2 (et non le colormap d'origine enregistré au démarrage).
+		_orig_mats[node] = mat
 	for child in node.get_children():
 		_apply_phase2_shader(child)
 

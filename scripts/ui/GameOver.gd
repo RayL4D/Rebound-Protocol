@@ -149,18 +149,22 @@ func _build_ui() -> void:
 	add_child(_flash_rect)
 
 	# Overlay sombre derrière le panneau
-	_overlay         = ColorRect.new()
-	_overlay.color   = Color(0.0, 0.0, 0.0, 0.65)
+	# MOUSE_FILTER_IGNORE : ne doit pas bloquer les clics sur les boutons du panneau
+	_overlay              = ColorRect.new()
+	_overlay.color        = Color(0.0, 0.0, 0.0, 0.65)
 	_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_overlay.visible = false
+	_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_overlay.visible      = false
 	add_child(_overlay)
 
 	# Panneau central
-	_panel           = Control.new()
-	_panel.size      = Vector2(380.0, 260.0)
+	# PROCESS_MODE_WHEN_PAUSED : doit répondre aux inputs même pendant la pause
+	_panel                = Control.new()
+	_panel.size           = Vector2(380.0, 260.0)
 	_panel.set_anchors_preset(Control.PRESET_CENTER)
-	_panel.position -= _panel.size * 0.5
-	_panel.visible   = false
+	_panel.position      -= _panel.size * 0.5
+	_panel.process_mode   = Node.PROCESS_MODE_WHEN_PAUSED
+	_panel.visible        = false
 	add_child(_panel)
 
 	var bg := ColorRect.new()
@@ -260,9 +264,10 @@ func _make_corners(origin: Vector2, size: Vector2, color: Color) -> Array:
 
 func _make_button(label: String, pos: Vector2, sz: Vector2, primary: bool) -> Button:
 	var btn := Button.new()
-	btn.text     = label
-	btn.position = pos
-	btn.size     = sz
+	btn.text         = label
+	btn.position     = pos
+	btn.size         = sz
+	btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED  # répond pendant la pause
 	btn.add_theme_font_size_override("font_size", 13 if primary else 11)
 	btn.add_theme_color_override("font_color",        COLOR_CYAN if primary else Color(0.4, 0.6, 0.7))
 	btn.add_theme_color_override("font_hover_color",  Color.WHITE)
@@ -306,7 +311,8 @@ func _animate_panel_in() -> void:
 
 func _on_retry() -> void:
 	get_tree().paused = false
-	get_tree().reload_current_scene()
+	# call_deferred obligatoire : reload depuis un signal callback provoque un crash
+	get_tree().reload_current_scene.call_deferred()
 
 
 func _on_quit() -> void:
