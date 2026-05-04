@@ -1403,7 +1403,6 @@ transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -48.390343, -0.5, -13.5528
 
 [node name="Player" parent="." unique_id=222719199 instance=ExtResource("12_idjjk")]
 transform = Transform3D(-0.51458955, 0, -0.85743695, 0, 1, 0, 0.85743695, 0, -0.51458955, -28.00249, 0.38722527, -26.176981)
-max_hp = 10
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1587413322]
 transform = Transform3D(1, 0, 0, 0, -0.53931475, 0.8421044, 0, -0.8421044, -0.53931475, 0, 0, 0)

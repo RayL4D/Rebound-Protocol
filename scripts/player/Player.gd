@@ -171,12 +171,14 @@ func _apply_texture_recursive(node: Node) -> void:
 func _physics_process(delta: float) -> void:
 	if is_dead:
 		# Garder la caméra orientée et en place pendant l'animation de mort.
-		# spring_arm.collision_mask est déjà à 0 (fixé dans _die()),
-		# donc le bras ne se raccourcit pas même si le mesh bouge.
+		# On force spring_length = _target_zoom chaque frame : même si le spring arm
+		# se contracte un instant (collision transitoire au moment de la mort avant
+		# que collision_mask = 0 soit pris en compte), il est rétabli immédiatement.
+		# Assignation atomique Vector3 pour éviter les artefacts Euler inter-composantes.
 		_handle_camera_orbit(delta)
-		spring_arm.global_position    = global_position + Vector3(0, 0.9, 0)
-		spring_arm.rotation_degrees.x = _cam_pitch
-		spring_arm.rotation_degrees.y = _cam_yaw
+		spring_arm.global_position  = global_position + Vector3(0, 0.9, 0)
+		spring_arm.rotation_degrees = Vector3(_cam_pitch, _cam_yaw, 0.0)
+		spring_arm.spring_length    = _target_zoom
 		return
 
 	_apply_gravity(delta)
@@ -203,10 +205,9 @@ func _physics_process(delta: float) -> void:
 
 	# Spring arm mis à jour AVANT _rotate_toward_mouse : le raycast souris
 	# utilise ainsi l'orientation de caméra du frame courant (et non du précédent).
-	spring_arm.global_position    = global_position + Vector3(0, 0.9, 0)
-	spring_arm.rotation_degrees.x = _cam_pitch
-	spring_arm.rotation_degrees.y = _cam_yaw
-	spring_arm.spring_length      = lerp(spring_arm.spring_length, _target_zoom, 10.0 * delta)
+	spring_arm.global_position  = global_position + Vector3(0, 0.9, 0)
+	spring_arm.rotation_degrees = Vector3(_cam_pitch, _cam_yaw, 0.0)
+	spring_arm.spring_length    = lerp(spring_arm.spring_length, _target_zoom, 10.0 * delta)
 
 	_rotate_toward_mouse()
 
@@ -699,4 +700,4 @@ func _die() -> void:
 	var playback := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
 	playback.travel("die")
 	player_died.emit()
-                                                                                                                                                                   
+                                                                                                                                                                                                                                          
