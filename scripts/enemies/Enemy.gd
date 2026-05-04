@@ -42,6 +42,12 @@ var _model: Node3D          = null
 var _anim_player: AnimationPlayer = null  # trouvé automatiquement dans _setup_model
 var _gesture_active: bool = false         # true pendant une animation de geste (bloque idle/walk/run)
 
+# Matériaux originaux mémorisés à l'init — restaurés après chaque flash.
+# Clé : MeshInstance3D  Valeur : Material original
+# Stocké une seule fois pour éviter la race condition (flash qui capture
+# un autre flash comme "original" quand plusieurs balles touchent vite).
+var _orig_mats: Dictionary = {}
+
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 # --- Signal (compatible avec EnemyPlaceholder) ------------------
@@ -94,6 +100,14 @@ func _setup_model() -> void:
 	var weapon_mount := get_node_or_null("WeaponMount")
 	if weapon_mount:
 		_apply_texture_recursive(weapon_mount, _weapon_texture)
+
+	# Mémoriser les matériaux originaux APRÈS leur application,
+	# pour pouvoir les restaurer correctement même si plusieurs flash
+	# se chevauchent (race condition).
+	var meshes: Array[MeshInstance3D] = []
+	_collect_meshes(_model, meshes)
+	for mesh in meshes:
+		_orig_mats[mesh] = mesh.get_surface_override_material(0)
 
 	# Trouver l'AnimationPlayer dans le GLB importé (recherche récursive)
 	_anim_player = _find_anim_player(_model)
@@ -407,11 +421,13 @@ func _flash_hit(color: Color, duration: float) -> void:
 	var meshes: Array[MeshInstance3D] = []
 	_collect_meshes(_model, meshes)
 	for mesh in meshes:
-		var orig_mat := mesh.get_surface_override_material(0)
+		# Toujours restaurer vers le matériau original mémorisé à l'init,
+		# pas vers le matériau courant (qui peut déjà être un flash précédent).
+		var orig_mat: Material = _orig_mats.get(mesh, null)
 		var flash    := StandardMaterial3D.new()
-		flash.albedo_color         = color
-		flash.emission_enabled     = true
-		flash.emission             = color
+		flash.albedo_color               = color
+		flash.emission_enabled           = true
+		flash.emission                   = color
 		flash.emission_energy_multiplier = 1.5
 		mesh.set_surface_override_material(0, flash)
 		var tw := create_tween()
