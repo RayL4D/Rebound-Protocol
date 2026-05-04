@@ -22,6 +22,9 @@ func setup(player: Player, panel: Control, message_label: Label, step_label: Lab
 	_panel         = panel
 	_message_label = message_label
 	_step_label    = step_label
+	# Connecter les signaux Player pour détecter les actions mobiles ET clavier
+	_player.jumped.connect(func(): _jumped = true)
+	_player.parried.connect(func(): _parried = true)
 	_hide()
 
 
@@ -32,15 +35,12 @@ func start() -> void:
 func _process(_delta: float) -> void:
 	if not _player: return
 
+	# Détecter le mouvement via la vélocité horizontale (fonctionne clavier + mobile)
 	if not _moved:
 		var horiz := Vector2(_player.velocity.x, _player.velocity.z)
 		if horiz.length_squared() > 0.5: _moved = true
-
-	if not _jumped and Input.is_action_just_pressed("jump"):
-		_jumped = true
-
-	if not _parried and Input.is_action_just_pressed("parry"):
-		_parried = true
+	# _jumped et _parried sont mis à true via les signaux Player.jumped / Player.parried
+	# connectés dans setup() — fonctionne pour clavier ET boutons mobiles.
 
 
 func _run_tutorial() -> void:
