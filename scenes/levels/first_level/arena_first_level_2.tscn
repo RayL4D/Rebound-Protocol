@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://cndnvc3c1yt7p"]
 
-[ext_resource type="Script" uid="uid://uya5dfbbo8ri" path="res://scripts/levels/arena_first_level_2.gd" id="1_723dc"]
+[ext_resource type="Script" path="res://scripts/levels/arena_first_level_2.gd" id="1_723dc"]
 [ext_resource type="PackedScene" uid="uid://cp8oo218ghcj" path="res://scenes/player/player.tscn" id="1_oyrup"]
 [ext_resource type="Texture2D" uid="uid://ds67yxarl10l1" path="res://assets/textures/cave/marble_cliff_02_diff_2k.jpg" id="2_pxi4t"]
-[ext_resource type="PackedScene" uid="uid://bk14aw3kobgpm" path="res://scenes/levels/zones/instant_exit.tscn" id="3_fmwuw"]
+[ext_resource type="PackedScene" path="res://scenes/levels/zones/instant_exit.tscn" id="3_fmwuw"]
 
 [sub_resource type="Environment" id="Environment_pxi4t"]
 background_mode = 1
