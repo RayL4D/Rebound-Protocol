@@ -17,6 +17,8 @@ func _ready() -> void:
 	
 	TranslationServer.set_locale(SceneManager.current_lang)
 	
+	#TranslationServer.set_locale("es") # Espagnol pour le test
+	
 	await get_tree().process_frame
 	CollisionManager.add_missing_collisions(self)
 
@@ -77,10 +79,6 @@ func _spawn_boss() -> void:
 	_boss.boss_hp_changed.connect(_on_boss_hp_changed)
 	_boss.boss_died.connect(_on_boss_died)
 
-	# Afficher la barre HP du boss dans le HUD
-	if hud.has_method("show_boss_bar"):
-		hud.show_boss_bar(tr("BOSS_LION_NAME"), _boss.max_hp)
-
 	# Afficher un message d'annonce
 	var message_label: Label = hud.get_node_or_null("%MessageLabel")
 	var panel: Control       = hud.get_node_or_null("%PanelContainer")
@@ -93,16 +91,11 @@ func _spawn_boss() -> void:
 		panel.visible = false
 
 
-func _on_boss_hp_changed(current_hp: int, max_hp: int) -> void:
-	if hud.has_method("update_boss_hp"):
-		hud.update_boss_hp(current_hp, max_hp)
+func _on_boss_hp_changed(_current_hp: int, _max_hp: int) -> void:
+	pass
 
 
 func _on_boss_died() -> void:
-	# Cacher la barre HP du boss
-	if hud.has_method("hide_boss_bar"):
-		hud.hide_boss_bar()
-
 	# Activer la sortie et afficher le message de fin
 	var exit_zone = $LevelExit
 	exit_zone.activate()
