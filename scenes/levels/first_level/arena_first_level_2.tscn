@@ -178,7 +178,7 @@ transform = Transform3D(0.51460797, 0.75536805, -0.40570703, 0.72748506, -0.6350
 mesh = SubResource("PlaneMesh_3muyu")
 
 [node name="CollisionShape3D_01" type="CollisionShape3D" parent="Ground" unique_id=1610276135]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.052204132, -0.23324108, -0.051488876)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.052, 0, -0.051)
 shape = SubResource("BoxShape3D_pxi4t")
 
 [node name="CollisionShape3D_02" type="CollisionShape3D" parent="Ground" unique_id=1773142544]
@@ -205,7 +205,7 @@ shape = SubResource("BoxShape3D_pxi4t")
 transform = Transform3D(0.009599137, 0, 0.9999539, 0, 1, 0, -0.9999539, 0, 0.009599137, 13.098409, 1.8962939, 3.1270933)
 
 [node name="Lantern" type="OmniLight3D" parent="Player" unique_id=1684608561]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.009598255, 1.5925252, -0.9999542)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0014309883, 1.5925252, -0.14918041)
 shadow_enabled = true
 
 [node name="Exits" type="Node3D" parent="." unique_id=994436842]
