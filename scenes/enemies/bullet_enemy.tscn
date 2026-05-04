@@ -3,11 +3,11 @@
 [ext_resource type="Script" uid="uid://bycoh56rhhvax" path="res://scripts/projectiles/Bullet.gd" id="1"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_1"]
-radius = 0.1
-height = 0.2
+radius = 0.13
+height = 0.26
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_1"]
-radius = 0.1
+radius = 0.11
 
 [node name="BulletEnemy" type="Area3D" unique_id=913700578]
 collision_layer = 2

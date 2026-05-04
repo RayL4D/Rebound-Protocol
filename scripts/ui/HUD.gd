@@ -1,40 +1,86 @@
 # =============================================================
-# HUD.gd — Interface joueur (barre de vie holographique + Pointeur)
+# HUD.gd — Interface joueur
+# Rebound Protocol
+# =============================================================
+# Barre HP fixe en haut à gauche — style cyberpunk RPG.
+# • Panel semi-transparent avec coins décoratifs
+# • Header « SYS · INTEGRITY »
+# • Barre segmentée avec glow et highlight
+# • Couleur : cyan → orange → rouge selon les HP
+# • Pulsation rouge quand HP < 30 %
+# • Vignette de dégât plein écran
+# • Barre de boss en bas de l'écran
+# • Pointeur d'objectif
 # =============================================================
 extends CanvasLayer
 
-const BAR_WIDTH  := 120.0
-const BAR_HEIGHT := 8.0
-const CORNER_LEN := 6.0
-const CORNER_THK := 1.5
+# --- Dimensions du panel HP -----------------------------------
+const PANEL_W    := 260.0
+const PANEL_H    := 74.0
+const PANEL_X    := 16.0
+const PANEL_Y    := 16.0
+const BAR_W      := 228.0
+const BAR_H      := 14.0
+const BAR_X      := 16.0          # offset X dans le panel
+const BAR_Y      := 34.0          # offset Y dans le panel
+const SEGMENTS   := 8             # séparateurs dans la barre
+const CORNER_LEN := 9.0
+const CORNER_THK := 2.0
 
-var _container:  Control
-var _bg:         ColorRect
-var _fill:       ColorRect
-var _highlight:  ColorRect
-var _hp_label:   Label
-var _corners:    Array[ColorRect] = []
+# --- Dimensions barre boss ------------------------------------
+const BOSS_BAR_WIDTH  := 320.0
+const BOSS_BAR_HEIGHT := 14.0
 
-var _player:        Player   = null
-var _camera:        Camera3D = null
-var _current_fill:  float    = 1.0
-var _target_fill:   float    = 1.0
-var _pulse_time:    float    = 0.0
+# --- Palette --------------------------------------------------
+const COLOR_CYAN   := Color(0.00, 0.85, 1.00)
+const COLOR_BG     := Color(0.012, 0.040, 0.090, 0.92)
+const COLOR_BORDER := Color(0.00, 0.80, 1.00, 0.80)
+const COLOR_SEP    := Color(0.00, 0.80, 1.00, 0.22)
+const COLOR_HEADER := Color(0.55, 0.97, 1.00, 0.70)
+const COLOR_HPNUM  := Color(0.85, 1.00, 1.00, 0.90)
 
-const WORLD_OFFSET := Vector3(0.0, 2.4, 0.0)
-const COLOR_CYAN   := Color(0.0, 0.85, 1.0)
+# --- Shader vignette dégât ------------------------------------
+const DAMAGE_VIGNETTE_SHADER := """
+shader_type canvas_item;
+uniform float intensity : hint_range(0.0, 1.0) = 0.0;
+void fragment() {
+	vec2 uv = UV * 2.0 - 1.0;
+	float edge = min(1.0 - abs(uv.x), 1.0 - abs(uv.y));
+	float rim   = smoothstep(0.18, 0.0,  edge);
+	float glow  = smoothstep(0.38, 0.10, edge) * 0.18;
+	float alpha = clamp(rim * 0.7 + glow, 0.0, 1.0) * intensity;
+	vec3 col = mix(vec3(0.55, 0.0, 0.0), vec3(1.0, 0.12, 0.12), rim);
+	COLOR = vec4(col, alpha);
+}
+"""
 
-# --- Vignette de dégât -------------------------------------------
+# --- Refs UI --------------------------------------------------
+var _container:    Control
+var _fill:         ColorRect
+var _highlight:    ColorRect
+var _glow1:        ColorRect
+var _glow2:        ColorRect
+var _hp_label:     Label
+var _corners:      Array[ColorRect] = []
+
+# --- État animation -------------------------------------------
+var _player:       Player   = null
+var _camera:       Camera3D = null
+var _current_fill: float    = 1.0
+var _target_fill:  float    = 1.0
+var _pulse_time:   float    = 0.0
+
+# --- Vignette dégât -------------------------------------------
 var _vignette_rect: ColorRect      = null
 var _vignette_mat:  ShaderMaterial = null
 var _vignette_tween: Tween         = null
 
-# --- Pointeur de fin de niveau -----------------------------------
-var _guide_icon: TextureRect = null
-var guide_target: Node3D = null
+# --- Pointeur objectif ----------------------------------------
+var _guide_icon:  TextureRect = null
+var guide_target: Node3D      = null
 
-# --- Barre HP du boss -------------------------------------------
-var _boss_bar_container: Control  = null
+# --- Barre boss -----------------------------------------------
+var _boss_bar_container: Control   = null
 var _boss_bar_bg:        ColorRect = null
 var _boss_bar_fill:      ColorRect = null
 var _boss_name_label:    Label     = null
@@ -43,24 +89,10 @@ var _boss_max_hp:        int       = 1
 var _boss_target_fill:   float     = 1.0
 var _boss_current_fill:  float     = 1.0
 
-const BOSS_BAR_WIDTH  := 320.0
-const BOSS_BAR_HEIGHT := 14.0
 
-const DAMAGE_VIGNETTE_SHADER := """
-shader_type canvas_item;
-uniform float intensity : hint_range(0.0, 1.0) = 0.0;
-
-void fragment() {
-	vec2 uv = UV * 2.0 - 1.0;
-	float edge = min(1.0 - abs(uv.x), 1.0 - abs(uv.y));
-	float rim   = smoothstep(0.18, 0.0,  edge);
-	float glow  = smoothstep(0.38, 0.10, edge) * 0.18;
-	float line  = smoothstep(0.02, 0.0,  abs(edge - 0.01)) * 0.6;
-	float alpha = clamp(rim * 0.7 + glow + line, 0.0, 1.0) * intensity;
-	vec3 col = mix(vec3(0.55, 0.0, 0.0), vec3(1.0, 0.12, 0.12), rim);
-	COLOR = vec4(col, alpha);
-}
-"""
+# =============================================================
+# LIFECYCLE
+# =============================================================
 
 func _ready() -> void:
 	_build_ui()
@@ -78,156 +110,208 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if _player == null or _camera == null:
+	if _player == null:
 		return
 
-	# --- Barre HP du boss (interpolée) ---
+	# --- Barre HP boss (interpolée) ---
 	if _boss_bar_container != null and _boss_bar_container.visible:
 		_boss_current_fill = lerp(_boss_current_fill, _boss_target_fill, 10.0 * delta)
 		_boss_bar_fill.size.x = BOSS_BAR_WIDTH * _boss_current_fill
-		var col: Color
+		var bc: Color
 		if _boss_current_fill > 0.5:
-			col = Color(1.0, 0.2, 0.2).lerp(Color(1.0, 0.55, 0.0), (_boss_current_fill - 0.5) * 2.0)
+			bc = Color(1.0, 0.2, 0.2).lerp(Color(1.0, 0.55, 0.0), (_boss_current_fill - 0.5) * 2.0)
 		else:
-			col = Color(0.5, 0.0, 0.8).lerp(Color(1.0, 0.2, 0.2), _boss_current_fill * 2.0)
-		_boss_bar_fill.color = col
+			bc = Color(0.5, 0.0, 0.8).lerp(Color(1.0, 0.2, 0.2), _boss_current_fill * 2.0)
+		_boss_bar_fill.color = bc
 
-	# --- Gestion de la barre de vie ---
-	var screen_pos := _camera.unproject_position(_player.global_position + WORLD_OFFSET)
-	_container.position = screen_pos - _container.size * 0.5
-
+	# --- Barre HP joueur (interpolée, fixe en haut à gauche) ---
 	_current_fill = lerp(_current_fill, _target_fill, 12.0 * delta)
 	_refresh_bar(_current_fill)
 
 	if _target_fill < 0.3:
 		_pulse_time += delta * 5.0
 		var p := sin(_pulse_time) * 0.5 + 0.5
-		var pulse_col := Color(1.0, 0.1 + p * 0.2, 0.1)
-		_fill.color = pulse_col
+		var pulse_col := Color(1.0, 0.08 + p * 0.15, 0.08)
+		_fill.color  = pulse_col
+		_glow1.color = Color(pulse_col.r, pulse_col.g, pulse_col.b, 0.30)
+		_glow2.color = Color(pulse_col.r, pulse_col.g, pulse_col.b, 0.14)
 		for c in _corners:
 			c.color = pulse_col
 	else:
 		_pulse_time = 0.0
-		
-	# --- Gestion du pointeur d'objectif ---
-	if guide_target != null and is_instance_valid(guide_target):
-		# Si la cible est derrière la caméra, on cache le curseur
+
+	# --- Pointeur objectif ---
+	if _camera != null and guide_target != null and is_instance_valid(guide_target):
 		if _camera.is_position_behind(guide_target.global_position):
 			_guide_icon.hide()
 		else:
-			var target_pos2d = _camera.unproject_position(guide_target.global_position)
-			var tex_size = _guide_icon.texture.get_size() if _guide_icon.texture else Vector2(32, 32)
-			
-			# Centre l'icône sur la cible
-			_guide_icon.position = target_pos2d - (tex_size / 2.0)
+			var tp := _camera.unproject_position(guide_target.global_position)
+			var ts := _guide_icon.texture.get_size() if _guide_icon.texture else Vector2(32, 32)
+			_guide_icon.position = tp - ts * 0.5
 			_guide_icon.show()
-	elif _guide_icon.visible:
+	elif _guide_icon != null and _guide_icon.visible:
 		_guide_icon.hide()
 
 
 # =============================================================
-# BUILD
+# BUILD UI
 # =============================================================
 
 func _build_ui() -> void:
-	# Vignette de dégât
-	var shader        := Shader.new()
-	shader.code        = DAMAGE_VIGNETTE_SHADER
-	_vignette_mat      = ShaderMaterial.new()
+	# --- Vignette dégât (plein écran, derrière tout) ---
+	var shader         := Shader.new()
+	shader.code         = DAMAGE_VIGNETTE_SHADER
+	_vignette_mat       = ShaderMaterial.new()
 	_vignette_mat.shader = shader
-	_vignette_rect     = ColorRect.new()
+	_vignette_rect      = ColorRect.new()
 	_vignette_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_vignette_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_vignette_rect.material     = _vignette_mat
 	add_child(_vignette_rect)
 
-	# --- Création de l'icône de guidage ---
+	# --- Pointeur objectif ---
 	_guide_icon = TextureRect.new()
-	# /!\ Vérifiez que le chemin de votre image est bien le bon ici :
-	_guide_icon.texture = preload("res://ui_theme/png/cursor/cursor_pointer3D.png") 
+	_guide_icon.texture      = preload("res://ui_theme/png/cursor/cursor_pointer3D.png")
 	_guide_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_guide_icon.hide()
 	add_child(_guide_icon)
 
-	# Conteneur HP
-	var total_w := BAR_WIDTH + 24.0   
-	var total_h := BAR_HEIGHT + 14.0
-
-	_container      = Control.new()
-	_container.name = "HPContainer"
-	_container.size = Vector2(total_w, total_h)
+	# --- Panel HP (haut gauche) ---
+	_container              = Control.new()
+	_container.name         = "HPPanel"
+	_container.size         = Vector2(PANEL_W, PANEL_H)
+	_container.position     = Vector2(PANEL_X, PANEL_Y)
+	_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_container)
 
-	# Label "HP"
-	var tag              := Label.new()
-	tag.text              = "HP"
-	tag.size              = Vector2(20.0, total_h)
-	tag.position          = Vector2(0.0, 0.0)
-	tag.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
-	tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	tag.add_theme_font_size_override("font_size", 7)
-	tag.add_theme_color_override("font_color", Color(0.5, 0.85, 1.0, 0.8))
-	_container.add_child(tag)
-
-	var bar_x := 22.0
-	var bar_y := (total_h - BAR_HEIGHT) * 0.5
-
 	# Fond sombre
-	_bg           = ColorRect.new()
-	_bg.color     = Color(0.0, 0.05, 0.1, 0.9)
-	_bg.position  = Vector2(bar_x, bar_y)
-	_bg.size      = Vector2(BAR_WIDTH, BAR_HEIGHT)
-	_container.add_child(_bg)
+	var bg             := ColorRect.new()
+	bg.color            = COLOR_BG
+	bg.size             = Vector2(PANEL_W, PANEL_H)
+	bg.mouse_filter     = Control.MOUSE_FILTER_IGNORE
+	_container.add_child(bg)
 
-	# Remplissage
-	_fill         = ColorRect.new()
-	_fill.position = Vector2(bar_x, bar_y)
-	_fill.size    = Vector2(BAR_WIDTH, BAR_HEIGHT)
+	# Ligne décorative verticale gauche (accent)
+	var accent_line        := ColorRect.new()
+	accent_line.color       = Color(COLOR_CYAN, 0.80)
+	accent_line.position    = Vector2(0.0, 0.0)
+	accent_line.size        = Vector2(3.0, PANEL_H)
+	accent_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_container.add_child(accent_line)
+
+	# Header « SYS · INTEGRITY »
+	var header              := Label.new()
+	header.text              = "SYS · INTEGRITY"
+	header.position          = Vector2(BAR_X, 7.0)
+	header.size              = Vector2(160.0, 14.0)
+	header.add_theme_font_size_override("font_size", 9)
+	header.add_theme_color_override("font_color", COLOR_HEADER)
+	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_container.add_child(header)
+
+	# Icône ◈ + "HP" à droite du header
+	var icon_label              := Label.new()
+	icon_label.text              = "◈  HP"
+	icon_label.position          = Vector2(PANEL_W - 58.0, 7.0)
+	icon_label.size              = Vector2(50.0, 14.0)
+	icon_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	icon_label.add_theme_font_size_override("font_size", 9)
+	icon_label.add_theme_color_override("font_color", Color(COLOR_CYAN, 0.55))
+	icon_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_container.add_child(icon_label)
+
+	# Séparateur fin
+	var sep            := ColorRect.new()
+	sep.color           = COLOR_SEP
+	sep.position        = Vector2(BAR_X, 24.0)
+	sep.size            = Vector2(PANEL_W - BAR_X * 2.0, 1.0)
+	sep.mouse_filter    = Control.MOUSE_FILTER_IGNORE
+	_container.add_child(sep)
+
+	# --- Barre ---
+
+	# Fond de la barre
+	var bar_bg         := ColorRect.new()
+	bar_bg.color        = Color(0.0, 0.03, 0.07, 1.0)
+	bar_bg.position     = Vector2(BAR_X, BAR_Y)
+	bar_bg.size         = Vector2(BAR_W, BAR_H)
+	bar_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_container.add_child(bar_bg)
+
+	# Glow bas (simulé avec deux rects semi-transparents sous la barre)
+	_glow2              = ColorRect.new()
+	_glow2.color        = Color(COLOR_CYAN, 0.10)
+	_glow2.position     = Vector2(BAR_X, BAR_Y + BAR_H + 2.0)
+	_glow2.size         = Vector2(BAR_W, 4.0)
+	_glow2.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_container.add_child(_glow2)
+
+	_glow1              = ColorRect.new()
+	_glow1.color        = Color(COLOR_CYAN, 0.22)
+	_glow1.position     = Vector2(BAR_X, BAR_Y + BAR_H)
+	_glow1.size         = Vector2(BAR_W, 3.0)
+	_glow1.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_container.add_child(_glow1)
+
+	# Remplissage principal
+	_fill               = ColorRect.new()
+	_fill.color         = COLOR_CYAN
+	_fill.position      = Vector2(BAR_X, BAR_Y)
+	_fill.size          = Vector2(BAR_W, BAR_H)
+	_fill.mouse_filter  = Control.MOUSE_FILTER_IGNORE
 	_container.add_child(_fill)
 
-	# Ligne brillante (gloss)
-	_highlight        = ColorRect.new()
-	_highlight.color  = Color(1.0, 1.0, 1.0, 0.45)
-	_highlight.position = Vector2(bar_x, bar_y)
-	_highlight.size   = Vector2(BAR_WIDTH, 2.0)
+	# Highlight (ligne brillante en haut de la barre)
+	_highlight              = ColorRect.new()
+	_highlight.color         = Color(1.0, 1.0, 1.0, 0.28)
+	_highlight.position      = Vector2(BAR_X, BAR_Y)
+	_highlight.size          = Vector2(BAR_W, 3.0)
+	_highlight.mouse_filter  = Control.MOUSE_FILTER_IGNORE
 	_container.add_child(_highlight)
 
-	# Coins décoratifs autour de la barre
-	var bx := bar_x - 2.0
-	var by := bar_y - 2.0
-	var bw := BAR_WIDTH + 4.0
-	var bh := BAR_HEIGHT + 4.0
-	_corners = _make_corners(Vector2(bx, by), Vector2(bw, bh), COLOR_CYAN)
-	for c in _corners:
-		_container.add_child(c)
+	# Séparateurs de segments
+	for i in SEGMENTS:
+		var dx         := BAR_X + BAR_W * float(i + 1) / float(SEGMENTS + 1)
+		var seg        := ColorRect.new()
+		seg.color       = Color(0.0, 0.0, 0.0, 0.45)
+		seg.position    = Vector2(dx, BAR_Y)
+		seg.size        = Vector2(1.5, BAR_H)
+		seg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_container.add_child(seg)
 
-	# Valeur HP
-	_hp_label = Label.new()
-	_hp_label.size     = Vector2(total_w, total_h)
-	_hp_label.position = Vector2(0.0, 0.0)
+	# Label HP numérique
+	_hp_label               = Label.new()
+	_hp_label.position       = Vector2(BAR_X, BAR_Y + BAR_H + 8.0)
+	_hp_label.size           = Vector2(BAR_W, 14.0)
 	_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_hp_label.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
-	_hp_label.add_theme_font_size_override("font_size", 7)
-	_hp_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
-	_hp_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.9))
-	_hp_label.add_theme_constant_override("outline_size", 3)
+	_hp_label.add_theme_font_size_override("font_size", 9)
+	_hp_label.add_theme_color_override("font_color", COLOR_HPNUM)
+	_hp_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.8))
+	_hp_label.add_theme_constant_override("outline_size", 2)
+	_hp_label.mouse_filter   = Control.MOUSE_FILTER_IGNORE
 	_container.add_child(_hp_label)
 
+	# Coins décoratifs (sur tout le panel)
+	_corners = _make_corners(Vector2.ZERO, Vector2(PANEL_W, PANEL_H), COLOR_BORDER)
+	for c in _corners:
+		c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_container.add_child(c)
 
-func _make_corners(origin: Vector2, size: Vector2, color: Color) -> Array[ColorRect]:
+
+func _make_corners(origin: Vector2, sz: Vector2, color: Color) -> Array[ColorRect]:
 	var result: Array[ColorRect] = []
 	var positions := [
-		[origin,                                           Vector2(CORNER_LEN, CORNER_THK)],
-		[origin,                                           Vector2(CORNER_THK, CORNER_LEN)],
-		[origin + Vector2(size.x - CORNER_LEN, 0),         Vector2(CORNER_LEN, CORNER_THK)],
-		[origin + Vector2(size.x - CORNER_THK, 0),         Vector2(CORNER_THK, CORNER_LEN)],
-		[origin + Vector2(0, size.y - CORNER_THK),         Vector2(CORNER_LEN, CORNER_THK)],
-		[origin + Vector2(0, size.y - CORNER_LEN),         Vector2(CORNER_THK, CORNER_LEN)],
-		[origin + Vector2(size.x - CORNER_LEN, size.y - CORNER_THK), Vector2(CORNER_LEN, CORNER_THK)],
-		[origin + Vector2(size.x - CORNER_THK, size.y - CORNER_LEN), Vector2(CORNER_THK, CORNER_LEN)],
+		[origin,                                              Vector2(CORNER_LEN, CORNER_THK)],
+		[origin,                                              Vector2(CORNER_THK, CORNER_LEN)],
+		[origin + Vector2(sz.x - CORNER_LEN, 0),              Vector2(CORNER_LEN, CORNER_THK)],
+		[origin + Vector2(sz.x - CORNER_THK, 0),              Vector2(CORNER_THK, CORNER_LEN)],
+		[origin + Vector2(0, sz.y - CORNER_THK),              Vector2(CORNER_LEN, CORNER_THK)],
+		[origin + Vector2(0, sz.y - CORNER_LEN),              Vector2(CORNER_THK, CORNER_LEN)],
+		[origin + Vector2(sz.x - CORNER_LEN, sz.y - CORNER_THK), Vector2(CORNER_LEN, CORNER_THK)],
+		[origin + Vector2(sz.x - CORNER_THK, sz.y - CORNER_LEN), Vector2(CORNER_THK, CORNER_LEN)],
 	]
 	for p in positions:
-		var r         = ColorRect.new()
+		var r         := ColorRect.new()
 		r.color        = color
 		r.position     = p[0]
 		r.size         = p[1]
@@ -240,25 +324,47 @@ func _make_corners(origin: Vector2, size: Vector2, color: Color) -> Array[ColorR
 # =============================================================
 
 func _refresh_bar(fill: float) -> void:
-	_fill.size.x      = BAR_WIDTH * fill
-	_highlight.size.x = BAR_WIDTH * fill
+	var w := BAR_W * fill
+	_fill.size.x      = w
+	_highlight.size.x = w
+	_glow1.size.x     = w
+	_glow2.size.x     = w
 
+	# Couleur selon le niveau de vie
 	var col: Color
 	if fill > 0.5:
-		col = COLOR_CYAN.lerp(Color(1.0, 0.6, 0.0), (1.0 - fill) * 2.0)
+		col = COLOR_CYAN.lerp(Color(1.0, 0.60, 0.0), (1.0 - fill) * 2.0)
 	else:
-		col = Color(1.0, 0.6, 0.0).lerp(Color(1.0, 0.08, 0.08), (0.5 - fill) * 2.0)
+		col = Color(1.0, 0.60, 0.0).lerp(Color(1.0, 0.08, 0.08), (0.5 - fill) * 2.0)
 
 	if _target_fill >= 0.3:
-		_fill.color = col
+		_fill.color  = col
+		_glow1.color = Color(col.r, col.g, col.b, 0.30)
+		_glow2.color = Color(col.r, col.g, col.b, 0.14)
 		for c in _corners:
-			c.color = col
+			c.color = Color(col.r * 0.6 + 0.0 * 0.4,
+							col.g * 0.4 + 0.8 * 0.6,
+							col.b * 0.3 + 1.0 * 0.7,
+							COLOR_BORDER.a)
 
+
+# =============================================================
+# CALLBACKS
+# =============================================================
 
 func _on_hp_changed(new_hp: int) -> void:
 	_target_fill = float(new_hp) / float(_player.max_hp)
 	_update_label(new_hp)
 	_flash_damage_vignette()
+
+
+func _on_player_died() -> void:
+	_target_fill = 0.0
+	_update_label(0)
+
+
+func _update_label(hp: int) -> void:
+	_hp_label.text = "%d / %d" % [hp, _player.max_hp]
 
 
 func _flash_damage_vignette() -> void:
@@ -274,15 +380,6 @@ func _flash_damage_vignette() -> void:
 	).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
 
 
-func _on_player_died() -> void:
-	_target_fill = 0.0
-	_update_label(0)
-
-
-func _update_label(hp: int) -> void:
-	_hp_label.text = "%d/%d  " % [hp, _player.max_hp]
-
-
 # =============================================================
 # BARRE HP DU BOSS
 # =============================================================
@@ -290,10 +387,9 @@ func _update_label(hp: int) -> void:
 func _build_boss_bar() -> void:
 	var panel_h := BOSS_BAR_HEIGHT + 36.0
 
-	_boss_bar_container = Control.new()
-	_boss_bar_container.name = "BossHPContainer"
-	_boss_bar_container.size = Vector2(BOSS_BAR_WIDTH + 20.0, panel_h)
-	# Centrer horizontalement, ancrer en bas
+	_boss_bar_container            = Control.new()
+	_boss_bar_container.name       = "BossHPContainer"
+	_boss_bar_container.size       = Vector2(BOSS_BAR_WIDTH + 20.0, panel_h)
 	_boss_bar_container.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	_boss_bar_container.anchor_top    = 1.0
 	_boss_bar_container.anchor_bottom = 1.0
@@ -302,7 +398,6 @@ func _build_boss_bar() -> void:
 	_boss_bar_container.mouse_filter  = Control.MOUSE_FILTER_IGNORE
 	add_child(_boss_bar_container)
 
-	# Nom du boss
 	_boss_name_label = Label.new()
 	_boss_name_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	_boss_name_label.size = Vector2(BOSS_BAR_WIDTH + 20.0, 20.0)
@@ -316,21 +411,18 @@ func _build_boss_bar() -> void:
 	var bar_y := 22.0
 	var bar_x := 10.0
 
-	# Fond de la barre
-	_boss_bar_bg = ColorRect.new()
+	_boss_bar_bg          = ColorRect.new()
 	_boss_bar_bg.color    = Color(0.0, 0.05, 0.1, 0.9)
 	_boss_bar_bg.position = Vector2(bar_x, bar_y)
 	_boss_bar_bg.size     = Vector2(BOSS_BAR_WIDTH, BOSS_BAR_HEIGHT)
 	_boss_bar_container.add_child(_boss_bar_bg)
 
-	# Remplissage
-	_boss_bar_fill = ColorRect.new()
+	_boss_bar_fill          = ColorRect.new()
 	_boss_bar_fill.color    = Color(1.0, 0.2, 0.2)
 	_boss_bar_fill.position = Vector2(bar_x, bar_y)
 	_boss_bar_fill.size     = Vector2(BOSS_BAR_WIDTH, BOSS_BAR_HEIGHT)
 	_boss_bar_container.add_child(_boss_bar_fill)
 
-	# Bordure décorative
 	for corner in _make_corners(
 		Vector2(bar_x - 2.0, bar_y - 2.0),
 		Vector2(BOSS_BAR_WIDTH + 4.0, BOSS_BAR_HEIGHT + 4.0),
@@ -338,8 +430,7 @@ func _build_boss_bar() -> void:
 	):
 		_boss_bar_container.add_child(corner)
 
-	# Label HP
-	_boss_hp_label = Label.new()
+	_boss_hp_label          = Label.new()
 	_boss_hp_label.position = Vector2(bar_x, bar_y)
 	_boss_hp_label.size     = Vector2(BOSS_BAR_WIDTH, BOSS_BAR_HEIGHT)
 	_boss_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -356,7 +447,7 @@ func _build_boss_bar() -> void:
 func show_boss_bar(boss_name: String, max_hp: int) -> void:
 	if _boss_bar_container == null:
 		_build_boss_bar()
-	_boss_max_hp = max_hp
+	_boss_max_hp       = max_hp
 	_boss_target_fill  = 1.0
 	_boss_current_fill = 1.0
 	_boss_name_label.text = boss_name

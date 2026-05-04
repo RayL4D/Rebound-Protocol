@@ -132,9 +132,20 @@ func _ready() -> void:
 
 	# Lire les valeurs initiales depuis le SpringArm configuré dans l'éditeur
 	_cam_pitch        = spring_arm.rotation_degrees.x
+	_target_pitch     = _cam_pitch   # Sync la cible pour éviter un lerp parasite au démarrage
 	_cam_yaw          = spring_arm.rotation_degrees.y
 	_target_snap_yaw  = _cam_yaw   # Synchroniser la cible sur l'angle initial
 	_target_zoom      = spring_arm.spring_length
+
+	# Positionner le spring arm immédiatement — évite que la caméra soit
+	# dans le corps du joueur pendant le premier frame rendu (notamment après Retry).
+	# Sans ça, le spring arm reste à la position locale (0,0,0) du joueur
+	# jusqu'au premier _physics_process, et SpringArm3D place la caméra
+	# à spring_length le long de son axe Z local → à l'intérieur du modèle.
+	spring_arm.global_position    = global_position + Vector3(0, 0.9, 0)
+	spring_arm.rotation_degrees.x = _cam_pitch
+	spring_arm.rotation_degrees.y = _cam_yaw
+	spring_arm.spring_length      = _target_zoom
 
 	# Stoppe l'AnimationPlayer brut du GLB — c'est l'AnimationTree qui prend
 	# le relais pour piloter les états (idle/sprint/parry/die).
@@ -202,7 +213,11 @@ func _physics_process(delta: float) -> void:
 	# Déclenche l'animation de parade (clavier/gamepad ou bouton mobile)
 	var mobile_parry := _mobile_parry_requested
 	_mobile_parry_requested = false
-	if Input.is_action_just_pressed("parry") or mobile_parry:
+	# Sur mobile, on n'accepte QUE le bouton dédié (mobile_parry).
+	# is_action_just_pressed("parry") est ignoré car "Emulate Mouse From Touch"
+	# le déclencherait sur chaque tap d'écran (parry = left mouse button).
+	var keyboard_parry := Input.is_action_just_pressed("parry") and not OS.has_feature("mobile")
+	if keyboard_parry or mobile_parry:
 		_parry_requested = true
 		parried.emit()
 		var pb := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
