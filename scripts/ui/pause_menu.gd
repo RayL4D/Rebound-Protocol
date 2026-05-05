@@ -30,6 +30,7 @@ var _music_slider:     HSlider
 var _sfx_slider:       HSlider
 var _fullscreen_check: CheckButton
 var _lang_buttons:     Dictionary = {}
+var _is_shop_open: bool = false
 
 var _font: FontFile = null
 
@@ -50,6 +51,10 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and not event.is_echo():
+		# --- ON BLOQUE ICI SI LA BOUTIQUE EST OUVERTE ---
+		if _is_shop_open:
+			return
+			
 		# Ne pas interferer avec l'écran GameOver si le joueur est mort
 		var player := get_tree().get_first_node_in_group("player") as Player
 		if player != null and player.is_dead:
@@ -190,12 +195,14 @@ func _show_settings_panel() -> void:
 func _open_shop() -> void:
 	# Cacher tout le CanvasLayer pause (overlay inclus) pendant que le shop est ouvert
 	hide()
+	_is_shop_open = true # On verrouille le menu pause
 
 	var shop: CanvasLayer = ShopScript.new()
 	get_tree().root.add_child(shop)
 
 	# Quand le shop se ferme, ré-afficher le menu pause (panel principal)
 	shop.tree_exiting.connect(func():
+		_is_shop_open = false # On déverrouille le menu pause
 		show()
 		_show_main_panel()
 	)

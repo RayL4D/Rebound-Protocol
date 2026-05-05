@@ -349,3 +349,12 @@ func _make_separator() -> HSeparator:
 	style.content_margin_bottom = 1.0
 	sep.add_theme_stylebox_override("separator", style)
 	return sep
+
+
+# =============================================================
+# INPUTS
+# =============================================================
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel") and not event.is_echo():
+		_on_close()
+		get_viewport().set_input_as_handled() # Indique à Godot que l'action a été traitée

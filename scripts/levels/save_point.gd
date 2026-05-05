@@ -52,6 +52,7 @@ var _pulse_time:  float = 0.0
 @onready var _orbiter1: MeshInstance3D = $Visuals/Orbiters/Orbiter1
 @onready var _orbiter2: MeshInstance3D = $Visuals/Orbiters/Orbiter2
 @onready var _orbiter3: MeshInstance3D = $Visuals/Orbiters/Orbiter3
+@onready var _hover_ring2: MeshInstance3D = $Visuals/HoverRing2
 
 # ── Matériaux (récupérés au _ready, partagés entre nœuds du même type) ───────
 var _ring_mat:       ShaderMaterial     = null
@@ -72,14 +73,32 @@ func _ready() -> void:
 	# Empêche _add_collision_recursive (arena_base) de solidifier les visuels
 	add_to_group("no_collision")
 
-	_ring_mat       = _ring_mi.material_override as ShaderMaterial
-	_beam_mat       = _beam_mi.material_override as StandardMaterial3D
-	_hover_ring_mat = _hover_ring.material_override as StandardMaterial3D
-	_cap_mat        = _cap_n.material_override as StandardMaterial3D
-	_orbiter_mat    = _orbiter1.material_override as StandardMaterial3D
-
 	_orbiters = [_orbiter1, _orbiter2, _orbiter3]
 	_caps     = [_cap_n, _cap_e, _cap_s, _cap_w]
+
+	# --- CORRECTION : DUPLIQUER LES MATÉRIAUX ---
+	# On utilise .duplicate() pour que ce SavePoint ait ses propres copies indépendantes.
+	
+	_ring_mat = _ring_mi.material_override.duplicate() as ShaderMaterial
+	_ring_mi.material_override = _ring_mat
+	
+	_beam_mat = _beam_mi.material_override.duplicate() as StandardMaterial3D
+	_beam_mi.material_override = _beam_mat
+	
+	_hover_ring_mat = _hover_ring.material_override.duplicate() as StandardMaterial3D
+	_hover_ring.material_override = _hover_ring_mat
+	
+	# Si tu as ajouté le 2ème anneau tout à l'heure, on lui applique la copie aussi
+	if _hover_ring2:
+		_hover_ring2.material_override = _hover_ring_mat
+		
+	_cap_mat = _cap_n.material_override.duplicate() as StandardMaterial3D
+	for cap in _caps:
+		cap.material_override = _cap_mat
+		
+	_orbiter_mat = _orbiter1.material_override.duplicate() as StandardMaterial3D
+	for orb in _orbiters:
+		orb.material_override = _orbiter_mat
 
 	_apply_flag_texture()
 
@@ -119,7 +138,18 @@ func _process(delta: float) -> void:
 	for i in _caps.size():
 		var cap: MeshInstance3D = _caps[i]
 		cap.position.y = 0.85 + sin(_pulse_time * 1.6 + i * (TAU / _caps.size())) * 0.04
-
+	
+	# HoverRings : effet gyroscope (rotation sur 3 axes)
+	if _hover_ring:
+		_hover_ring.rotation.y = _pulse_time * 0.4
+		_hover_ring.rotation.x = sin(_pulse_time * 0.8) * 0.2 # Inclinaison dynamique
+		_hover_ring.rotation.z = cos(_pulse_time * 0.7) * 0.2
+		
+	if _hover_ring2:
+		# Tourne dans le sens inverse avec une inclinaison différente
+		_hover_ring2.rotation.y = -_pulse_time * 0.6
+		_hover_ring2.rotation.x = cos(_pulse_time * 1.1) * 0.25
+		_hover_ring2.rotation.z = sin(_pulse_time * 0.9) * 0.25
 
 # =============================================================
 # TEXTURE DU FLAG
@@ -171,15 +201,13 @@ func _do_save(player_node: Node3D) -> void:
 	SaveData.set_checkpoint(checkpoint_id)
 	SaveData.set_current_level(lname)
 
-	# On sauvegarde la position du SavePoint lui-même (+ léger offset vertical)
-	# plutôt que la position du joueur au moment de l'entrée dans la zone,
-	# pour garantir un respawn propre et centré.
 	var spawn_pos := global_position + Vector3(0, 0.1, 0)
 	SaveData.set_player_position(spawn_pos)
 
-	# HP sauvegardés = HP max du joueur pour qu'il réapparaisse en pleine forme
-	if player_node.get("max_hp") != null:
-		SaveData.set_player_hp(int(player_node.get("max_hp")))
+	# --- MODIFICATION ICI ---
+	# On récupère "current_hp" au lieu de "max_hp"
+	if player_node.get("current_hp") != null:
+		SaveData.set_player_hp(int(player_node.get("current_hp")))
 
 	SaveData.save_current()
 	save_triggered.emit()
@@ -190,6 +218,8 @@ func _do_save(player_node: Node3D) -> void:
 # =============================================================
 
 func _play_activate_animation() -> void:
+	# Nouvelle onde de choc
+	_spawn_shockwave(COLOR_ACTIVE)
 	# 1. Anneau de sol : cyan → or
 	if _ring_mat:
 		var tw := create_tween()
@@ -311,3 +341,31 @@ func _spawn_burst(color: Color, count: int) -> void:
 				mat.emission_energy_multiplier = a * 3.0,
 			1.0, 0.0, dur)
 		tw.tween_callback(mi.queue_free)
+		
+func _spawn_shockwave(color: Color) -> void:
+	# Création d'un anneau 3D (Torus)
+	var mesh := TorusMesh.new()
+	mesh.inner_radius = 1.8
+	mesh.outer_radius = 2.0
+	mesh.rings = 32
+	mesh.ring_segments = 16  # <-- LA CORRECTION EST ICI
+
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.emission_enabled = true
+	mat.emission = color
+	mat.emission_energy_multiplier = 4.0
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.material_override = mat
+	get_tree().current_scene.add_child(mi)
+	mi.global_position = global_position + Vector3(0, 0.1, 0)
+	
+	# Animation : S'agrandit énormément en s'effaçant
+	var tw := mi.create_tween().set_parallel(true)
+	tw.tween_property(mi, "scale", Vector3(3.5, 1.0, 3.5), 0.6).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(mat, "albedo_color:a", 0.0, 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_callback(mi.queue_free).set_delay(0.6)
