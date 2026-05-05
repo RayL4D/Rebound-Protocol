@@ -170,10 +170,16 @@ func _do_save(player_node: Node3D) -> void:
 
 	SaveData.set_checkpoint(checkpoint_id)
 	SaveData.set_current_level(lname)
-	SaveData.set_player_position(player_node.global_position)
 
-	if player_node.get("current_hp") != null:
-		SaveData.set_player_hp(int(player_node.get("current_hp")))
+	# On sauvegarde la position du SavePoint lui-même (+ léger offset vertical)
+	# plutôt que la position du joueur au moment de l'entrée dans la zone,
+	# pour garantir un respawn propre et centré.
+	var spawn_pos := global_position + Vector3(0, 0.1, 0)
+	SaveData.set_player_position(spawn_pos)
+
+	# HP sauvegardés = HP max du joueur pour qu'il réapparaisse en pleine forme
+	if player_node.get("max_hp") != null:
+		SaveData.set_player_hp(int(player_node.get("max_hp")))
 
 	SaveData.save_current()
 	save_triggered.emit()

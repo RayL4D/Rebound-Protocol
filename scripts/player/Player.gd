@@ -284,6 +284,9 @@ func _physics_process(delta: float) -> void:
 # =============================================================
 
 func _input(event: InputEvent) -> void:
+	if is_dead:
+		return   # Bloquer tout input caméra/zoom pendant l'animation de mort
+
 	if event is InputEventMouseButton:
 		match event.button_index:
 			MOUSE_BUTTON_WHEEL_UP:

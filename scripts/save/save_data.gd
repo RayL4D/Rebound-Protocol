@@ -437,6 +437,9 @@ func _empty_slot() -> Dictionary:
 		"checkpoint_id": "",
 		"hp":            0,
 		"timestamp":     0,
+		"pos_x":         0.0,
+		"pos_y":         0.0,
+		"pos_z":         0.0,
 	}
 
 

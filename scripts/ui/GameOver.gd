@@ -313,6 +313,7 @@ func _animate_panel_in() -> void:
 
 func _on_retry() -> void:
 	get_tree().paused = false
+	SaveData.reload_from_disk()   # Restaure les pièces/HP du dernier checkpoint
 	# call_deferred obligatoire : reload depuis un signal callback provoque un crash
 	get_tree().reload_current_scene.call_deferred()
 
