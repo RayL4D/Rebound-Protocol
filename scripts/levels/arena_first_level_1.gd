@@ -6,6 +6,9 @@ func _ready() -> void:
 func _add_collision_recursive(node: Node) -> void:
 	if node is CharacterBody3D or node is RigidBody3D:
 		return
+	# Groupe "no_collision" : skip ce nœud ET tous ses descendants
+	if node.is_in_group("no_collision"):
+		return
 
 	if node is MeshInstance3D and node.mesh != null:
 		var has_collision := false
