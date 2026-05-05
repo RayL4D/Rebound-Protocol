@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://cp8oo218ghcj" path="res://scenes/player/player.tscn" id="1_ha378"]
 [ext_resource type="PackedScene" uid="uid://dtenrqcyval18" path="res://assets/models/environments/tutorial_and_first_level/rock_largeA.glb" id="2_617ci"]
 [ext_resource type="PackedScene" uid="uid://dn3as1iq1s4i2" path="res://assets/models/environments/tutorial_and_first_level/meteor.glb" id="5_enpma"]
+[ext_resource type="PackedScene" uid="uid://c4er506cy637w" path="res://scenes/levels/zones/kill_zone.tscn" id="5_tbebd"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_ha378"]
 sky_top_color = Color(0.04379709, 0.5018009, 0.59652394, 1)
@@ -613,3 +614,6 @@ move_speed = 40.0
 transform = Transform3D(1, 0, 0, 0, -0.30007312, 0.9539163, 0, -0.9539163, -0.30007312, 70.46008, 152.68854, 150.39107)
 light_color = Color(1, 0.9411765, 0.8, 1)
 shadow_enabled = true
+
+[node name="KillZone" parent="." unique_id=1786468622 instance=ExtResource("5_tbebd")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 94.67728, 114.01021, 9.754303)

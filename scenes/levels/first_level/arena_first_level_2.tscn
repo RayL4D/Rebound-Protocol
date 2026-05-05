@@ -1,9 +1,10 @@
 [gd_scene format=3 uid="uid://cndnvc3c1yt7p"]
 
-[ext_resource type="Script" path="res://scripts/levels/arena_first_level_2.gd" id="1_723dc"]
+[ext_resource type="Script" uid="uid://uya5dfbbo8ri" path="res://scripts/levels/arena_first_level_2.gd" id="1_723dc"]
 [ext_resource type="PackedScene" uid="uid://cp8oo218ghcj" path="res://scenes/player/player.tscn" id="1_oyrup"]
 [ext_resource type="Texture2D" uid="uid://ds67yxarl10l1" path="res://assets/textures/cave/marble_cliff_02_diff_2k.jpg" id="2_pxi4t"]
-[ext_resource type="PackedScene" path="res://scenes/levels/zones/instant_exit.tscn" id="3_fmwuw"]
+[ext_resource type="PackedScene" uid="uid://bk14aw3kobgpm" path="res://scenes/levels/zones/instant_exit.tscn" id="3_fmwuw"]
+[ext_resource type="PackedScene" uid="uid://c4er506cy637w" path="res://scenes/levels/zones/kill_zone.tscn" id="5_k4bcp"]
 
 [sub_resource type="Environment" id="Environment_pxi4t"]
 background_mode = 1
@@ -212,12 +213,15 @@ shadow_enabled = true
 
 [node name="Instant_exit" parent="Exits" unique_id=1235627036 instance=ExtResource("3_fmwuw")]
 transform = Transform3D(-0.0014311243, 0, 0.999999, 0, 1, 0, -0.999999, 0, -0.0014311243, -16.58659, 1.2453265, 0)
-next_scene_path = "uid://cndnvc3c1yt7p"
+next_scene_path = "uid://cjghekyt73em7"
 
 [node name="Instant_exit_entry" parent="Exits" unique_id=2011490171 instance=ExtResource("3_fmwuw")]
 transform = Transform3D(-0.019022925, 0, -0.99981916, 0, 1, 0, 0.99981916, 0, -0.019022925, 16.411095, 0.9437438, 2.8042893)
-next_scene_path = "uid://dpcguux7a3rqn"
+next_scene_path = "uid://cndnvc3c1yt7p"
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1718334821]
 transform = Transform3D(1, 0, 0, 0, -0.90775555, 0.41949952, 0, -0.41949952, -0.90775555, 0, 11.174824, 0)
 light_color = Color(0.1931001, 0.19310006, 0.19310006, 1)
+
+[node name="KillZone" parent="." unique_id=1786468622 instance=ExtResource("5_k4bcp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 68.235016, 0)
