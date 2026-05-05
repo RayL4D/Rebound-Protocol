@@ -15,10 +15,17 @@ extends Node
 
 # ---------------------------------------------------------------
 # Sauvegarde dans le dossier du projet (visible dans l'explorateur).
-# À changer en "user://saves/save_data.json" avant export final.
+# À changer en "user://saves/" avant export final.
 const SAVE_DIR  := "res://saves/"
-const SAVE_FILE := "save_data.json"
+const SAVE_FILE := "save_data.sav"   # Extension .sav — fichier chiffré
 const MAX_SLOTS := 5
+
+# Clé de chiffrement AES-256 (hardcodée dans le binaire).
+# Changer avant release. Ne jamais committer en clair dans un dépôt public.
+const _ENC_PASS := "rbp_AES_k3y_!R3b0und#2025_xK9mPqZ"
+
+# Sel HMAC pour la vérification d'intégrité (anti-falsification).
+const _HMAC_SALT := "rbp_hmac_s4lt_!integrity#check_v2"
 
 var _save_path: String = ""
 
@@ -302,24 +309,35 @@ func reset_shop() -> void:
 
 
 # =============================================================
-# PERSISTANCE JSON
+# PERSISTANCE — chiffrement AES-256 + vérification HMAC
 # =============================================================
+
+## Calcule le HMAC-SHA256 d'une chaîne avec le sel secret.
+## Utilisé pour détecter toute falsification du fichier.
+func _compute_hmac(payload: String) -> String:
+	var ctx := HashingContext.new()
+	ctx.start(HashingContext.HASH_SHA256)
+	ctx.update((payload + _HMAC_SALT).to_utf8_buffer())
+	return ctx.finish().hex_encode()
+
 
 func save_current() -> void:
 	if active_slot >= 0:
 		_active()["timestamp"] = int(Time.get_unix_time_from_system())
 		_active()["used"] = true
 
-	var data := {
-		"version": 2,
-		"saves":   saves,
-	}
+	# 1. Construire le payload JSON
+	var payload := JSON.stringify({"version": 2, "saves": saves})
 
-	var file := FileAccess.open(_save_path, FileAccess.WRITE)
+	# 2. Calculer la signature HMAC du payload
+	var sig := _compute_hmac(payload)
+
+	# 3. Écrire le tout chiffré avec AES-256
+	var file := FileAccess.open_encrypted_with_pass(_save_path, FileAccess.WRITE, _ENC_PASS)
 	if file == null:
 		push_error("SaveData : impossible d'écrire " + _save_path)
 		return
-	file.store_string(JSON.stringify(data, "\t"))
+	file.store_string(JSON.stringify({"sig": sig, "payload": payload}))
 	file.close()
 
 
@@ -329,43 +347,84 @@ func _load_from_disk() -> void:
 		saves[i] = _empty_slot()
 
 	if not FileAccess.file_exists(_save_path):
+		# Vérifier si un ancien fichier .json non chiffré existe (migration)
+		var old_path := _save_path.replace(".sav", ".json")
+		if FileAccess.file_exists(old_path):
+			_migrate_plain_json(old_path)
 		return
 
-	var file := FileAccess.open(_save_path, FileAccess.READ)
+	# 1. Lire le fichier chiffré
+	var file := FileAccess.open_encrypted_with_pass(_save_path, FileAccess.READ, _ENC_PASS)
 	if file == null:
-		push_error("SaveData : impossible de lire " + _save_path)
+		push_error("SaveData : impossible de déchiffrer " + _save_path + " — fichier corrompu ou mauvaise clé.")
 		return
 
-	var raw  := file.get_as_text()
+	var raw := file.get_as_text()
 	file.close()
 
-	var parsed = JSON.parse_string(raw)
+	# 2. Parser l'enveloppe {sig, payload}
+	var envelope = JSON.parse_string(raw)
+	if envelope == null or not envelope is Dictionary \
+			or not envelope.has("sig") or not envelope.has("payload"):
+		push_error("SaveData : format invalide — réinitialisation.")
+		return
+
+	# 3. Vérifier le HMAC — si la signature ne correspond pas, le fichier a été falsifié
+	var payload: String = envelope["payload"]
+	var expected_sig := _compute_hmac(payload)
+	if envelope["sig"] != expected_sig:
+		push_error("SaveData : signature invalide — sauvegarde falsifiée ou corrompue, réinitialisation.")
+		# On repart de zéro : ne pas charger des données trafiquées
+		return
+
+	# 4. Parser le payload validé
+	var parsed = JSON.parse_string(payload)
 	if parsed == null or not parsed is Dictionary:
-		push_error("SaveData : fichier corrompu — réinitialisation.")
+		push_error("SaveData : payload corrompu — réinitialisation.")
 		return
 
 	var file_version := int(parsed.get("version", 1))
+	var raw_saves    = parsed.get("saves", [])
 
-	var raw_saves = parsed.get("saves", [])
 	for i in MAX_SLOTS:
 		if i < raw_saves.size() and raw_saves[i] is Dictionary:
 			saves[i] = _merge_slot(raw_saves[i])
 		else:
 			saves[i] = _empty_slot()
 
-	# Migration version 1 → 2 :
-	# L'ancien format sauvegardait les shop_upgrades immédiatement (sans checkpoint).
-	# On efface les upgrades de tous les slots pour repartir proprement.
-	# Les pièces et la progression de niveau sont conservées.
+	# Migration version 1 → 2
 	if file_version < 2:
 		for i in MAX_SLOTS:
 			saves[i]["shop_upgrades"] = {}
-		# Réécrire le fichier migré sur disque
-		var migrated := {"version": 2, "saves": saves}
-		var mf := FileAccess.open(_save_path, FileAccess.WRITE)
-		if mf != null:
-			mf.store_string(JSON.stringify(migrated, "\t"))
-			mf.close()
+		save_current()
+
+
+## Migration : convertit un ancien fichier JSON non chiffré vers le nouveau format chiffré.
+func _migrate_plain_json(old_path: String) -> void:
+	var file := FileAccess.open(old_path, FileAccess.READ)
+	if file == null:
+		return
+	var raw := file.get_as_text()
+	file.close()
+
+	var parsed = JSON.parse_string(raw)
+	if parsed == null or not parsed is Dictionary:
+		return
+
+	push_warning("SaveData : migration de l'ancien fichier JSON non chiffré vers " + _save_path)
+
+	var raw_saves = parsed.get("saves", [])
+	for i in MAX_SLOTS:
+		if i < raw_saves.size() and raw_saves[i] is Dictionary:
+			saves[i] = _merge_slot(raw_saves[i])
+			saves[i]["shop_upgrades"] = {}   # Effacer les upgrades de l'ancien format
+		else:
+			saves[i] = _empty_slot()
+
+	# Réécrire dans le nouveau format chiffré
+	save_current()
+	# Supprimer l'ancien fichier
+	DirAccess.remove_absolute(old_path)
 
 
 func _empty_slot() -> Dictionary:
