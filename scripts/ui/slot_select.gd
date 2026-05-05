@@ -32,6 +32,9 @@ var _confirm_overlay: Control = null
 func _ready() -> void:
 	if ResourceLoader.exists(FONT_PATH):
 		_font = load(FONT_PATH)
+	# Recharger depuis le disque pour afficher les vraies valeurs sauvegardées,
+	# pas les données en mémoire de la session en cours.
+	SaveData.reload_from_disk()
 	_build_ui()
 
 
@@ -291,6 +294,9 @@ func _on_continue(slot: int) -> void:
 func _on_new_game(slot: int) -> void:
 	SaveData.new_game(slot)
 	SaveData.set_current_level("arena_base")
+	# Sauvegarder le niveau de départ sur disque immédiatement
+	# (le HP initial sera sauvegardé par Player._restore_hp_from_save)
+	SaveData.save_current()
 	SceneManager.load_level("res://scenes/levels/arena_base.tscn")
 
 

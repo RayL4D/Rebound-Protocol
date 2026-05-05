@@ -133,13 +133,17 @@ func _do_save(player_node: Node3D) -> void:
 	if lname == "":
 		lname = get_tree().current_scene.scene_file_path.get_file().get_basename()
 
+	# Mettre à jour toutes les données en mémoire…
 	SaveData.set_checkpoint(checkpoint_id)
 	SaveData.set_current_level(lname)
 	SaveData.set_player_position(player_node.global_position)
 
-	# HP : accès sûr via get() sur le nœud
 	if player_node.get("current_hp") != null:
 		SaveData.set_player_hp(int(player_node.get("current_hp")))
+
+	# …puis écrire sur disque en une seule fois.
+	# Coins et upgrades achetées depuis le dernier checkpoint sont persistés ici aussi.
+	SaveData.save_current()
 
 	save_triggered.emit()
 

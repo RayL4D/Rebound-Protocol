@@ -140,11 +140,16 @@ func _ready() -> void:
 	_target_snap_yaw  = _cam_yaw   # Synchroniser la cible sur l'angle initial
 	_target_zoom      = spring_arm.spring_length
 
-	# Positionner le spring arm immédiatement — évite que la caméra soit
-	# dans le corps du joueur pendant le premier frame rendu (notamment après Retry).
-	# Sans ça, le spring arm reste à la position locale (0,0,0) du joueur
-	# jusqu'au premier _physics_process, et SpringArm3D place la caméra
-	# à spring_length le long de son axe Z local → à l'intérieur du modèle.
+	# Restaurer la position du checkpoint IMMÉDIATEMENT, avant le premier frame
+	# de physique. Sans ça, le joueur spawne à la position par défaut de la scène
+	# pendant au moins un frame avant d'être téléporté.
+	if SaveData.active_slot >= 0:
+		var saved_pos := SaveData.get_player_position()
+		if saved_pos != Vector3.ZERO:
+			global_position = saved_pos
+
+	# Positionner le spring arm sur la position finale du joueur (checkpoint ou défaut).
+	# Évite que la caméra soit dans le corps du joueur pendant le premier frame rendu.
 	spring_arm.global_position    = global_position + Vector3(0, 0.9, 0)
 	spring_arm.rotation_degrees.x = _cam_pitch
 	spring_arm.rotation_degrees.y = _cam_yaw
@@ -156,12 +161,9 @@ func _ready() -> void:
 	if anim_player:
 		anim_player.stop()
 
-	# Pas besoin de connecter parry_resolved pour les animations :
-	# on détecte l'appui SPACE directement dans _physics_process.
-
-	# Restaurer position + HP depuis le dernier checkpoint (deferred :
-	# attend que tous les nœuds de la scène soient prêts).
-	call_deferred("_restore_from_checkpoint")
+	# Restaurer les HP en deferred : le HUD (qui écoute hp_changed) n'est pas
+	# encore connecté pendant _ready(), on attend la fin du frame.
+	call_deferred("_restore_hp_from_save")
 
 
 # =============================================================
@@ -183,22 +185,26 @@ func _apply_save_upgrades() -> void:
 	move_speed = move_speed * speed_mult
 
 
-## Restaure la position et les HP depuis le dernier checkpoint sauvegardé.
-## Appelée en deferred depuis _ready() pour que tous les nœuds soient prêts.
-func _restore_from_checkpoint() -> void:
+## Restaure les HP depuis la dernière sauvegarde.
+## Appelée en deferred depuis _ready() — attend que le HUD soit connecté.
+## La position est déjà restaurée directement dans _ready().
+func _restore_hp_from_save() -> void:
 	if SaveData.active_slot < 0:
 		return
 
-	# Restaurer la position
-	var saved_pos := SaveData.get_player_position()
-	if saved_pos != Vector3.ZERO:
-		global_position = saved_pos
-
-	# Restaurer les HP (clampés au max actuel qui tient déjà compte des upgrades)
 	var saved_hp := SaveData.get_player_hp()
 	if saved_hp > 0:
 		current_hp = min(saved_hp, max_hp)
-		hp_changed.emit(current_hp)
+
+	# Toujours émettre pour que le HUD affiche le bon HP dès le départ.
+	hp_changed.emit(current_hp)
+
+	# Si aucun checkpoint n'a encore été activé (HP sauvegardé = 0),
+	# écrire le HP de départ sur disque pour que le slot affiche une valeur correcte.
+	# Pièces et upgrades ne sont PAS sauvegardées ici — uniquement aux checkpoints.
+	if SaveData.get_player_hp() == 0:
+		SaveData.set_player_hp(current_hp)
+		SaveData.save_current()
 
 # Applique la texture sur tous les MeshInstance3D du modèle (tête, torse,
 # bras, jambes) en un seul appel.

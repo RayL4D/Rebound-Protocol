@@ -2,35 +2,28 @@
 # save_data.gd — Autoload singleton de sauvegarde
 # Rebound Protocol
 # =============================================================
-# Deux couches de persistance :
+# Deux couches de persistance — TOUTES deux par slot :
 #
-#   shop_upgrades  (Dict)  — permanent, commun à toutes les parties.
-#                            Clé : upgrade_id   Valeur : palier acheté (int)
-#
-#   saves          (Array) — 5 slots de partie.
-#                            Chaque slot : coins, competences, level,
-#                            checkpoint_id, hp, timestamp
+#   shop_upgrades  (Dict)  — upgrades achetées en boutique, propres à chaque slot.
+#   coins, hp, level, checkpoint, position — données de partie.
 #
 # Catalogue des upgrades (CATALOG) : définit les stats de chaque
-# amélioration permanente. Utilisé par la boutique ET par Player/Shield
-# pour appliquer les effets en jeu.
+# amélioration. Utilisé par la boutique ET par Player/Shield.
 # =============================================================
 
 extends Node
 
 # ---------------------------------------------------------------
-const SAVE_PATH := "user://save_data.json"
+# Sauvegarde dans le dossier du projet (visible dans l'explorateur).
+# À changer en "user://saves/save_data.json" avant export final.
+const SAVE_DIR  := "res://saves/"
+const SAVE_FILE := "save_data.json"
 const MAX_SLOTS := 5
+
+var _save_path: String = ""
 
 # ---------------------------------------------------------------
 # Catalogue des améliorations permanentes
-# Clé          : id unique (String)
-# cat          : "joueur" | "bouclier" | "passifs"
-# name_key     : clé de traduction pour le nom
-# desc_key     : clé de traduction pour la description
-# max_tier     : palier maximum achetable
-# prices       : coût de chaque palier (array, index = palier 0-based)
-# effect       : valeur par palier (float, interprétée selon l'upgrade)
 # ---------------------------------------------------------------
 const CATALOG: Dictionary = {
 	# ── JOUEUR ──────────────────────────────────────────────────
@@ -38,63 +31,63 @@ const CATALOG: Dictionary = {
 		"cat": "joueur", "name_key": "SHOP_HP_MAX", "desc_key": "SHOP_HP_MAX_DESC",
 		"max_tier": 10,
 		"prices": [50, 75, 105, 145, 195, 255, 325, 410, 510, 635],
-		"effect": 1.0,   # +1 HP max par palier
+		"effect": 1.0,
 	},
 	"move_speed": {
 		"cat": "joueur", "name_key": "SHOP_MOVE_SPEED", "desc_key": "SHOP_MOVE_SPEED_DESC",
 		"max_tier": 5,
 		"prices": [60, 100, 155, 230, 345],
-		"effect": 0.05,  # +5 % vitesse par palier
+		"effect": 0.05,
 	},
 	"damage_reduction": {
 		"cat": "joueur", "name_key": "SHOP_DMG_REDUCTION", "desc_key": "SHOP_DMG_REDUCTION_DESC",
 		"max_tier": 5,
 		"prices": [80, 130, 200, 305, 460],
-		"effect": 0.05,  # −5 % dégâts reçus par palier
+		"effect": 0.05,
 	},
 	"pickup_radius": {
 		"cat": "joueur", "name_key": "SHOP_PICKUP_RADIUS", "desc_key": "SHOP_PICKUP_RADIUS_DESC",
 		"max_tier": 5,
 		"prices": [40, 70, 110, 170, 260],
-		"effect": 0.20,  # +20 % rayon de collecte par palier
+		"effect": 0.20,
 	},
 	# ── BOUCLIER ─────────────────────────────────────────────────
 	"shield_size": {
 		"cat": "bouclier", "name_key": "SHOP_SHIELD_SIZE", "desc_key": "SHOP_SHIELD_SIZE_DESC",
 		"max_tier": 5,
 		"prices": [70, 110, 165, 250, 375],
-		"effect": 0.08,  # +8 % rayon bouclier par palier
+		"effect": 0.08,
 	},
 	"shield_duration": {
 		"cat": "bouclier", "name_key": "SHOP_SHIELD_DURATION", "desc_key": "SHOP_SHIELD_DURATION_DESC",
 		"max_tier": 5,
 		"prices": [60, 100, 150, 225, 340],
-		"effect": 0.10,  # +10 % durée activation par palier
+		"effect": 0.10,
 	},
 	"parry_damage": {
 		"cat": "bouclier", "name_key": "SHOP_PARRY_DAMAGE", "desc_key": "SHOP_PARRY_DAMAGE_DESC",
 		"max_tier": 8,
 		"prices": [50, 80, 120, 175, 250, 355, 500, 700],
-		"effect": 0.10,  # +10 % dégâts balles renvoyées par palier
+		"effect": 0.10,
 	},
 	"parry_window": {
 		"cat": "bouclier", "name_key": "SHOP_PARRY_WINDOW", "desc_key": "SHOP_PARRY_WINDOW_DESC",
 		"max_tier": 3,
 		"prices": [120, 200, 350],
-		"effect": 1.0,   # +1 frame de fenêtre critique par palier
+		"effect": 1.0,
 	},
 	# ── PASSIFS ──────────────────────────────────────────────────
 	"hp_regen": {
 		"cat": "passifs", "name_key": "SHOP_HP_REGEN", "desc_key": "SHOP_HP_REGEN_DESC",
 		"max_tier": 3,
 		"prices": [150, 250, 400],
-		"effect": 1.0,   # palier → intervalle regen (1=30s, 2=20s, 3=12s)
+		"effect": 1.0,
 	},
 	"xp_bonus": {
 		"cat": "passifs", "name_key": "SHOP_XP_BONUS", "desc_key": "SHOP_XP_BONUS_DESC",
 		"max_tier": 5,
 		"prices": [90, 140, 200, 285, 405],
-		"effect": 0.10,  # +10 % XP par ennemi tué par palier
+		"effect": 0.10,
 	},
 }
 
@@ -102,19 +95,15 @@ const CATALOG: Dictionary = {
 # Données runtime
 # ---------------------------------------------------------------
 
-## Améliorations permanentes achetées (toutes parties confondues).
-## Clé : upgrade_id   Valeur : palier acheté (0 = non acheté)
-var shop_upgrades: Dictionary = {}
-
-## Slots de partie (MAX_SLOTS entrées).
+## Slots de partie (MAX_SLOTS entrées). Chaque slot contient ses propres
+## shop_upgrades — plus de données partagées entre parties.
 var saves: Array = []
 
 ## Index du slot actif (−1 = aucun).
 var active_slot: int = -1
 
 ## Mode d'accès à l'écran de sélection de slot.
-## true = "Nouvelle partie" (montrer bouton nouvelle partie)
-## false = "Continuer" (montrer bouton continuer, griser les slots vides)
+## true = "Nouvelle partie" ; false = "Continuer"
 var new_game_mode: bool = false
 
 
@@ -123,6 +112,16 @@ var new_game_mode: bool = false
 # =============================================================
 
 func _ready() -> void:
+	# Construire le chemin absolu et créer le dossier si nécessaire
+	var abs_dir := ProjectSettings.globalize_path(SAVE_DIR)
+	DirAccess.make_dir_recursive_absolute(abs_dir)
+	_save_path = abs_dir + SAVE_FILE
+	_load_from_disk()
+
+
+## Recharge toutes les données depuis le disque (sans toucher à active_slot).
+## À appeler avant d'afficher un écran qui lit les infos des slots.
+func reload_from_disk() -> void:
 	_load_from_disk()
 
 
@@ -130,7 +129,6 @@ func _ready() -> void:
 # GESTION DES SLOTS
 # =============================================================
 
-## Crée (ou réinitialise) le slot et le sélectionne comme actif.
 func new_game(slot: int) -> void:
 	assert(slot >= 0 and slot < MAX_SLOTS, "Slot invalide")
 	saves[slot] = _empty_slot()
@@ -138,16 +136,17 @@ func new_game(slot: int) -> void:
 	save_current()
 
 
-## Charge un slot existant. Retourne false si le slot est vide.
 func load_slot(slot: int) -> bool:
 	assert(slot >= 0 and slot < MAX_SLOTS, "Slot invalide")
+	# Recharger depuis le disque pour ignorer toute donnée en mémoire
+	# accumulée depuis le dernier checkpoint (pièces, upgrades non sauvegardées).
+	_load_from_disk()
 	if not saves[slot].get("used", false):
 		return false
 	active_slot = slot
 	return true
 
 
-## Supprime un slot (ex. "Nouvelle partie" sur slot occupé).
 func delete_slot(slot: int) -> void:
 	assert(slot >= 0 and slot < MAX_SLOTS, "Slot invalide")
 	saves[slot] = _empty_slot()
@@ -156,7 +155,6 @@ func delete_slot(slot: int) -> void:
 	save_current()
 
 
-## Infos résumées pour l'écran de sélection de slot.
 func get_slot_info(slot: int) -> Dictionary:
 	assert(slot >= 0 and slot < MAX_SLOTS, "Slot invalide")
 	var s: Dictionary = saves[slot]
@@ -182,25 +180,23 @@ func get_coins() -> int:
 func add_coins(amount: int) -> void:
 	if active_slot < 0 or active_slot >= MAX_SLOTS:
 		return
+	# Mise à jour en mémoire uniquement — persisté au prochain checkpoint.
 	saves[active_slot]["coins"] = int(saves[active_slot].get("coins", 0)) + amount
-	save_current()
 
 
-## Tente de dépenser `amount` pièces. Retourne true si OK.
 func spend_coins(amount: int) -> bool:
 	if active_slot < 0 or active_slot >= MAX_SLOTS:
 		return false
 	var current := int(saves[active_slot].get("coins", 0))
 	if current < amount:
 		return false
+	# Mise à jour en mémoire uniquement — persisté au prochain checkpoint.
 	saves[active_slot]["coins"] = current - amount
-	save_current()
 	return true
 
 
 func set_checkpoint(checkpoint_id: String) -> void:
 	_active()["checkpoint_id"] = checkpoint_id
-	save_current()
 
 
 func get_checkpoint() -> String:
@@ -209,7 +205,6 @@ func get_checkpoint() -> String:
 
 func set_current_level(level_name: String) -> void:
 	_active()["level"] = level_name
-	save_current()
 
 
 func get_current_level() -> String:
@@ -220,7 +215,6 @@ func set_player_hp(hp: int) -> void:
 	if active_slot < 0 or active_slot >= MAX_SLOTS:
 		return
 	saves[active_slot]["hp"] = hp
-	save_current()
 
 
 func get_player_hp() -> int:
@@ -235,7 +229,6 @@ func set_player_position(pos: Vector3) -> void:
 	saves[active_slot]["pos_x"] = pos.x
 	saves[active_slot]["pos_y"] = pos.y
 	saves[active_slot]["pos_z"] = pos.z
-	save_current()
 
 
 func get_player_position() -> Vector3:
@@ -244,7 +237,6 @@ func get_player_position() -> Vector3:
 	var x := float(saves[active_slot].get("pos_x", 0.0))
 	var y := float(saves[active_slot].get("pos_y", 0.0))
 	var z := float(saves[active_slot].get("pos_z", 0.0))
-	# Retourne ZERO si aucune position n'a été sauvegardée
 	if x == 0.0 and y == 0.0 and z == 0.0:
 		return Vector3.ZERO
 	return Vector3(x, y, z)
@@ -260,23 +252,22 @@ func set_competence(key: String, value: Variant) -> void:
 
 
 # =============================================================
-# BOUTIQUE PERMANENTE
+# BOUTIQUE — upgrades par slot
 # =============================================================
 
-## Palier actuellement acheté pour un upgrade (0 = pas acheté).
 func get_upgrade_tier(upgrade_id: String) -> int:
-	return shop_upgrades.get(upgrade_id, 0)
+	if active_slot < 0 or active_slot >= MAX_SLOTS:
+		return 0
+	var upgrades: Dictionary = saves[active_slot].get("shop_upgrades", {})
+	return int(upgrades.get(upgrade_id, 0))
 
 
-## Valeur effective de l'upgrade au palier actuel.
-## ex. "hp_max" tier 3 → 3 * 1.0 = 3 HP bonus
 func get_upgrade_value(upgrade_id: String) -> float:
 	var tier := get_upgrade_tier(upgrade_id)
 	var entry: Dictionary = CATALOG.get(upgrade_id, {})
 	return float(tier) * entry.get("effect", 0.0)
 
 
-## Coût du prochain palier (−1 = déjà au max).
 func get_next_tier_price(upgrade_id: String) -> int:
 	var entry: Dictionary = CATALOG.get(upgrade_id, {})
 	var tier  := get_upgrade_tier(upgrade_id)
@@ -288,21 +279,25 @@ func get_next_tier_price(upgrade_id: String) -> int:
 	return prices[tier]
 
 
-## Achète le prochain palier si le joueur a assez de pièces.
-## Retourne true si l'achat a réussi.
 func buy_upgrade(upgrade_id: String) -> bool:
+	if active_slot < 0 or active_slot >= MAX_SLOTS:
+		return false
 	var price := get_next_tier_price(upgrade_id)
 	if price < 0:
-		return false          # déjà au max
+		return false
 	if not spend_coins(price):
-		return false          # pas assez de pièces
-	shop_upgrades[upgrade_id] = get_upgrade_tier(upgrade_id) + 1
-	save_current()
+		return false
+	if not saves[active_slot].has("shop_upgrades"):
+		saves[active_slot]["shop_upgrades"] = {}
+	# Mise à jour en mémoire uniquement — persisté au prochain checkpoint.
+	saves[active_slot]["shop_upgrades"][upgrade_id] = get_upgrade_tier(upgrade_id) + 1
 	return true
 
 
 func reset_shop() -> void:
-	shop_upgrades.clear()
+	if active_slot < 0 or active_slot >= MAX_SLOTS:
+		return
+	saves[active_slot]["shop_upgrades"] = {}
 	save_current()
 
 
@@ -316,14 +311,13 @@ func save_current() -> void:
 		_active()["used"] = true
 
 	var data := {
-		"version":       1,
-		"shop_upgrades": shop_upgrades,
-		"saves":         saves,
+		"version": 2,
+		"saves":   saves,
 	}
 
-	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	var file := FileAccess.open(_save_path, FileAccess.WRITE)
 	if file == null:
-		push_error("SaveData : impossible d'écrire " + SAVE_PATH)
+		push_error("SaveData : impossible d'écrire " + _save_path)
 		return
 	file.store_string(JSON.stringify(data, "\t"))
 	file.close()
@@ -334,15 +328,15 @@ func _load_from_disk() -> void:
 	for i in MAX_SLOTS:
 		saves[i] = _empty_slot()
 
-	if not FileAccess.file_exists(SAVE_PATH):
+	if not FileAccess.file_exists(_save_path):
 		return
 
-	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	var file := FileAccess.open(_save_path, FileAccess.READ)
 	if file == null:
-		push_error("SaveData : impossible de lire " + SAVE_PATH)
+		push_error("SaveData : impossible de lire " + _save_path)
 		return
 
-	var raw     := file.get_as_text()
+	var raw  := file.get_as_text()
 	file.close()
 
 	var parsed = JSON.parse_string(raw)
@@ -350,7 +344,7 @@ func _load_from_disk() -> void:
 		push_error("SaveData : fichier corrompu — réinitialisation.")
 		return
 
-	shop_upgrades = parsed.get("shop_upgrades", {})
+	var file_version := int(parsed.get("version", 1))
 
 	var raw_saves = parsed.get("saves", [])
 	for i in MAX_SLOTS:
@@ -359,11 +353,26 @@ func _load_from_disk() -> void:
 		else:
 			saves[i] = _empty_slot()
 
+	# Migration version 1 → 2 :
+	# L'ancien format sauvegardait les shop_upgrades immédiatement (sans checkpoint).
+	# On efface les upgrades de tous les slots pour repartir proprement.
+	# Les pièces et la progression de niveau sont conservées.
+	if file_version < 2:
+		for i in MAX_SLOTS:
+			saves[i]["shop_upgrades"] = {}
+		# Réécrire le fichier migré sur disque
+		var migrated := {"version": 2, "saves": saves}
+		var mf := FileAccess.open(_save_path, FileAccess.WRITE)
+		if mf != null:
+			mf.store_string(JSON.stringify(migrated, "\t"))
+			mf.close()
+
 
 func _empty_slot() -> Dictionary:
 	return {
 		"used":          false,
 		"coins":         0,
+		"shop_upgrades": {},
 		"competences":   {},
 		"level":         "",
 		"checkpoint_id": "",

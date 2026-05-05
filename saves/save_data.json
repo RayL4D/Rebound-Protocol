@@ -1,0 +1,78 @@
+{
+	"saves": [
+		{
+			"checkpoint_id": "checkpoint_default",
+			"coins": 453,
+			"competences": {
+
+			},
+			"hp": 59,
+			"level": "arena_base",
+			"pos_x": 1.43909931182861,
+			"pos_y": 0.401335388422012,
+			"pos_z": -10.9108600616455,
+			"shop_upgrades": {
+				"hp_max": 1
+			},
+			"timestamp": 1777966800,
+			"used": true
+		},
+		{
+			"checkpoint_id": "",
+			"coins": 0.0,
+			"competences": {
+
+			},
+			"hp": 0.0,
+			"level": "",
+			"shop_upgrades": {
+
+			},
+			"timestamp": 0.0,
+			"used": false
+		},
+		{
+			"checkpoint_id": "",
+			"coins": 0.0,
+			"competences": {
+
+			},
+			"hp": 0.0,
+			"level": "",
+			"shop_upgrades": {
+
+			},
+			"timestamp": 0.0,
+			"used": false
+		},
+		{
+			"checkpoint_id": "",
+			"coins": 0.0,
+			"competences": {
+
+			},
+			"hp": 0.0,
+			"level": "",
+			"shop_upgrades": {
+
+			},
+			"timestamp": 0.0,
+			"used": false
+		},
+		{
+			"checkpoint_id": "",
+			"coins": 0.0,
+			"competences": {
+
+			},
+			"hp": 0.0,
+			"level": "",
+			"shop_upgrades": {
+
+			},
+			"timestamp": 0.0,
+			"used": false
+		}
+	],
+	"version": 2
+}
