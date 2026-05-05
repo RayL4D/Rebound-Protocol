@@ -274,9 +274,27 @@ func _spawn_damage_number(amount: int) -> void:
 	fade.tween_property(label, "modulate:a", 0.0, 0.75)
 
 
+## Nombre de pièces droppées à la mort.
+## Surcharge dans les sous-classes (Boss, mini-boss…) pour des drops plus gros.
+@export var coin_drop_min: int = 1
+@export var coin_drop_max: int = 2
+
+
 func _die() -> void:
 	enemy_died.emit()
+	_drop_coins()
 	_play_death_sequence()
+
+
+func _drop_coins() -> void:
+	if not is_inside_tree():
+		return
+	var amount := randi_range(coin_drop_min, coin_drop_max)
+	var parent  := get_tree().current_scene
+	# Chaque pièce a une valeur de 1 — on en spawne `amount`
+	# (plus facile à ramasser qu'une seule grosse pièce invisible)
+	for i in amount:
+		Coin.spawn(parent, global_position)
 
 
 func _play_death_sequence() -> void:

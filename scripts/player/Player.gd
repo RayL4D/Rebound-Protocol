@@ -116,6 +116,9 @@ signal parried         # Émis à chaque appui parade (clavier ET mobile)
 # =============================================================
 
 func _ready() -> void:
+	# ── Appliquer les upgrades permanentes avant tout le reste ──
+	_apply_save_upgrades()
+
 	current_hp = max_hp
 	floor_snap_length = 0.3
 	spring_arm.set_as_top_level(true)
@@ -156,6 +159,46 @@ func _ready() -> void:
 	# Pas besoin de connecter parry_resolved pour les animations :
 	# on détecte l'appui SPACE directement dans _physics_process.
 
+	# Restaurer position + HP depuis le dernier checkpoint (deferred :
+	# attend que tous les nœuds de la scène soient prêts).
+	call_deferred("_restore_from_checkpoint")
+
+
+# =============================================================
+# UPGRADES PERMANENTES (SaveData)
+# =============================================================
+
+## Lit les upgrades achetées dans SaveData et modifie les stats du joueur.
+## Appelée une seule fois dans _ready(), avant l'initialisation des HP.
+func _apply_save_upgrades() -> void:
+	if SaveData.active_slot < 0:
+		return   # Pas de slot actif (ex. lancement direct depuis l'éditeur)
+
+	# HP maximum : +1 HP par palier
+	var hp_bonus := int(SaveData.get_upgrade_value("hp_max"))
+	max_hp += hp_bonus
+
+	# Vitesse : +5 % par palier (ex. tier 3 → move_speed * 1.15)
+	var speed_mult := 1.0 + SaveData.get_upgrade_value("move_speed")
+	move_speed = move_speed * speed_mult
+
+
+## Restaure la position et les HP depuis le dernier checkpoint sauvegardé.
+## Appelée en deferred depuis _ready() pour que tous les nœuds soient prêts.
+func _restore_from_checkpoint() -> void:
+	if SaveData.active_slot < 0:
+		return
+
+	# Restaurer la position
+	var saved_pos := SaveData.get_player_position()
+	if saved_pos != Vector3.ZERO:
+		global_position = saved_pos
+
+	# Restaurer les HP (clampés au max actuel qui tient déjà compte des upgrades)
+	var saved_hp := SaveData.get_player_hp()
+	if saved_hp > 0:
+		current_hp = min(saved_hp, max_hp)
+		hp_changed.emit(current_hp)
 
 # Applique la texture sur tous les MeshInstance3D du modèle (tête, torse,
 # bras, jambes) en un seul appel.
@@ -640,7 +683,12 @@ func take_damage(amount: int) -> void:
 	if is_dead or _invincible:
 		return
 
-	current_hp = max(0, current_hp - amount)
+	# Réduction de dégâts permanente (upgrade "damage_reduction")
+	var reduction := SaveData.get_upgrade_value("damage_reduction") if SaveData.active_slot >= 0 else 0.0
+	var final_dmg := int(round(float(amount) * (1.0 - reduction)))
+	final_dmg      = max(1, final_dmg)   # minimum 1 dégât toujours
+
+	current_hp = max(0, current_hp - final_dmg)
 	hp_changed.emit(current_hp)
 
 	if current_hp == 0:
@@ -699,4 +747,3 @@ func _die() -> void:
 	var playback := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
 	playback.travel("die")
 	player_died.emit()
-                                                                                                                                                                   

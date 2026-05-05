@@ -221,10 +221,12 @@ func _build_ui() -> void:
 	# Boutons
 	_btn_retry = _make_button(tr("UI_RETRY"), Vector2(90.0, 163.0), Vector2(200.0, 38.0), true)
 	_btn_retry.pressed.connect(_on_retry)
+	_btn_retry.process_mode = Node.PROCESS_MODE_ALWAYS   # fonctionne paused ou non
 	_panel.add_child(_btn_retry)
 
 	_btn_quit = _make_button(tr("UI_QUIT"), Vector2(90.0, 210.0), Vector2(200.0, 30.0), false)
 	_btn_quit.pressed.connect(_on_quit)
+	_btn_quit.process_mode = Node.PROCESS_MODE_ALWAYS    # fonctionne paused ou non
 	_panel.add_child(_btn_quit)
 
 
@@ -264,10 +266,10 @@ func _make_corners(origin: Vector2, size: Vector2, color: Color) -> Array:
 
 func _make_button(label: String, pos: Vector2, sz: Vector2, primary: bool) -> Button:
 	var btn := Button.new()
-	btn.text         = label
-	btn.position     = pos
-	btn.size         = sz
-	btn.process_mode = Node.PROCESS_MODE_WHEN_PAUSED  # répond pendant la pause
+	btn.text     = label
+	btn.position = pos
+	btn.size     = sz
+	# process_mode est assigné individuellement après l'appel
 	btn.add_theme_font_size_override("font_size", 13 if primary else 11)
 	btn.add_theme_color_override("font_color",        COLOR_CYAN if primary else Color(0.4, 0.6, 0.7))
 	btn.add_theme_color_override("font_hover_color",  Color.WHITE)
