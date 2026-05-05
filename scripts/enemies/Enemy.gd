@@ -286,16 +286,36 @@ func _die() -> void:
 	_play_death_sequence()
 
 
+# Dans Enemy.gd
 func _drop_coins() -> void:
 	if not is_inside_tree():
 		return
-	var amount := randi_range(coin_drop_min, coin_drop_max)
+		
+	# On récupère la valeur totale voulue (ex: 500)
+	var total_value := randi_range(coin_drop_min, coin_drop_max)
 	var parent  := get_tree().current_scene
-	# Chaque pièce a une valeur de 1 — on en spawne `amount`
-	# (plus facile à ramasser qu'une seule grosse pièce invisible)
-	for i in amount:
-		Coin.spawn(parent, global_position)
-
+	
+	# On limite le nombre de pièces physiques générées à 10 maximum pour les perfs
+	var physical_coins_to_spawn := mini(total_value, 10)
+	
+	# On répartit la valeur (ex: 500 / 10 = 50 de valeur par pièce visuelle)
+	var value_per_coin := total_value / physical_coins_to_spawn
+	var remainder := total_value % physical_coins_to_spawn
+	
+	for i in physical_coins_to_spawn:
+		if i > 0:
+			await get_tree().create_timer(0.05).timeout
+			
+		if not is_inside_tree() or not is_instance_valid(parent):
+			break
+			
+		# La première pièce prend le "reste" de la division au cas où ce n'est pas un chiffre rond
+		var current_coin_value = value_per_coin
+		if i == 0:
+			current_coin_value += remainder
+			
+		# On passe la valeur correcte à ta méthode spawn
+		Coin.spawn(parent, global_position, current_coin_value)
 
 func _play_death_sequence() -> void:
 	# Désactiver la physique et les collisions pour que le corps ne bloque plus

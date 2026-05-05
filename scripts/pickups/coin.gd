@@ -27,6 +27,11 @@ var _attracted:  bool   = false
 var _lifetime:   float  = LIFETIME
 var _bob_time:   float  = 0.0      # pour l'animation de flottaison
 
+# --- NOUVELLES VARIABLES POUR LE SAUT ---
+var _is_popping: bool    = false
+var _velocity:   Vector3 = Vector3.ZERO
+var _ground_y:   float   = 0.0
+var _gravity:    float   = 18.0    # Force de la gravité personnalisée
 
 # =============================================================
 # FACTORY
@@ -38,9 +43,20 @@ static func spawn(parent: Node, world_pos: Vector3, value: int = 1) -> void:
 	var coin := _build()
 	coin._value = value
 	parent.add_child(coin)
-	coin.global_position = world_pos + Vector3(
-		randf_range(-0.3, 0.3), 0.4, randf_range(-0.3, 0.3))
-
+	
+	# On démarre exactement au centre de l'ennemi
+	coin.global_position = world_pos
+	
+	# La cible Y où la pièce finira par flotter
+	coin._ground_y = world_pos.y + 0.4
+	
+	# Impulsion aléatoire pour l'explosion
+	coin._velocity = Vector3(
+		randf_range(-3.0, 3.0),
+		randf_range(5.0, 8.0), # Force vers le haut
+		randf_range(-3.0, 3.0)
+	)
+	coin._is_popping = true
 
 ## Construit le graphe de nœuds d'une pièce (sans l'ajouter à la scène).
 static func _build() -> Coin:
@@ -109,18 +125,37 @@ func _process(delta: float) -> void:
 		queue_free()
 		return
 
-	_bob_time += delta
-	# Flottaison sinusoïdale douce
-	position.y += sin(_bob_time * 3.0) * 0.003
+	if _is_popping:
+		# --- PHASE 1 : EXPLOSION ET REBONDS ---
+		_velocity.y -= _gravity * delta
+		global_position += _velocity * delta
+		
+		# Si la pièce tombe sous sa ligne de flottaison cible
+		if global_position.y <= _ground_y and _velocity.y < 0.0:
+			global_position.y = _ground_y
+			
+			# Rebond amorti
+			_velocity.y *= -0.4  # Perd de la hauteur
+			_velocity.x *= 0.6   # Ralentit sur les côtés
+			_velocity.z *= 0.6
+			
+			# Si le rebond est trop petit, on arrête la physique
+			if _velocity.y < 1.0:
+				_is_popping = false
+				_bob_time = 0.0  # On reset pour la flottaison
+	else:
+		# --- PHASE 2 : COMPORTEMENT ORIGINAL ---
+		_bob_time += delta
+		# Flottaison sinusoïdale douce
+		position.y += sin(_bob_time * 3.0) * 0.003
 
-	# Attraction vers le joueur
-	if _attracted and _player != null and is_instance_valid(_player):
-		var dir := (_player.global_position + Vector3(0, 0.5, 0)) - global_position
-		if dir.length() < COLLECT_RADIUS:
-			_collect()
-			return
-		global_position += dir.normalized() * ATTRACT_SPEED * delta
-
+		# Attraction vers le joueur
+		if _attracted and _player != null and is_instance_valid(_player):
+			var dir := (_player.global_position + Vector3(0, 0.5, 0)) - global_position
+			if dir.length() < COLLECT_RADIUS:
+				_collect()
+				return
+			global_position += dir.normalized() * ATTRACT_SPEED * delta
 
 func _on_body_entered(body: Node) -> void:
 	if body is Player:

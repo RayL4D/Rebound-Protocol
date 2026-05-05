@@ -1403,7 +1403,6 @@ transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -48.390343, -0.5, -13.5528
 
 [node name="Player" parent="." unique_id=222719199 instance=ExtResource("12_idjjk")]
 transform = Transform3D(-0.51458955, 0, -0.85743695, 0, 1, 0, 0.85743695, 0, -0.51458955, -28.00249, 0.38722527, -26.176981)
-max_hp = 10
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1587413322]
 transform = Transform3D(1, 0, 0, 0, -0.53931475, 0.8421044, 0, -0.8421044, -0.53931475, 0, 0, 0)
@@ -1453,8 +1452,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6.7714443)
 
 [node name="MobileControls" parent="." unique_id=246116136 instance=ExtResource("22_dyu6h")]
 
-[node name="SavePoint" parent="." unique_id=1614403436 instance=ExtResource("32_2i80p")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.91647387, 0, 3.7109745)
+[node name="SavePoint" parent="." unique_id=1095395053 instance=ExtResource("32_2i80p")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.944681, 0, 0)
 
-[node name="SavePoint2" parent="." unique_id=1491873481 instance=ExtResource("32_2i80p")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 17.942863)
+[node name="SavePoint2" parent="." unique_id=1464802946 instance=ExtResource("32_2i80p")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.2938385, 0, 0)
