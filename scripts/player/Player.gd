@@ -116,6 +116,9 @@ signal parried         # Émis à chaque appui parade (clavier ET mobile)
 # =============================================================
 
 func _ready() -> void:
+	# ── Appliquer les upgrades permanentes avant tout le reste ──
+	_apply_save_upgrades()
+
 	current_hp = max_hp
 	floor_snap_length = 0.3
 	spring_arm.set_as_top_level(true)
@@ -137,15 +140,19 @@ func _ready() -> void:
 	_target_snap_yaw  = _cam_yaw   # Synchroniser la cible sur l'angle initial
 	_target_zoom      = spring_arm.spring_length
 
-	# Positionner le spring arm immédiatement — évite que la caméra soit
-	# dans le corps du joueur pendant le premier frame rendu (notamment après Retry).
-	# Sans ça, le spring arm reste à la position locale (0,0,0) du joueur
-	# jusqu'au premier _physics_process, et SpringArm3D place la caméra
-	# à spring_length le long de son axe Z local → à l'intérieur du modèle.
-	spring_arm.global_position    = global_position + Vector3(0, 0.9, 0)
-	spring_arm.rotation_degrees.x = _cam_pitch
-	spring_arm.rotation_degrees.y = _cam_yaw
-	spring_arm.spring_length      = _target_zoom
+	# Restaurer la position du checkpoint IMMÉDIATEMENT, avant le premier frame
+	# de physique. Sans ça, le joueur spawne à la position par défaut de la scène
+	# pendant au moins un frame avant d'être téléporté.
+	if SaveData.active_slot >= 0:
+		var saved_pos := SaveData.get_player_position()
+		if saved_pos != Vector3.ZERO:
+			global_position = saved_pos
+
+	# Positionner le spring arm sur la position finale du joueur (checkpoint ou défaut).
+	# Évite que la caméra soit dans le corps du joueur pendant le premier frame rendu.
+	spring_arm.global_position  = global_position + Vector3(0, 0.9, 0)
+	spring_arm.rotation_degrees = Vector3(_cam_pitch, _cam_yaw, 0.0)
+	spring_arm.spring_length    = _target_zoom
 
 	# Stoppe l'AnimationPlayer brut du GLB — c'est l'AnimationTree qui prend
 	# le relais pour piloter les états (idle/sprint/parry/die).
@@ -153,9 +160,50 @@ func _ready() -> void:
 	if anim_player:
 		anim_player.stop()
 
-	# Pas besoin de connecter parry_resolved pour les animations :
-	# on détecte l'appui SPACE directement dans _physics_process.
+	# Restaurer les HP en deferred : le HUD (qui écoute hp_changed) n'est pas
+	# encore connecté pendant _ready(), on attend la fin du frame.
+	call_deferred("_restore_hp_from_save")
 
+
+# =============================================================
+# UPGRADES PERMANENTES (SaveData)
+# =============================================================
+
+## Lit les upgrades achetées dans SaveData et modifie les stats du joueur.
+## Appelée une seule fois dans _ready(), avant l'initialisation des HP.
+func _apply_save_upgrades() -> void:
+	if SaveData.active_slot < 0:
+		return   # Pas de slot actif (ex. lancement direct depuis l'éditeur)
+
+	# HP maximum : +1 HP par palier
+	var hp_bonus := int(SaveData.get_upgrade_value("hp_max"))
+	max_hp += hp_bonus
+
+	# Vitesse : +5 % par palier (ex. tier 3 → move_speed * 1.15)
+	var speed_mult := 1.0 + SaveData.get_upgrade_value("move_speed")
+	move_speed = move_speed * speed_mult
+
+
+## Restaure les HP depuis la dernière sauvegarde.
+## Appelée en deferred depuis _ready() — attend que le HUD soit connecté.
+## La position est déjà restaurée directement dans _ready().
+func _restore_hp_from_save() -> void:
+	if SaveData.active_slot < 0:
+		return
+
+	var saved_hp := SaveData.get_player_hp()
+	if saved_hp > 0:
+		current_hp = min(saved_hp, max_hp)
+
+	# Toujours émettre pour que le HUD affiche le bon HP dès le départ.
+	hp_changed.emit(current_hp)
+
+	# Si aucun checkpoint n'a encore été activé (HP sauvegardé = 0),
+	# écrire le HP de départ sur disque pour que le slot affiche une valeur correcte.
+	# Pièces et upgrades ne sont PAS sauvegardées ici — uniquement aux checkpoints.
+	if SaveData.get_player_hp() == 0:
+		SaveData.set_player_hp(current_hp)
+		SaveData.save_current()
 
 # Applique la texture sur tous les MeshInstance3D du modèle (tête, torse,
 # bras, jambes) en un seul appel.
@@ -236,6 +284,9 @@ func _physics_process(delta: float) -> void:
 # =============================================================
 
 func _input(event: InputEvent) -> void:
+	if is_dead:
+		return   # Bloquer tout input caméra/zoom pendant l'animation de mort
+
 	if event is InputEventMouseButton:
 		match event.button_index:
 			MOUSE_BUTTON_WHEEL_UP:
@@ -641,7 +692,12 @@ func take_damage(amount: int) -> void:
 	if is_dead or _invincible:
 		return
 
-	current_hp = max(0, current_hp - amount)
+	# Réduction de dégâts permanente (upgrade "damage_reduction")
+	var reduction := SaveData.get_upgrade_value("damage_reduction") if SaveData.active_slot >= 0 else 0.0
+	var final_dmg := int(round(float(amount) * (1.0 - reduction)))
+	final_dmg      = max(1, final_dmg)   # minimum 1 dégât toujours
+
+	current_hp = max(0, current_hp - final_dmg)
 	hp_changed.emit(current_hp)
 
 	if current_hp == 0:
@@ -700,4 +756,3 @@ func _die() -> void:
 	var playback := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
 	playback.travel("die")
 	player_died.emit()
-                                                                                                                                                                                                                                          

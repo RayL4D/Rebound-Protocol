@@ -4,3 +4,5 @@ export_presets.cfg
 /android/
 *.tmp
 *.tmp.*
+/.claude
+/saves

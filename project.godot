@@ -11,13 +11,14 @@ config_version=5
 [application]
 
 config/name="Rebound Protocol"
-run/main_scene="uid://c3c1mmg3r6473"
+run/main_scene="uid://csuqak0vnysy3"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
 
 SceneManager="*uid://g3qi87qjs1bv"
+SaveData="*res://scripts/save/save_data.gd"
 CollisionManager="*res://scripts/levels/collision_manager.gd"
 
 [display]

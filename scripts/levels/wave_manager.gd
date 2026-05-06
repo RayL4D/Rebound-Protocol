@@ -164,8 +164,6 @@ func _on_wave_cleared() -> void:
 
 func _on_player_died() -> void:
 	_show_message(tr("UI_DEATH_MSG"))
-	await get_tree().create_timer(2.5).timeout
-	get_tree().reload_current_scene()
 
 	
 # --- CORRECTION : C'est ici qu'on gère la fin dans ce script ---

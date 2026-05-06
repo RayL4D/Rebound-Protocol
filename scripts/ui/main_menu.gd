@@ -26,9 +26,17 @@ func _ready() -> void:
 	btn_quit.pressed.connect(_on_quit_pressed)
 	btn_options.pressed.connect(_on_options_pressed)
 
-	# BtnContinue désactivé (pas de système de sauvegarde pour l'instant)
-	btn_continue.disabled = true
-	btn_continue.modulate = Color(0.5, 0.5, 0.5, 0.8)
+	btn_continue.pressed.connect(_on_continue_pressed)
+
+	# Activer "Continuer" seulement s'il existe au moins un slot utilisé
+	var has_save := false
+	for i in SaveData.MAX_SLOTS:
+		if SaveData.get_slot_info(i)["used"]:
+			has_save = true
+			break
+	if not has_save:
+		btn_continue.disabled = true
+		btn_continue.modulate = Color(0.5, 0.5, 0.5, 0.8)
 
 	# Connexion du bouton pour dérouler les langues
 	btn_toggle_language.pressed.connect(_on_toggle_language_pressed)
@@ -40,7 +48,13 @@ func _ready() -> void:
 
 
 func _on_new_game_pressed() -> void:
-	SceneManager.load_level("res://scenes/levels/arena_base.tscn")
+	SaveData.new_game_mode = true
+	get_tree().change_scene_to_file("res://scenes/ui/slot_select.tscn")
+
+
+func _on_continue_pressed() -> void:
+	SaveData.new_game_mode = false
+	get_tree().change_scene_to_file("res://scenes/ui/slot_select.tscn")
 
 
 func _on_options_pressed() -> void:
