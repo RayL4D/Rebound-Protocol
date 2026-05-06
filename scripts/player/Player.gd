@@ -104,6 +104,16 @@ const DASH_GHOST_INTERVAL: float = 0.04  # une afterimage toutes les 40 ms
 # Gravité récupérée depuis les paramètres projet Godot
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
+# --- Sons joueur (null = pas encore chargé, pas de crash) --------
+const _SFX_JUMP  : AudioStream = preload("res://audio/sfx/player/jump.wav")
+const _SFX_LAND  : AudioStream = null  # preload("res://audio/sfx/player/land.ogg")
+const _SFX_DASH  : AudioStream = null  # preload("res://audio/sfx/player/dash.ogg")
+const _SFX_PARRY : AudioStream = null  # preload("res://audio/sfx/player/parry.ogg")
+const _SFX_HURT  : AudioStream = null  # preload("res://audio/sfx/player/hurt.ogg")
+const _SFX_DIE   : AudioStream = null  # preload("res://audio/sfx/player/die.ogg")
+
+var _sfx: AudioStreamPlayer = null
+
 # --- Signaux -----------------------------------------------------
 signal player_died
 signal hp_changed(new_hp: int)
@@ -160,6 +170,11 @@ func _ready() -> void:
 	var anim_player := robot_model.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if anim_player:
 		anim_player.stop()
+
+	# AudioStreamPlayer pour les SFX joueur (bus SFX, polyphonie simple)
+	_sfx = AudioStreamPlayer.new()
+	_sfx.bus = "SFX"
+	add_child(_sfx)
 
 	# Restaurer les HP en deferred : le HUD (qui écoute hp_changed) n'est pas
 	# encore connecté pendant _ready(), on attend la fin du frame.
@@ -269,6 +284,7 @@ func _physics_process(delta: float) -> void:
 	if keyboard_parry or mobile_parry:
 		_parry_requested = true
 		parried.emit()
+		_play_sfx(_SFX_PARRY)
 		var pb := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
 		pb.travel("parry")
 
@@ -349,6 +365,7 @@ func _handle_jump() -> void:
 		velocity.y        = jump_force
 		floor_snap_length = 0.0
 		jumped.emit()
+		_play_sfx(_SFX_JUMP)
 		_squash_stretch_jump()
 	elif on_floor and not _was_on_floor:
 		floor_snap_length = 0.3
@@ -356,6 +373,7 @@ func _handle_jump() -> void:
 		# pas sur la tête d'un ennemi.
 		if not _standing_on_enemy():
 			_stomp_hit_this_jump = false
+			_play_sfx(_SFX_LAND)
 			_squash_stretch_land()
 	elif on_floor:
 		floor_snap_length = 0.3
@@ -607,6 +625,7 @@ func _start_dash() -> void:
 	_dash_ghost_timer    = 0.0
 	_dash_hit_enemies.clear()
 
+	_play_sfx(_SFX_DASH)
 	_dash_fx_start()
 
 
@@ -703,6 +722,7 @@ func take_damage(amount: int) -> void:
 	if current_hp == 0:
 		_die()
 	else:
+		_play_sfx(_SFX_HURT)
 		_start_iframes()
 
 
@@ -753,6 +773,18 @@ func _die() -> void:
 
 	# Déclenché ici directement car _physics_process retourne immédiatement
 	# quand is_dead est true — _update_animation() ne serait jamais appelée.
+	_play_sfx(_SFX_DIE)
 	var playback := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
 	playback.travel("die")
 	player_died.emit()
+
+
+# =============================================================
+# SFX HELPER
+# =============================================================
+
+func _play_sfx(stream: AudioStream) -> void:
+	if stream == null or _sfx == null:
+		return
+	_sfx.stream = stream
+	_sfx.play()
