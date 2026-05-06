@@ -21,7 +21,7 @@
 [ext_resource type="PackedScene" uid="uid://b2hehayj3ft7e" path="res://scenes/levels/zones/level_exit.tscn" id="17_djr2x"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/pet_fox.tscn" id="21_dyu6h"]
 [ext_resource type="PackedScene" uid="uid://b2oxmnlr28vu" path="res://scenes/enemies/pet_dog.tscn" id="22_8iijb"]
-[ext_resource type="PackedScene" uid="uid://cnm5imuwr82km" path="res://scenes/ui/mobile_controls.tscn" id="22_dyu6h"]
+[ext_resource type="PackedScene" uid="uid://bxss4q4q2p5dq" path="res://scenes/ui/mobile_controls.tscn" id="22_dyu6h"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/pet_bunny.tscn" id="22_lj50e"]
 [ext_resource type="PackedScene" uid="uid://ubnnx67erpeq" path="res://scenes/enemies/pet_cow.tscn" id="23_3ojju"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/pet_panda.tscn" id="24_cugfp"]
@@ -1403,6 +1403,7 @@ transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, -48.390343, -0.5, -13.5528
 
 [node name="Player" parent="." unique_id=222719199 instance=ExtResource("12_idjjk")]
 transform = Transform3D(-0.51458955, 0, -0.85743695, 0, 1, 0, 0.85743695, 0, -0.51458955, -28.00249, 0.38722527, -26.176981)
+max_hp = 1000
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1587413322]
 transform = Transform3D(1, 0, 0, 0, -0.53931475, 0.8421044, 0, -0.8421044, -0.53931475, 0, 0, 0)
