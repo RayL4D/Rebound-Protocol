@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 SceneManager="*uid://g3qi87qjs1bv"
 SaveData="*res://scripts/save/save_data.gd"
+CollisionManager="*res://scripts/levels/collision_manager.gd"
 
 [display]
 
