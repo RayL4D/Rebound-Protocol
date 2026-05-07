@@ -17,10 +17,13 @@ func _ready() -> void:
 	MusicManager.play("gameplay")
 
 	TranslationServer.set_locale(SceneManager.current_lang)
-	
+
 	#TranslationServer.set_locale("es") # Espagnol pour le test
-	
-	_add_collision_recursive(self)
+	# Générer les collisions manquantes pour la géométrie de cette scène.
+	# Sans await : _ready() des enfants s'exécute avant celui du parent,
+	# donc cet appel se termine AVANT celui du script racine du niveau.
+	# Le CollisionManager détecte ensuite les StaticBody3D déjà créés → pas de doublon.
+	CollisionManager.add_missing_collisions(self)
 
 	# --- Labels HUD ---
 	var wave_label:    Label   = hud.get_node_or_null("%WaveLabel")
@@ -45,7 +48,7 @@ func _ready() -> void:
 	tutorial_manager.setup(player, panel, message_label, step_label)
 	tutorial_manager.tutorial_completed.connect(_on_tutorial_completed)
 	tutorial_manager.start()
-	
+
 	# --- Connexion de fin de niveau ---
 	wave_manager.all_waves_finished.connect(_on_waves_finished)
 
@@ -54,31 +57,6 @@ func _on_tutorial_completed() -> void:
 	wave_manager.start()
 
 
-# =============================================================
-# COLLISION DÉCOR
-# =============================================================
-
-func _add_collision_recursive(node: Node) -> void:
-	if node is CharacterBody3D:
-		return
-	# Groupe "no_collision" : skip ce nœud ET tous ses descendants
-	if node.is_in_group("no_collision"):
-		return
-
-	if node is MeshInstance3D:
-		var parent := node.get_parent()
-		var parent_has_collision := false
-		for child in parent.get_children():
-			if child is CollisionShape3D:
-				parent_has_collision = true
-				break
-		if not parent_has_collision:
-			node.create_trimesh_collision()
-
-	for child in node.get_children():
-		_add_collision_recursive(child)
-		
-		
 # =============================================================
 # BOSS
 # =============================================================

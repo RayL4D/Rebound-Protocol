@@ -21,5 +21,5 @@ func activate():
 
 
 func _on_body_entered(body: Node3D):
-	if body is Player: 
-		SceneManager.load_level("res://scenes/levels/arena_base.tscn")
+	if body is Player:
+		SceneManager.load_level(next_scene)
