@@ -118,10 +118,11 @@ func _play_death_sequence() -> void:
 	# 3. Attendre la fin de l'animation de mort (~2 s) avant le panneau
 	await get_tree().create_timer(2.0).timeout
 
-	# 4. Afficher le panneau + pauser
+	# 4. Afficher le panneau + musique game over + pauser
 	_panel.visible   = true
 	_panel_visible   = true
 	_animate_panel_in()
+	MusicManager.play("game_over")
 	get_tree().paused = true
 
 

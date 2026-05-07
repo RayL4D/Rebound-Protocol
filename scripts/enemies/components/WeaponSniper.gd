@@ -57,7 +57,19 @@ var _pulse_phase: float = 0.0
 # INITIALISATION
 # =============================================================
 
+# --- Audio ------------------------------------------------------
+const _SFX_CHARGE: AudioStream = preload("res://audio/sfx/enemies/sniper_charge.wav")
+var _sfx_charge: AudioStreamPlayer = null
+
+
 func _ready() -> void:
+	# Remplace le son de tir standard hérité de WeaponBullet par le son sniper
+	_shoot_sfx = preload("res://audio/sfx/enemies/sniper_fire.wav")
+
+	_sfx_charge     = AudioStreamPlayer.new()
+	_sfx_charge.bus = "SFX"
+	add_child(_sfx_charge)
+
 	# Différé : s'exécute après que Enemy._setup_model() a appliqué
 	# ses textures → notre matériau n'est plus écrasé
 	call_deferred("_create_laser")
@@ -169,6 +181,13 @@ func _process(delta: float) -> void:
 			if global_position.distance_to(_target.global_position) > shoot_range:
 				_abort_charge()
 				return
+
+			# Jouer le son de charge au début (une seule fois)
+			if _charge_elapsed == 0.0 and _sfx_charge != null and _SFX_CHARGE != null:
+				_sfx_charge.stream      = _SFX_CHARGE
+				_sfx_charge.volume_db   = -10.0
+				_sfx_charge.pitch_scale = 1.0
+				_sfx_charge.play()
 
 			_charge_elapsed += delta
 			_pulse_phase    += delta

@@ -35,10 +35,19 @@ var _melee_cooldown: float  = 0.0
 # HOOK D'INITIALISATION
 # =============================================================
 
+# --- Audio ------------------------------------------------------
+const _SFX_SWIPE: AudioStream = preload("res://audio/sfx/enemies/melee_swipe.wav")
+var _sfx_player: AudioStreamPlayer = null
+
+
 func _on_ready() -> void:
 	_create_melee_area()
 	if _anim_player != null:
 		_anim_player.animation_finished.connect(_on_animation_finished)
+
+	_sfx_player     = AudioStreamPlayer.new()
+	_sfx_player.bus = "SFX"
+	add_child(_sfx_player)
 
 
 func _create_melee_area() -> void:
@@ -83,6 +92,12 @@ func _check_melee() -> void:
 		if body.is_in_group("player"):
 			body.take_damage(melee_damage)
 			_melee_cooldown = melee_interval
+
+			if _sfx_player and _SFX_SWIPE:
+				_sfx_player.stream      = _SFX_SWIPE
+				_sfx_player.volume_db   = -8.0 + randf_range(-1.0, 1.0)
+				_sfx_player.pitch_scale = randf_range(0.93, 1.07)
+				_sfx_player.play()
 
 			# Animation de frappe
 			if _anim_player != null:

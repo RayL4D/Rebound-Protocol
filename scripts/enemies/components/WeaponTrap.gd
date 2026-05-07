@@ -21,6 +21,16 @@ extends WeaponComponent
 # --- État interne -----------------------------------------------
 var _mines: Array = []  # Array[TrapMine] — nettoyé automatiquement
 
+# --- Audio ------------------------------------------------------
+const _SFX_DEPLOY: AudioStream = preload("res://audio/sfx/enemies/mine_deploy.wav")
+var _sfx_player: AudioStreamPlayer = null
+
+
+func _ready() -> void:
+	_sfx_player     = AudioStreamPlayer.new()
+	_sfx_player.bus = "SFX"
+	add_child(_sfx_player)
+
 
 # =============================================================
 # SURCHARGE DE _process — pas de vérification de portée
@@ -55,3 +65,9 @@ func _fire() -> void:
 	get_tree().current_scene.add_child(mine)
 	mine.init(global_position, damage, mine_lifetime)
 	_mines.append(mine)
+
+	if _sfx_player and _SFX_DEPLOY:
+		_sfx_player.stream      = _SFX_DEPLOY
+		_sfx_player.volume_db   = -14.0
+		_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+		_sfx_player.play()
