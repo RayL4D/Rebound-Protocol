@@ -16,6 +16,7 @@ extends Control
 
 
 func _ready() -> void:
+	MusicManager.play("menu")
 	flags_container.hide()
 
 	# Appliquer les paramètres sauvegardés dès le menu

@@ -14,6 +14,7 @@ var _boss: BossLion = null
 
 
 func _ready() -> void:
+	MusicManager.play("gameplay")
 
 	TranslationServer.set_locale(SceneManager.current_lang)
 
@@ -66,6 +67,7 @@ func _on_waves_finished() -> void:
 
 
 func _spawn_boss() -> void:
+	MusicManager.play("boss")
 	_boss = BOSS_SCENE.instantiate() as BossLion
 	add_child(_boss)
 
@@ -98,6 +100,7 @@ func _on_boss_hp_changed(_current_hp: int, _max_hp: int) -> void:
 
 
 func _on_boss_died() -> void:
+	MusicManager.play("gameplay")
 	# Activer la sortie et afficher le message de fin
 	var exit_zone = $LevelExit
 	exit_zone.activate()
