@@ -3,7 +3,10 @@
 [ext_resource type="Script" uid="uid://c4vmmif0c42hl" path="res://scripts/levels/arena_first_level_1.gd" id="1_doyx5"]
 [ext_resource type="PackedScene" uid="uid://cp8oo218ghcj" path="res://scenes/player/player.tscn" id="1_ha378"]
 [ext_resource type="PackedScene" uid="uid://dtenrqcyval18" path="res://assets/models/environments/tutorial_and_first_level/rock_largeA.glb" id="2_617ci"]
+[ext_resource type="Script" uid="uid://c8iuwrbemhmo6" path="res://scripts/levels/wave_manager.gd" id="2_arrf3"]
+[ext_resource type="PackedScene" uid="uid://dh1hioalq5p7" path="res://scenes/enemies/dropship.tscn" id="3_r734y"]
 [ext_resource type="PackedScene" uid="uid://qkhkbe5uvj64" path="res://assets/models/environments/tutorial_and_first_level/hangar_roundB.glb" id="4_enpma"]
+[ext_resource type="PackedScene" uid="uid://b2oxmnlr28vu" path="res://scenes/enemies/pet_dog.tscn" id="4_r734y"]
 [ext_resource type="PackedScene" uid="uid://d0miflglqrbug" path="res://assets/models/environments/tutorial_and_first_level/hangar_smallB.glb" id="5_61jvx"]
 [ext_resource type="Shader" uid="uid://ctto1apvv4vc4" path="res://assets/shaders/portal_effect.gdshader" id="5_e3tnm"]
 [ext_resource type="PackedScene" uid="uid://dn3as1iq1s4i2" path="res://assets/models/environments/tutorial_and_first_level/meteor.glb" id="5_enpma"]
@@ -38,7 +41,10 @@
 [ext_resource type="PackedScene" uid="uid://dbhdbhhp6hb6h" path="res://assets/models/environments/tutorial_and_first_level/platform_small.glb" id="34_u5hel"]
 [ext_resource type="PackedScene" uid="uid://bd823ofpus08f" path="res://assets/models/environments/tutorial_and_first_level/stairs_short.glb" id="35_jtgeh"]
 [ext_resource type="PackedScene" uid="uid://d2yvf13ndfbeu" path="res://assets/models/environments/tutorial_and_first_level/pipe_supportLow.glb" id="36_k1odj"]
-[ext_resource type="PackedScene" uid="uid://bhgvjljgxud1e" path="res://scenes/enemies/enemy_patrol_dog.tscn" id="39_ydtev"]
+[ext_resource type="PackedScene" uid="uid://chm01swb33150" path="res://scenes/ui/HUD.tscn" id="42_ayx3v"]
+[ext_resource type="PackedScene" uid="uid://pbrlw8kcrlq4" path="res://scenes/ui/game_over.tscn" id="43_om3xt"]
+[ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="44_ctbie"]
+[ext_resource type="PackedScene" uid="uid://bxss4q4q2p5dq" path="res://scenes/ui/mobile_controls.tscn" id="45_hrfqu"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_ha378"]
 sky_top_color = Color(0.04379709, 0.5018009, 0.59652394, 1)
@@ -167,22 +173,44 @@ height = 0.001
 height = 0.1
 radius = 2.5
 
-[sub_resource type="Curve3D" id="Curve3D_e3tnm"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, 12.815102, 0.4603703, 1.9238892, 0, 0, 0, 0, 0, 0, 14.31517, 0.043700695, 83.74584, 0, 0, 0, 0, 0, 0, 71.44291, -0.002843678, 67.554955),
-"tilts": PackedFloat32Array(0, 0, 0)
-}
-point_count = 3
+[sub_resource type="BoxShape3D" id="BoxShape3D_om3xt"]
+size = Vector3(50, 1, 80)
 
-[sub_resource type="Curve3D" id="Curve3D_ydtev"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -14.320488, 1.4232396, -4.3915634, 0, 0, 0, 0, 0, 0, -60.255924, 1.3416433, -14.096497),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
+[sub_resource type="BoxShape3D" id="BoxShape3D_arrf3"]
+size = Vector3(150, 1, 150)
 
 [node name="ArenaFirstLevel1" type="Node3D" unique_id=1626442709]
 script = ExtResource("1_doyx5")
+
+[node name="WaveManager_Zone1" type="Node" parent="." unique_id=877376594]
+script = ExtResource("2_arrf3")
+dropship_scene = ExtResource("3_r734y")
+enemy_scene = ExtResource("4_r734y")
+dropship_spawn_points = Array[NodePath]([NodePath("DropShipSpawn_01")])
+
+[node name="DropShipSpawn_01" type="Marker3D" parent="WaveManager_Zone1" unique_id=987807997]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.6608505, 12.913968, 169.7789)
+
+[node name="WaveManager_Zone2" type="Node" parent="." unique_id=546491800]
+script = ExtResource("2_arrf3")
+dropship_scene = ExtResource("3_r734y")
+enemy_scene = ExtResource("4_r734y")
+dropship_spawn_points = Array[NodePath]([NodePath("DropShipSpawn_01"), NodePath("DropShipSpawn_02")])
+
+[node name="DropShipSpawn_01" type="Marker3D" parent="WaveManager_Zone2" unique_id=2050821465]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 170.30763, 19.800678, 11.254816)
+
+[node name="DropShipSpawn_02" type="Marker3D" parent="WaveManager_Zone2" unique_id=1410210126]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 224.28586, 19.801, -44.997513)
+
+[node name="WaveManager_Boss" type="Node" parent="." unique_id=1787827494]
+script = ExtResource("2_arrf3")
+dropship_scene = ExtResource("3_r734y")
+enemy_scene = ExtResource("4_r734y")
+dropship_spawn_points = Array[NodePath]([NodePath("DropShipSpawn_01")])
+
+[node name="DropShipSpawn_01" type="Marker3D" parent="WaveManager_Boss" unique_id=2037180213]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 191.49687, 12.913968, -48.720276)
 
 [node name="Environment" type="Node3D" parent="." unique_id=34951753]
 
@@ -743,6 +771,12 @@ transform = Transform3D(4.5965014, 0, 1.9677843, 0, 5, 0, -1.9677843, 0, 4.59650
 [node name="bones2" parent="WorldObjects_container/outpost_small/outdoor_decorations" unique_id=1013680177 instance=ExtResource("12_5o6i8")]
 transform = Transform3D(5.1162786, 0, 3.134277, 0, 6, 0, -3.134277, 0, 5.1162786, 2.0767756, 12.893337, 200.76384)
 
+[node name="bones4" parent="WorldObjects_container/outpost_small/outdoor_decorations" unique_id=941108726 instance=ExtResource("12_5o6i8")]
+transform = Transform3D(5.1162786, 0, 3.134277, 0, 6, 0, -3.134277, 0, 5.1162786, 56.01035, -0.53561616, 71.29042)
+
+[node name="bones5" parent="WorldObjects_container/outpost_small/outdoor_decorations" unique_id=1750263796 instance=ExtResource("12_5o6i8")]
+transform = Transform3D(5.6052265, 0, -2.140428, 0, 6, 0, 2.140428, 0, 5.6052265, 91.076004, -0.53561616, 114.77009)
+
 [node name="bones3" parent="WorldObjects_container/outpost_small/outdoor_decorations" unique_id=1370106139 instance=ExtResource("12_5o6i8")]
 transform = Transform3D(5.10371, 0, -3.1547005, 0, 5.9999995, 0, 3.1547005, 0, 5.10371, -5.9423, 12.893337, 164.15172)
 
@@ -1061,39 +1095,28 @@ transform = Transform3D(1, 0, 0, 0, -0.30007312, 0.9539163, 0, -0.9539163, -0.30
 light_color = Color(1, 0.9411765, 0.8, 1)
 shadow_enabled = true
 
-[node name="PetDog" parent="." unique_id=437757490 node_paths=PackedStringArray("path_follow") instance=ExtResource("39_ydtev")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50.3099, 0, 0)
-path_follow = NodePath("../Rail_patrol/PathFollow3D")
+[node name="Trigger_Zone1" type="Area3D" parent="." unique_id=98107820]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 13.300564, 196.92197)
 
-[node name="PetDog2" parent="." unique_id=1540007572 node_paths=PackedStringArray("path_follow") instance=ExtResource("39_ydtev")]
-path_follow = NodePath("../Rail_patrol2/PathFollow3D8_01")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Trigger_Zone1" unique_id=928291943]
+transform = Transform3D(-0.00872653, 0, -0.9999619, 0, 1, 0, 0.9999619, 0, -0.00872653, 12.240219, 0, -1.1137543)
+shape = SubResource("BoxShape3D_om3xt")
 
-[node name="Rail_patrol" type="Path3D" parent="." unique_id=1856586822]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 77.874, -0.5, 74.887)
-curve = SubResource("Curve3D_e3tnm")
+[node name="Trigger_Zone2" type="Area3D" parent="." unique_id=1926126455]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 184.28604, -7.6293945e-06, -65.433334)
 
-[node name="PathFollow3D" type="PathFollow3D" parent="Rail_patrol" unique_id=1450828487]
-transform = Transform3D(1, 0, 0, 0, 0.9999951, 0, 0, 0, 0.9999983, 12.815102, 0.4603703, 1.9238892)
-rotation_mode = 0
-loop = false
-tilt_enabled = false
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Trigger_Zone2" unique_id=1830844604]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.716034, 21.61779, 17.730762)
+shape = SubResource("BoxShape3D_arrf3")
+debug_color = Color(0.9807982, 0, 0.3806079, 0.41960785)
 
-[node name="Rail_patrol3" type="Path3D" parent="." unique_id=1337342815]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 77.874, -0.5, 74.887)
-curve = SubResource("Curve3D_e3tnm")
+[node name="HUD" parent="." unique_id=1994348935 instance=ExtResource("42_ayx3v")]
 
-[node name="PathFollow3D" type="PathFollow3D" parent="Rail_patrol3" unique_id=684928782]
-transform = Transform3D(1, 0, 0, 0, 0.9999951, 0, 0, 0, 0.9999983, 12.815102, 0.4603703, 1.9238892)
-rotation_mode = 0
-loop = false
-tilt_enabled = false
+[node name="GameOver" parent="." unique_id=892376385 instance=ExtResource("43_om3xt")]
 
-[node name="Rail_patrol2" type="Path3D" parent="." unique_id=1434134715]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 77.874, -1.8413448, 74.887)
-curve = SubResource("Curve3D_ydtev")
+[node name="PauseMenu" parent="." unique_id=1927269659 instance=ExtResource("44_ctbie")]
 
-[node name="PathFollow3D8_01" type="PathFollow3D" parent="Rail_patrol2" unique_id=625538619]
-transform = Transform3D(1, 0, 0, 0, 0.9999951, 0, 0, 0, 0.9999983, -14.320488, 1.4232396, -4.3915634)
-rotation_mode = 0
-loop = false
-tilt_enabled = false
+[node name="MobileControls" parent="." unique_id=1449797109 instance=ExtResource("45_hrfqu")]
+
+[connection signal="body_entered" from="Trigger_Zone1" to="." method="_on_trigger_zone_1_body_entered"]
+[connection signal="body_entered" from="Trigger_Zone2" to="." method="_on_trigger_zone_2_body_entered"]
