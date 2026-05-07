@@ -1,7 +1,7 @@
 extends Node
 
 ## Génère automatiquement les collisions manquantes.
-static func add_missing_collisions(node: Node) -> void:
+func add_missing_collisions(node: Node) -> void:
 	# Ignorer les entités mobiles, les zones de trigger et les corps rigides.
 	if node is CharacterBody3D or node is Area3D or node is RigidBody3D:
 		return
