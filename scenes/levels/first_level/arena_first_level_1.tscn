@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" uid="uid://dn3as1iq1s4i2" path="res://assets/models/environments/tutorial_and_first_level/meteor.glb" id="5_enpma"]
 [ext_resource type="PackedScene" uid="uid://c4er506cy637w" path="res://scenes/levels/zones/kill_zone.tscn" id="5_tbebd"]
 [ext_resource type="PackedScene" uid="uid://k3xwyj2an72" path="res://assets/models/environments/tutorial_and_first_level/hangar_largeB.glb" id="6_f2nsb"]
+[ext_resource type="PackedScene" uid="uid://cnqylnjxoolj0" path="res://scenes/enemies/boss_lion.tscn" id="6_qsnft"]
 [ext_resource type="PackedScene" uid="uid://dgaaan3vs5ujh" path="res://assets/models/environments/tutorial_and_first_level/machine_generator.glb" id="7_dppew"]
 [ext_resource type="PackedScene" uid="uid://dysysxe40a80g" path="res://assets/models/environments/tutorial_and_first_level/craft_speederB.glb" id="8_f2nsb"]
 [ext_resource type="PackedScene" uid="uid://mwlayrnfs41m" path="res://assets/models/environments/tutorial_and_first_level/platform_large.glb" id="9_74u5m"]
@@ -146,15 +147,15 @@ shader_parameter/base_color = Color(0, 0.83, 1, 1)
 shader_parameter/speed = 1.0
 shader_parameter/distortion = 2.0
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_k1odj"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hrfqu"]
 albedo_color = Color(0.40545133, 1.4369954, 1.4369954, 0.42745098)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_e3tnm"]
-material = SubResource("StandardMaterial3D_k1odj")
+material = SubResource("StandardMaterial3D_hrfqu")
 size = Vector2(3, 3.3)
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_ydtev"]
-material = SubResource("StandardMaterial3D_k1odj")
+material = SubResource("StandardMaterial3D_hrfqu")
 size = Vector2(3.5, 3.5)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_lwkvo"]
@@ -195,22 +196,25 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.6608505, 12.913968, 169.77
 script = ExtResource("2_arrf3")
 dropship_scene = ExtResource("3_r734y")
 enemy_scene = ExtResource("4_r734y")
-dropship_spawn_points = Array[NodePath]([NodePath("DropShipSpawn_01"), NodePath("DropShipSpawn_02")])
+dropship_spawn_points = Array[NodePath]([NodePath("DropShipSpawn_01"), NodePath("DropShipSpawn_02"), NodePath("DropShipSpawn_03")])
 
 [node name="DropShipSpawn_01" type="Marker3D" parent="WaveManager_Zone2" unique_id=2050821465]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 170.30763, 19.800678, 11.254816)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 169.56725, 23.361256, 7.8146744)
 
 [node name="DropShipSpawn_02" type="Marker3D" parent="WaveManager_Zone2" unique_id=1410210126]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 224.28586, 19.801, -44.997513)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 213.1478, 22.443537, -45.642853)
+
+[node name="DropShipSpawn_03" type="Marker3D" parent="WaveManager_Zone2" unique_id=297900242]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 169.44394, 22.443537, -89.91768)
 
 [node name="WaveManager_Boss" type="Node" parent="." unique_id=1787827494]
 script = ExtResource("2_arrf3")
 dropship_scene = ExtResource("3_r734y")
-enemy_scene = ExtResource("4_r734y")
+enemy_scene = ExtResource("6_qsnft")
 dropship_spawn_points = Array[NodePath]([NodePath("DropShipSpawn_01")])
 
 [node name="DropShipSpawn_01" type="Marker3D" parent="WaveManager_Boss" unique_id=2037180213]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 191.49687, 12.913968, -48.720276)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 220.72163, 22.913967, -42.131016)
 
 [node name="Environment" type="Node3D" parent="." unique_id=34951753]
 
@@ -1088,7 +1092,6 @@ transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, 244.12885, 19.5, -42.114094)
 
 [node name="Player" parent="." unique_id=222719199 instance=ExtResource("1_ha378")]
 transform = Transform3D(-0.9873115, 0, -0.15879565, 0, 1, 0, 0.15879565, 0, -0.9873115, -3.5227365, 0.43636608, -21.772272)
-move_speed = 20.0
 
 [node name="Sunlight" type="DirectionalLight3D" parent="." unique_id=2005369758]
 transform = Transform3D(1, 0, 0, 0, -0.30007312, 0.9539163, 0, -0.9539163, -0.30007312, 70.46008, 152.68854, 150.39107)
