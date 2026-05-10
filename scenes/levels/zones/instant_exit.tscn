@@ -7,19 +7,11 @@
 size = Vector3(3.052208, 3.0622559, 0.6731262)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_80rfq"]
-albedo_color = Color(18.892157, 18.892157, 18.892157, 1)
+albedo_color = Color(0, 0.83137256, 1, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_gpv4n"]
 material = SubResource("StandardMaterial3D_80rfq")
 size = Vector3(3, 3, 0)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_o6v2b"]
-albedo_color = Color(18.892157, 18.892157, 18.892157, 1)
-
-[sub_resource type="CylinderMesh" id="CylinderMesh_h18m8"]
-material = SubResource("StandardMaterial3D_o6v2b")
-top_radius = 1.5
-height = 0.001
 
 [sub_resource type="Animation" id="Animation_agokr"]
 length = 0.001
@@ -96,10 +88,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.21416986, 0)
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=2054332960]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.008865714, -0.032667637, 0.04934454)
 mesh = SubResource("BoxMesh_gpv4n")
-
-[node name="MeshInstance3D2" type="MeshInstance3D" parent="." unique_id=1533355037]
-transform = Transform3D(1, 0, 0, 0, -0.019232323, -0.99981505, 0, 0.99981505, -0.019232323, 0, 1.6001364, 0.026498795)
-mesh = SubResource("CylinderMesh_h18m8")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=922719862]
 libraries/ = SubResource("AnimationLibrary_xqna2")
