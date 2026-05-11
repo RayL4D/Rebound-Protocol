@@ -39,6 +39,11 @@ const UPGRADE_LABELS: Dictionary = {
 	"xp_bonus":         ["Bonus XP",              "+10 % XP par ennemi tué"],
 }
 
+const _SFX_BUY_1:   AudioStream = preload("res://audio/sfx/ui/shop_buy_1.wav")
+const _SFX_BUY_2:   AudioStream = preload("res://audio/sfx/ui/shop_buy_2.wav")
+const _SFX_BUY_MAX: AudioStream = preload("res://audio/sfx/ui/shop_buy_max.wav")
+var _sfx_player: AudioStreamPlayer = null
+
 var _font: FontFile = null
 var _coin_label: Label = null
 var _tab_buttons: Dictionary = {}        # cat → Button
@@ -56,6 +61,12 @@ func _ready() -> void:
 	layer = 10   # s'affiche au-dessus du menu pause (layer 0 par défaut)
 	if ResourceLoader.exists(FONT_PATH):
 		_font = load(FONT_PATH)
+
+	_sfx_player             = AudioStreamPlayer.new()
+	_sfx_player.bus         = "SFX"
+	_sfx_player.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_sfx_player)
+
 	_build_ui()
 	_switch_tab("joueur")
 
@@ -283,6 +294,22 @@ func _refresh_row(id: String) -> void:
 func _on_buy(id: String) -> void:
 	if SaveData.buy_upgrade(id):
 		_refresh_coins()
+
+		# Choisir le son selon le palier atteint
+		var new_tier: int = SaveData.get_upgrade_tier(id)
+		var max_tier: int = SaveData.UPGRADES[id]["max_tier"]
+		var sfx: AudioStream
+		if new_tier >= max_tier:
+			sfx = _SFX_BUY_MAX
+		elif new_tier >= 2:
+			sfx = _SFX_BUY_2
+		else:
+			sfx = _SFX_BUY_1
+		if _sfx_player and sfx:
+			_sfx_player.stream      = sfx
+			_sfx_player.volume_db   = -6.0
+			_sfx_player.pitch_scale = 1.0
+			_sfx_player.play()
 
 
 func _on_close() -> void:

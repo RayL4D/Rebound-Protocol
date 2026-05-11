@@ -37,17 +37,12 @@ var _melee_cooldown: float  = 0.0
 
 # --- Audio ------------------------------------------------------
 const _SFX_SWIPE: AudioStream = preload("res://audio/sfx/enemies/melee_swipe.wav")
-var _sfx_player: AudioStreamPlayer = null
 
 
 func _on_ready() -> void:
 	_create_melee_area()
 	if _anim_player != null:
 		_anim_player.animation_finished.connect(_on_animation_finished)
-
-	_sfx_player     = AudioStreamPlayer.new()
-	_sfx_player.bus = "SFX"
-	add_child(_sfx_player)
 
 
 func _create_melee_area() -> void:

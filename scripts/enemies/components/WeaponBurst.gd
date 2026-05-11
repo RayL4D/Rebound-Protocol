@@ -26,6 +26,16 @@ var _in_burst:    bool  = false
 var _shots_fired: int   = 0
 var _burst_timer: float = 0.0
 
+# --- Audio ------------------------------------------------------
+const _SFX_SHOOT: AudioStream = preload("res://audio/sfx/enemies/bullet_shoot.wav")
+var _sfx_player: AudioStreamPlayer = null
+
+
+func _ready() -> void:
+	_sfx_player     = AudioStreamPlayer.new()
+	_sfx_player.bus = "SFX"
+	add_child(_sfx_player)
+
 
 # =============================================================
 # SURCHARGE COMPLÈTE de _process (logique burst spécifique)
@@ -94,3 +104,9 @@ func _fire() -> void:
 	dir.y = 0.0
 
 	bullet.init(global_position, dir)
+
+	if _sfx_player and _SFX_SHOOT:
+		_sfx_player.stream      = _SFX_SHOOT
+		_sfx_player.volume_db   = -8.0 + randf_range(-1.0, 1.0)
+		_sfx_player.pitch_scale = randf_range(0.95, 1.05)
+		_sfx_player.play()

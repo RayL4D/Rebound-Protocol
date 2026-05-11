@@ -35,6 +35,12 @@ extends CharacterBody3D
 var _enemy_texture:  Texture2D = preload("res://assets/textures/enemies/colormap.png")
 var _weapon_texture: Texture2D = preload("res://assets/textures/weapons/colormap.png")
 
+# --- Audio ------------------------------------------------------
+const _SFX_HURT:       AudioStream = preload("res://audio/sfx/enemies/enemy_hurt.wav")
+const _SFX_DIE:        AudioStream = preload("res://audio/sfx/enemies/enemy_die.wav")
+const _SFX_COIN_SPAWN: AudioStream = preload("res://audio/sfx/enemies/coin_spawn.wav")
+var _sfx_player: AudioStreamPlayer = null
+
 # --- État -------------------------------------------------------
 var current_hp: int
 var player: Player          = null
@@ -70,6 +76,11 @@ func _ready() -> void:
 
 	player = get_tree().get_first_node_in_group("player")
 	_setup_model()
+
+	_sfx_player     = AudioStreamPlayer.new()
+	_sfx_player.bus = "SFX"
+	add_child(_sfx_player)
+
 	_on_ready()  # Hook pour les sous-classes
 
 
@@ -223,6 +234,12 @@ func take_damage(amount: int) -> void:
 		_die()
 		return
 
+	if _sfx_player and _SFX_HURT:
+		_sfx_player.stream      = _SFX_HURT
+		_sfx_player.volume_db   = -8.0 + randf_range(-1.5, 1.5)
+		_sfx_player.pitch_scale = randf_range(0.92, 1.08)
+		_sfx_player.play()
+
 	# Flash coloré selon l'intensité du coup
 	var flash_col: Color
 	if amount >= 20:
@@ -283,6 +300,18 @@ func _spawn_damage_number(amount: int) -> void:
 func _die() -> void:
 	enemy_died.emit()
 	_drop_coins()
+
+	# Player flottant pour que le son survive au queue_free de l'ennemi
+	if _SFX_DIE != null:
+		var p := AudioStreamPlayer.new()
+		p.stream      = _SFX_DIE
+		p.bus         = "SFX"
+		p.volume_db   = -6.0 + randf_range(-1.5, 1.5)
+		p.pitch_scale = randf_range(0.90, 1.10)
+		get_tree().root.add_child(p)
+		p.play()
+		p.finished.connect(p.queue_free)
+
 	_play_death_sequence()
 
 
@@ -293,6 +322,18 @@ func _drop_coins() -> void:
 		
 	# On récupère la valeur totale voulue (ex: 500)
 	var total_value := randi_range(coin_drop_min, coin_drop_max)
+
+	# Son de spawn des pièces
+	if _SFX_COIN_SPAWN != null:
+		var p := AudioStreamPlayer.new()
+		p.stream      = _SFX_COIN_SPAWN
+		p.bus         = "SFX"
+		p.volume_db   = -2.0
+		p.pitch_scale = randf_range(0.95, 1.05)
+		get_tree().root.add_child(p)
+		p.play()
+		p.finished.connect(p.queue_free)
+
 	var parent  := get_tree().current_scene
 	
 	# On limite le nombre de pièces physiques générées à 10 maximum pour les perfs

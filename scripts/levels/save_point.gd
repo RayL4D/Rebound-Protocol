@@ -37,6 +37,10 @@ var _activated:   bool  = false
 var _orbit_angle: float = 0.0
 var _pulse_time:  float = 0.0
 
+# --- Audio ------------------------------------------------------
+const _SFX_ACTIVATE: AudioStream = preload("res://audio/sfx/ui/checkpoint_activate.wav")
+var _sfx_player: AudioStreamPlayer = null
+
 # ── Références de scène ───────────────────────────────────────────────────────
 @onready var _flag_model: Node3D         = $Flag
 @onready var _beam_mi:    MeshInstance3D = $Visuals/Beam
@@ -101,6 +105,10 @@ func _ready() -> void:
 		orb.material_override = _orbiter_mat
 
 	_apply_flag_texture()
+
+	_sfx_player             = AudioStreamPlayer.new()
+	_sfx_player.bus         = "SFX"
+	add_child(_sfx_player)
 
 
 func _process(delta: float) -> void:
@@ -185,6 +193,11 @@ func _on_player_entered(body: Node3D) -> void:
 
 	if not _activated:
 		_activated = true
+		if _sfx_player and _SFX_ACTIVATE:
+			_sfx_player.stream      = _SFX_ACTIVATE
+			_sfx_player.volume_db   = -6.0
+			_sfx_player.pitch_scale = 1.0
+			_sfx_player.play()
 		_play_activate_animation()
 	else:
 		_play_repulse_animation()

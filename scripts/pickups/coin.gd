@@ -22,6 +22,12 @@ const COLLECT_RADIUS      := 0.6   # collecte effective (toucher le joueur)
 const ATTRACT_SPEED       := 8.0   # m/s vers le joueur quand attiré
 const LIFETIME            := 20.0  # disparaît après 20 s si non collectée
 
+# --- Audio ------------------------------------------------------
+const _SFX_LAND:    AudioStream = preload("res://audio/sfx/enemies/coin_land.wav")
+const _SFX_COLLECT: AudioStream = preload("res://audio/sfx/enemies/coin_collect.wav")
+var _sfx: AudioStreamPlayer = null
+var _land_played: bool = false   # évite de rejouer si plusieurs rebonds
+
 var _player:     Player = null
 var _attracted:  bool   = false
 var _lifetime:   float  = LIFETIME
@@ -109,6 +115,9 @@ static func _build() -> Coin:
 
 func _ready() -> void:
 	_player = get_tree().get_first_node_in_group("player")
+	_sfx     = AudioStreamPlayer.new()
+	_sfx.bus = "SFX"
+	add_child(_sfx)
 
 	# Ajuster le rayon d'attraction selon l'upgrade "pickup_radius"
 	var radius_mult := 1.0 + SaveData.get_upgrade_value("pickup_radius")
@@ -143,6 +152,12 @@ func _process(delta: float) -> void:
 			if _velocity.y < 1.0:
 				_is_popping = false
 				_bob_time = 0.0  # On reset pour la flottaison
+				if not _land_played and _sfx and _SFX_LAND:
+					_land_played        = true
+					_sfx.stream         = _SFX_LAND
+					_sfx.volume_db      = -6.0 + randf_range(-1.0, 1.0)
+					_sfx.pitch_scale    = randf_range(0.90, 1.10)
+					_sfx.play()
 	else:
 		# --- PHASE 2 : COMPORTEMENT ORIGINAL ---
 		_bob_time += delta
@@ -166,6 +181,18 @@ func _on_body_entered(body: Node) -> void:
 func _collect() -> void:
 	SaveData.add_coins(_value)
 	_spawn_collect_burst()
+
+	# Player flottant — survit au queue_free de la pièce
+	if _SFX_COLLECT != null:
+		var p := AudioStreamPlayer.new()
+		p.stream      = _SFX_COLLECT
+		p.bus         = "SFX"
+		p.volume_db   = -2.0 + randf_range(-1.0, 1.0)
+		p.pitch_scale = randf_range(0.95, 1.05)
+		get_tree().root.add_child(p)
+		p.play()
+		p.finished.connect(p.queue_free)
+
 	queue_free()
 
 

@@ -92,6 +92,12 @@ var _phase2_triggered: bool = false
 # --- Scène des chiens invoqués --------------------------------
 var dog_scene: PackedScene = preload("res://scenes/enemies/pet_dog.tscn")
 
+# --- Audio ----------------------------------------------------
+const _SFX_BOSS_DIE:    AudioStream = preload("res://audio/sfx/enemies/boss_die.wav")
+const _SFX_BOSS_SUMMON: AudioStream = preload("res://audio/sfx/enemies/boss_summon.wav")
+const _SFX_BOSS_CHARGE: AudioStream = preload("res://audio/sfx/enemies/boss_charge.wav")
+const _SFX_BOSS_MELEE:  AudioStream = preload("res://audio/sfx/enemies/boss_melee.wav")
+
 
 # =============================================================
 # SETUP MODÈLE — surcharge pour appliquer la texture sur les
@@ -229,6 +235,12 @@ func _begin_windup() -> void:
 	to_player.y   = 0.0
 	_charge_dir   = to_player.normalized()
 
+	if _sfx_player and _SFX_BOSS_CHARGE:
+		_sfx_player.stream      = _SFX_BOSS_CHARGE
+		_sfx_player.volume_db   = -4.0
+		_sfx_player.pitch_scale = 1.0
+		_sfx_player.play()
+
 
 func _begin_charge() -> void:
 	_charge_state = ChargeState.CHARGING
@@ -244,6 +256,12 @@ func _begin_attack() -> void:
 	# Dégâts au joueur si méthode disponible
 	if player.has_method("take_damage"):
 		player.take_damage(MELEE_DAMAGE)
+
+	if _sfx_player and _SFX_BOSS_MELEE:
+		_sfx_player.stream      = _SFX_BOSS_MELEE
+		_sfx_player.volume_db   = -4.0
+		_sfx_player.pitch_scale = randf_range(0.95, 1.05)
+		_sfx_player.play()
 
 
 func _begin_recover() -> void:
@@ -312,6 +330,17 @@ func _die() -> void:
 	if summon_timer:
 		summon_timer.stop()
 	boss_died.emit()
+
+	# Player flottant — survit au queue_free du boss
+	if _SFX_BOSS_DIE != null:
+		var p := AudioStreamPlayer.new()
+		p.stream    = _SFX_BOSS_DIE
+		p.bus       = "SFX"
+		p.volume_db = -4.0
+		get_tree().root.add_child(p)
+		p.play()
+		p.finished.connect(p.queue_free)
+
 	queue_free()
 
 
@@ -322,6 +351,12 @@ func _die() -> void:
 func _summon_dogs() -> void:
 	if not is_inside_tree() or dog_scene == null:
 		return
+
+	if _sfx_player and _SFX_BOSS_SUMMON:
+		_sfx_player.stream      = _SFX_BOSS_SUMMON
+		_sfx_player.volume_db   = -5.0
+		_sfx_player.pitch_scale = 1.0
+		_sfx_player.play()
 
 	for i in range(2):
 		var dog: CharacterBody3D = dog_scene.instantiate()
