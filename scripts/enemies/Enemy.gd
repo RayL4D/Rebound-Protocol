@@ -225,7 +225,8 @@ func _update_animation() -> void:
 # SANTÉ
 # =============================================================
 
-func take_damage(amount: int) -> void:
+## silent_hurt : passer true pour supprimer le son hurt (ex. stomp/dash — le joueur a son propre son d'impact)
+func take_damage(amount: int, silent_hurt: bool = false) -> void:
 	if not is_inside_tree():
 		return
 	current_hp = max(0, current_hp - amount)
@@ -234,7 +235,7 @@ func take_damage(amount: int) -> void:
 		_die()
 		return
 
-	if _sfx_player and _SFX_HURT:
+	if not silent_hurt and _sfx_player and _SFX_HURT:
 		_sfx_player.stream      = _SFX_HURT
 		_sfx_player.volume_db   = -8.0 + randf_range(-1.5, 1.5)
 		_sfx_player.pitch_scale = randf_range(0.92, 1.08)
@@ -328,7 +329,7 @@ func _drop_coins() -> void:
 		var p := AudioStreamPlayer.new()
 		p.stream      = _SFX_COIN_SPAWN
 		p.bus         = "SFX"
-		p.volume_db   = -2.0
+		p.volume_db   = 4.0
 		p.pitch_scale = randf_range(0.95, 1.05)
 		get_tree().root.add_child(p)
 		p.play()

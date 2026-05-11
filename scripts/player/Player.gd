@@ -118,14 +118,16 @@ const DASH_GHOST_INTERVAL: float = 0.04  # une afterimage toutes les 40 ms
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 # --- Sons joueur (null = pas encore chargé, pas de crash) --------
-const _SFX_JUMP  : AudioStream = preload("res://audio/sfx/player/jump.wav")
-const _SFX_LAND  : AudioStream = preload("res://audio/sfx/player/land.wav")
-const _SFX_DASH  : AudioStream = preload("res://audio/sfx/player/dash.wav")
-const _SFX_PARRY  : AudioStream = preload("res://audio/sfx/player/parry.wav")
-const _SFX_HURT   : AudioStream = preload("res://audio/sfx/player/hurt.wav")
-const _SFX_DIE    : AudioStream = preload("res://audio/sfx/player/die.wav")
-const _SFX_STEP_A : AudioStream = preload("res://audio/sfx/player/step_a.ogg")
-const _SFX_STEP_B : AudioStream = preload("res://audio/sfx/player/step_b.ogg")
+const _SFX_JUMP      : AudioStream = preload("res://audio/sfx/player/jump.wav")
+const _SFX_LAND      : AudioStream = preload("res://audio/sfx/player/land.wav")
+const _SFX_DASH      : AudioStream = preload("res://audio/sfx/player/dash.wav")
+const _SFX_PARRY     : AudioStream = preload("res://audio/sfx/player/parry.wav")
+const _SFX_HURT      : AudioStream = preload("res://audio/sfx/player/hurt.wav")
+const _SFX_DIE       : AudioStream = preload("res://audio/sfx/player/die.wav")
+const _SFX_STEP_A    : AudioStream = preload("res://audio/sfx/player/step_a.ogg")
+const _SFX_STEP_B    : AudioStream = preload("res://audio/sfx/player/step_b.ogg")
+const _SFX_STOMP_HIT : AudioStream = preload("res://audio/sfx/player/stomp_hit.wav")
+const _SFX_DASH_HIT  : AudioStream = preload("res://audio/sfx/player/dash_hit.wav")
 
 var _sfx:        AudioStreamPlayer = null   # Jump et effets généraux
 var _sfx_land:   AudioStreamPlayer = null   # Land — séparé pour ne pas couper le jump
@@ -133,6 +135,7 @@ var _sfx_dash:   AudioStreamPlayer = null   # Dash — séparé pour ne pas coup
 var _sfx_parry:  AudioStreamPlayer = null   # Parry — séparé pour ne pas couper les autres
 var _sfx_hurt:   AudioStreamPlayer = null   # Hurt — séparé pour ne pas couper les autres
 var _sfx_step:   AudioStreamPlayer = null   # Pas de course (step_a / step_b)
+var _sfx_impact: AudioStreamPlayer = null   # Stomp sur ennemi + dash hit
 
 # --- Signaux -----------------------------------------------------
 signal player_died
@@ -223,6 +226,11 @@ func _ready() -> void:
 	_sfx_step = AudioStreamPlayer.new()
 	_sfx_step.bus = "SFX"
 	add_child(_sfx_step)
+
+	# Player dédié aux impacts (stomp sur ennemi + dash hit)
+	_sfx_impact = AudioStreamPlayer.new()
+	_sfx_impact.bus = "SFX"
+	add_child(_sfx_impact)
 
 	# Restaurer les HP en deferred : le HUD (qui écoute hp_changed) n'est pas
 	# encore connecté pendant _ready(), on attend la fin du frame.
@@ -620,11 +628,18 @@ func _check_stomp() -> void:
 	# Rebond — toujours actif, permet de rebondir sur le même ennemi
 	velocity.y = STOMP_BOUNCE
 
+	# Son joué à chaque rebond sur un ennemi
+	if _SFX_STOMP_HIT and _sfx_impact:
+		_sfx_impact.stream      = _SFX_STOMP_HIT
+		_sfx_impact.volume_db   = 6.0
+		_sfx_impact.pitch_scale = randf_range(0.95, 1.05)
+		_sfx_impact.play()
+
 	# Dégâts uniquement au premier contact depuis le dernier atterrissage sol
 	if not _stomp_hit_this_jump:
 		_stomp_hit_this_jump = true
 		enemy.stomp_squish()
-		enemy.take_damage(STOMP_DAMAGE)
+		enemy.take_damage(STOMP_DAMAGE, true)   # silent_hurt — le stomp a son propre son
 
 
 # =============================================================
@@ -762,9 +777,14 @@ func _check_dash_hits() -> void:
 		if body is Enemy and not _dash_hit_enemies.has(body):
 			var enemy := body as Enemy
 			_dash_hit_enemies.append(enemy)
-			enemy.take_damage(DASH_DAMAGE)
+			enemy.take_damage(DASH_DAMAGE, true)   # silent_hurt — le dash a son propre son d'impact
 			# Knockback dans la direction du dash
 			enemy.apply_knockback(_dash_dir, DASH_KNOCKBACK)
+			if _SFX_DASH_HIT and _sfx_impact:
+				_sfx_impact.stream      = _SFX_DASH_HIT
+				_sfx_impact.volume_db   = 0.0
+				_sfx_impact.pitch_scale = randf_range(0.95, 1.05)
+				_sfx_impact.play()
 
 
 # =============================================================

@@ -42,6 +42,9 @@ const UPGRADE_LABELS: Dictionary = {
 const _SFX_BUY_1:   AudioStream = preload("res://audio/sfx/ui/shop_buy_1.wav")
 const _SFX_BUY_2:   AudioStream = preload("res://audio/sfx/ui/shop_buy_2.wav")
 const _SFX_BUY_MAX: AudioStream = preload("res://audio/sfx/ui/shop_buy_max.wav")
+const _SFX_HOVER:   AudioStream = preload("res://audio/sfx/ui/btn_hover.wav")
+const _SFX_CLICK:   AudioStream = preload("res://audio/sfx/ui/btn_click.wav")
+const _SFX_CLOSE:   AudioStream = preload("res://audio/sfx/ui/shop_close.wav")
 var _sfx_player: AudioStreamPlayer = null
 
 var _font: FontFile = null
@@ -313,6 +316,16 @@ func _on_buy(id: String) -> void:
 
 
 func _on_close() -> void:
+	# Son de fermeture boutique — floating player car queue_free() suit immédiatement
+	if _SFX_CLOSE != null:
+		var p := AudioStreamPlayer.new()
+		p.stream      = _SFX_CLOSE
+		p.bus         = "SFX"
+		p.volume_db   = 0.0
+		p.pitch_scale = 1.0
+		get_tree().root.add_child(p)
+		p.play()
+		p.finished.connect(p.queue_free)
 	queue_free()
 
 
@@ -355,6 +368,20 @@ func _make_button(text: String, callback: Callable) -> Button:
 	hover.set_border_width_all(1)
 	btn.add_theme_stylebox_override("hover", hover)
 	btn.pressed.connect(callback)
+	btn.mouse_entered.connect(func():
+		if _sfx_player and _SFX_HOVER:
+			_sfx_player.stream      = _SFX_HOVER
+			_sfx_player.volume_db   = 2.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
+	btn.pressed.connect(func():
+		if _sfx_player and _SFX_CLICK:
+			_sfx_player.stream      = _SFX_CLICK
+			_sfx_player.volume_db   = 5.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
 	return btn
 
 

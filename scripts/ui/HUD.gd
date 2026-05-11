@@ -14,7 +14,12 @@
 # =============================================================
 extends CanvasLayer
 
-const ShopScript := preload("res://scripts/ui/shop.gd")
+const ShopScript      := preload("res://scripts/ui/shop.gd")
+const _SFX_HOVER:      AudioStream = preload("res://audio/sfx/ui/btn_hover.wav")
+const _SFX_CLICK:      AudioStream = preload("res://audio/sfx/ui/btn_click.wav")
+const _SFX_SHOP_OPEN:  AudioStream = preload("res://audio/sfx/ui/shop_open.wav")
+const _SFX_SHOP_CLOSE: AudioStream = preload("res://audio/sfx/ui/shop_close.wav")
+var _sfx_player: AudioStreamPlayer = null
 
 # --- Dimensions du panel HP -----------------------------------
 const PANEL_W    := 260.0
@@ -82,8 +87,9 @@ var _guide_icon:  TextureRect = null
 var guide_target: Node3D      = null
 
 # --- Coin counter + boutique ----------------------------------
-var _coin_label_hud:  Label  = null
-var _shop_open:       bool   = false
+var _coin_label_hud:  Label        = null
+var _shop_open:       bool         = false
+var _shop_instance:   CanvasLayer  = null   # référence pour fermer via B
 
 # --- Barre boss -----------------------------------------------
 var _boss_bar_container: Control   = null
@@ -101,6 +107,12 @@ var _boss_current_fill:  float     = 1.0
 # =============================================================
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS   # reçoit l'input même quand le jeu est en pause
+
+	_sfx_player     = AudioStreamPlayer.new()
+	_sfx_player.bus = "SFX"
+	add_child(_sfx_player)
+
 	_build_ui()
 	_player = get_tree().get_first_node_in_group("player") as Player
 	if _player == null:
@@ -372,6 +384,20 @@ func _build_coin_panel() -> void:
 	style_h.set_border_width_all(1)
 	shop_btn.add_theme_stylebox_override("hover", style_h)
 	shop_btn.pressed.connect(_open_shop_from_hud)
+	shop_btn.mouse_entered.connect(func():
+		if _sfx_player and _SFX_HOVER:
+			_sfx_player.stream      = _SFX_HOVER
+			_sfx_player.volume_db   = 2.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
+	shop_btn.pressed.connect(func():
+		if _sfx_player and _SFX_CLICK:
+			_sfx_player.stream      = _SFX_CLICK
+			_sfx_player.volume_db   = 5.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
 	add_child(shop_btn)
 
 
@@ -383,18 +409,46 @@ func _open_shop_from_hud() -> void:
 		return
 	_shop_open = true
 	get_tree().paused = true
-	var shop: CanvasLayer = ShopScript.new()
-	get_tree().root.add_child(shop)
-	shop.tree_exiting.connect(func():
+
+	# Son d'ouverture boutique
+	if _sfx_player and _SFX_SHOP_OPEN:
+		_sfx_player.stream      = _SFX_SHOP_OPEN
+		_sfx_player.volume_db   = 0.0
+		_sfx_player.pitch_scale = 1.0
+		_sfx_player.play()
+
+	_shop_instance = ShopScript.new()
+	get_tree().root.add_child(_shop_instance)
+	_shop_instance.tree_exiting.connect(func():
 		get_tree().paused = false
-		_shop_open = false
+		_shop_open    = false
+		_shop_instance = null
 	)
+
+
+func _close_shop_from_hud() -> void:
+	if not _shop_open or _shop_instance == null:
+		return
+	# Son de fermeture boutique
+	if _SFX_SHOP_CLOSE != null:
+		var p := AudioStreamPlayer.new()
+		p.stream      = _SFX_SHOP_CLOSE
+		p.bus         = "SFX"
+		p.volume_db   = 0.0
+		p.pitch_scale = 1.0
+		get_tree().root.add_child(p)
+		p.play()
+		p.finished.connect(p.queue_free)
+	_shop_instance.queue_free()
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_B:
-			_open_shop_from_hud()
+			if _shop_open:
+				_close_shop_from_hud()
+			else:
+				_open_shop_from_hud()
 
 
 const COLOR_GOLD := Color(1.0, 0.82, 0.0, 1.0)

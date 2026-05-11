@@ -155,7 +155,7 @@ func _process(delta: float) -> void:
 				if not _land_played and _sfx and _SFX_LAND:
 					_land_played        = true
 					_sfx.stream         = _SFX_LAND
-					_sfx.volume_db      = -6.0 + randf_range(-1.0, 1.0)
+					_sfx.volume_db      = 2.0 + randf_range(-1.0, 1.0)
 					_sfx.pitch_scale    = randf_range(0.90, 1.10)
 					_sfx.play()
 	else:
@@ -187,7 +187,7 @@ func _collect() -> void:
 		var p := AudioStreamPlayer.new()
 		p.stream      = _SFX_COLLECT
 		p.bus         = "SFX"
-		p.volume_db   = -2.0 + randf_range(-1.0, 1.0)
+		p.volume_db   = 4.0 + randf_range(-1.0, 1.0)
 		p.pitch_scale = randf_range(0.95, 1.05)
 		get_tree().root.add_child(p)
 		p.play()

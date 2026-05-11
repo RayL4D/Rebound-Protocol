@@ -274,8 +274,8 @@ func _begin_recover() -> void:
 # SANTÉ — détection de la transition de phase
 # =============================================================
 
-func take_damage(amount: int) -> void:
-	super.take_damage(amount)
+func take_damage(amount: int, silent_hurt: bool = false) -> void:
+	super.take_damage(amount, silent_hurt)
 	boss_hp_changed.emit(current_hp, max_hp)
 	if current_hp > 0:
 		_check_phase_transition()

@@ -106,10 +106,10 @@ func _update_shield(delta: float) -> void:
 # SANTÉ — immunité totale pendant le bouclier
 # =============================================================
 
-func take_damage(amount: int) -> void:
+func take_damage(amount: int, silent_hurt: bool = false) -> void:
 	if _shield_active:
 		return   # bouclier actif → aucun dégât
-	super.take_damage(amount)
+	super.take_damage(amount, silent_hurt)
 
 
 # =============================================================
