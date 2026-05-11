@@ -15,19 +15,26 @@ class WaveData:
 	var enemy_count: int
 	var dropship_count: int
 	var message: String
+	# --- Sélection d'ennemi par index dans le catalogue ---
+	var enemy_index: int = -1  # -1 = utiliser enemy_scene par défaut, sinon index dans enemy_catalog
 	# --- boss ---	
 	var enemy_scene: PackedScene = null 
 	var dropship_mesh: PackedScene = null 
 
-	func _init(p_count: int, p_ships: int, p_msg: String) -> void:
+	func _init(p_count: int, p_ships: int, p_msg: String, p_enemy_idx: int = -1) -> void:
 		enemy_count = p_count
 		dropship_count = p_ships
 		message = p_msg
+		enemy_index = p_enemy_idx
 
 # --- CONFIGURATION ---
+@export_group("Dropships")
 @export var dropship_scene: PackedScene
-@export var enemy_scene: PackedScene
 @export var dropship_spawn_points: Array[NodePath] = []
+
+@export_group("Ennemis")
+@export var enemy_scene: PackedScene  ## Ennemi par défaut (rétro-compatibilité)
+@export var enemy_catalog: Array[PackedScene] = []  ## 📋 Catalogue d'ennemis : [0]=Dog, [1]=Cat, [2]=Lion...
 @export var time_between_waves: float = 2.5
 
 # --- VARIABLES INTERNES ---
@@ -175,7 +182,26 @@ func _spawn_dropship(pos: Vector3, enemy_count: int) -> void:
 		return
 
 	var ship = dropship_scene.instantiate()
-	ship.mob_scene = _current_wave_data.enemy_scene if _current_wave_data.enemy_scene else enemy_scene
+	
+	# 🎯 NOUVELLE LOGIQUE : Sélection de l'ennemi
+	var selected_enemy: PackedScene = null
+	
+	# Priorité 1 : enemy_scene dans WaveData (pour boss custom)
+	if _current_wave_data.enemy_scene:
+		selected_enemy = _current_wave_data.enemy_scene
+	# Priorité 2 : enemy_index dans le catalogue
+	elif _current_wave_data.enemy_index >= 0 and _current_wave_data.enemy_index < enemy_catalog.size():
+		selected_enemy = enemy_catalog[_current_wave_data.enemy_index]
+	# Priorité 3 : enemy_scene par défaut (rétro-compatibilité)
+	else:
+		selected_enemy = enemy_scene
+	
+	if not selected_enemy:
+		push_error("WaveManager : Aucun ennemi configuré pour cette vague !")
+		ship.queue_free()
+		return
+	
+	ship.mob_scene = selected_enemy
 	ship.spawn_count = enemy_count
 	ship.enemy_died_callback = _on_enemy_died
 	ship.dropship_mesh = _current_wave_data.dropship_mesh
