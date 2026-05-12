@@ -1,13 +1,13 @@
 id,en,fr,es
 TUTORIAL,,,
-TUTO_STEP_1,Calibration protocol initiated. Test of directional thrusters required.,Protocole de calibrage initié.\nTest des propulseurs directionnels requis.,Protocolo de calibración iniciado.\nSe requiere probar los propulsores direccionales.
+TUTO_STEP_1,Calibration protocol initiated.\nTest of directional thrusters required.,Protocole de calibrage initié.\nTest des propulseurs directionnels requis.,Protocolo de calibración iniciado.\nSe requiere probar los propulsores direccionales.
 TUTO_PERFECT,Perfect!,Parfait !,¡Perfecto!
-TUTO_STEP_2,Optical sensor calibration. Adjust your viewing angle.,Calibrage des capteurs optiques.\nAjustez l'angle de vision.,Calibración de sensores ópticos.\nAjuste el ángulo de visión.
-TUTO_STEP_3,Vertical elevation system test. Jump initialization required.,Test du système d'élévation.\nInitialisation du saut requise.,Prueba del sistema de elevación vertical.\nSe requiere iniciar el salto.
+TUTO_STEP_2,Optical sensor calibration.\nAdjust your viewing angle.,Calibrage des capteurs optiques.\nAjustez l'angle de vision.,Calibración de sensores ópticos.\nAjuste el ángulo de visión.
+TUTO_STEP_3,Vertical elevation system test.\nJump initialization required.,Test du système d'élévation.\nInitialisation du saut requise.,Prueba del sistema de elevación vertical.\nSe requiere iniciar el salto.
 TUTO_GOOD_JOB,Well done!,Bien joué !,¡Bien hecho!
-TUTO_STEP_4,Kinetic shield calibration. Intercept the test projectile.,Calibrage du bouclier cinétique.\nInterceptez le projectile.,Calibración del escudo cinético.\nIntercepte el proyectil de prueba.
+TUTO_STEP_4,Kinetic shield calibration.\nIntercept the test projectile.,Calibrage du bouclier cinétique.\nInterceptez le projectile.,Calibración del escudo cinético.\nIntercepte el proyectil de prueba.
 TUTO_EXCELLENT,Excellent!,Excellent !,¡Excelente!
-TUTO_STEP_5,Calibration complete! An enemy ship is approaching...,Calibrage terminé !\nUn vaisseau ennemi approche...,¡Calibración completada!\nUna nave enemiga se aproxima...
+TUTO_STEP_5,Calibration complete!\nAn enemy ship is approaching...,Calibrage terminé !\nUn vaisseau ennemi approche...,¡Calibración completada!\nUna nave enemiga se aproxima...
 WAVES / HUD,,,
 HUD_WAVE_COUNT,Wave %d / %d,Vague %d / %d,Oleada %d / %d
 HUD_ENEMIES_LEFT,Remaining enemies: %d,Ennemis restants : %d,Enemigos restantes: %d
@@ -15,19 +15,19 @@ WAVE_MSG_1,Wave 1 — Parry and counter-attack!,Vague 1 — Pare et contre-attaq
 WAVE_MSG_2,"Wave 2 — Two enemies, stay mobile!","Vague 2 — Deux ennemis, reste mobile !","Oleada 2 — ¡Dos enemigos, mantente móvil!"
 WAVE_MSG_FINAL,"Final Wave — Three enemies, two ships!","Vague finale — trois ennemis, deux vaisseaux !","Oleada final — ¡Tres enemigos, dos naves!"
 WAVE_CLEARED,Wave %d cleared!,Vague %d terminée !,¡Oleada %d completada!
-ALL_WAVES_CLEARED,Arena complete! Well done!,Arène terminée !\nBravo !,¡Arena completada!\n¡Bravo!
+ALL_WAVES_CLEARED,Arena complete!\nWell done!,Arène terminée !\nBravo !,¡Arena completada!\n¡Bravo!
 WAVE_HUD,Wave 0 / 0,Vague 0 / 0,Oleada 0 / 0
 ENEMIES_HUD,Remaining enemies: 0,Ennemis restants : 0,Enemigos restantes: 0
-MISSION_ACCOMPLISHED,Mission accomplished! \nA door just opened...,Mission accomplie ! \nUne porte vient de s'ouvrir..,¡Misión cumplida! \nSe acaba de abrir una puerta.
+MISSION_ACCOMPLISHED,Mission accomplished!\nA door just opened...,Mission accomplie !\nUne porte vient de s'ouvrir...,¡Misión cumplida!\nSe acaba de abrir una puerta...
 GAME OVER / UI,,,
-UI_DEATH_MSG,You are dead. Returning to wave 1...,Tu es mort.\nRetour à la vague 1...,Has muerto.\nVolviendo a la oleada 1...
+UI_DEATH_MSG,You are dead.\nReturning to wave 1...,Tu es mort.\nRetour à la vague 1...,Has muerto.\nVolviendo a la oleada 1...
 UI_GAME_OVER,GAME OVER,GAME OVER,FIN DE LA PARTIDA
 UI_SYS_NEUTRALIZED,— system neutralized —,— system neutralized —,— sistema neutralizado —
 UI_VICTORY,VICTORY,VICTOIRE,VICTORIA
 UI_THREAT_CLEARED,— threat neutralized —,— threat neutralized —,— amenaza neutralizada —
 UI_RETRY,[ RETRY ],[ RETRY ],[ REINTENTAR ]
 UI_PLAY_AGAIN,[ PLAY AGAIN ],[ PLAY AGAIN ],[ JUGAR DE NUEVO ]
-UI_QUIT,QUIT,QUIT,SALIR
+UI_QUIT,QUIT,QUITTER,SALIR
 MAIN MENU / UI,,,
 UI_MAIN_MENU,MAIN MENU,MENU PRINCIPAL,MENÚ PRINCIPAL
 UI_NEW_GAME,NEW GAME,NOUVELLE PARTIE,NUEVA PARTIDA
@@ -37,8 +37,8 @@ UI_CHANGE_LANGUAGE,CHANGE LANGUAGE,CHANGER DE LANGUE,CAMBIAR IDIOMA
 UI_LANGUAGE,LANGUAGE,LANGUE,IDIOMA
 UI_LEAVE,LEAVE,QUITTER,PARA IRSE
 BOSS,,,
-BOSS_LION_NAME,⚔ LION COMMANDER ⚔,⚔ LION COMMANDANT ⚔,⚔ COMANDANTE LEÓN ⚔
-BOSS_LION_ANNOUNCE,BOSS — LION COMMANDER,BOSS — LION COMMANDANT,JEFE — COMANDANTE LEÓN
+BOSS_LION_NAME,⚔ LION COMMANDER ⚔,⚔ COMMANDANT LION ⚔,⚔ COMANDANTE LEÓN ⚔
+BOSS_LION_ANNOUNCE,BOSS — LION COMMANDER,BOSS — COMMANDANT LION,JEFE — COMANDANTE LEÓN
 PAUSE,,,
 PAUSE_TITLE,PAUSE,PAUSE,PAUSA
 PAUSE_RESUME,RESUME,REPRENDRE,CONTINUAR
@@ -47,10 +47,21 @@ PAUSE_QUIT_MENU,QUIT TO MENU,MENU PRINCIPAL,MENÚ PRINCIPAL
 SETTINGS,,,
 SETTINGS_TITLE,OPTIONS,OPTIONS,OPCIONES
 SETTINGS_SECTION_AUDIO,AUDIO,AUDIO,AUDIO
-SETTINGS_MASTER_VOLUME,Master volume,Volume générale,Volumen general
+SETTINGS_MASTER_VOLUME,Master volume,Volume général,Volumen general
 SETTINGS_MUSIC,Music,Musique,Música
 SETTINGS_SFX,Sound effects,Effets sonores,Efectos de sonido
 SETTINGS_SECTION_DISPLAY,DISPLAY,AFFICHAGE,PANTALLA
 SETTINGS_FULLSCREEN,Fullscreen,Plein écran,Pantalla completa
 SETTINGS_SECTION_LANGUAGE,LANGUAGE,LANGUE,IDIOMA
 SETTINGS_BACK,BACK,RETOUR,VOLVER
+STORY / NARRATIVE,,,
+LVL1_INTRO_MSG,Directive: Investigate origins.\nI must search the Depot.,Directive : Enquêter sur mes origines.\nJe dois fouiller le Dépôt.,Directiva: Investigar orígenes.\nDebo buscar en el Depósito.
+LVL1_EXIT_OPENED_MSG,Threat neutralized. Transit portal active.\nI will find Vauclair.,Menace neutralisée. Portail de transit actif.\nJe retrouverai Vauclair.,Amenaza neutralizada. Portal de tránsito activo.\nEncontraré a Vauclair.
+WAVE NAMES,,,
+WAVE_NAME_OUTPOST,DESERT OUTPOST,AVANT-POSTE DÉSERTIQUE,PUESTO AVANZADO DEL DESIERTO
+WAVE_NAME_SQUAD,INFANTRY SQUAD,ESCOUADE D'INFANTERIE,ESCUADRÓN DE INFANTERÍA
+WAVE_NAME_REINFORCEMENTS,REINFORCEMENTS CALLED,RENFORTS APPELÉS,REFUERZOS LLAMADOS
+WAVE_NAME_MAX_ALERT,MAXIMUM ALERT,ALERTE MAXIMALE,ALERTA MÁXIMA
+WAVE_NAME_BOSS_LION,⚠️ LION COMMANDER,⚠️ COMMANDANT LION,⚠️ COMANDANTE LEÓN
+STORY / CAVE,,,
+LVL2_CAVE_ENTRY,A secondary base... The signal is getting stronger.,Une base secondaire... Le signal s'intensifie.,Una base secundaria... La señal se intensifica.

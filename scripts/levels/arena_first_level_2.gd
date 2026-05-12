@@ -1,4 +1,47 @@
+# =============================================================
+# arena_first_level_2.gd — Scène de la Grotte 
+# =============================================================
 extends Node3D
 
+@onready var hud: Node = $HUD
+
 func _ready() -> void:
+	TranslationServer.set_locale(SceneManager.current_lang)
+		
 	CollisionManager.add_missing_collisions(self)
+	_setup_ui()
+	_set_permanent_message("LVL2_CAVE_ENTRY")
+
+func _setup_ui() -> void:
+	if not hud:
+		push_error("HUD non trouvé dans la grotte !")
+		return
+	
+	var wave_label = hud.find_child("WaveLabel", true, false) as Label
+	var enemies_label = hud.find_child("EnemiesLabel", true, false) as Label
+	var separator_label = hud.find_child("Separator", true, false) as Label
+	
+	if wave_label: 
+		wave_label.text = ""
+	if enemies_label: 
+		enemies_label.text = ""
+	if separator_label:
+		separator_label.text = ""
+
+# --- UTILITAIRES D'AFFICHAGE ---
+func _set_permanent_message(translation_key: String) -> void:
+	if not hud: return
+	
+	var message_label = hud.find_child("MessageLabel", true, false) as Label
+	var panel = hud.find_child("PanelContainer", true, false) as Control
+	if not panel: panel = hud.find_child("Panel", true, false) as Control
+	
+	if message_label:
+		message_label.text = tr(translation_key)
+		
+	if panel:
+		panel.visible = true
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_TRANSLATION_CHANGED:
+		_set_permanent_message("LVL2_CAVE_ENTRY")

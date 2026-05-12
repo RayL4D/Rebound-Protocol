@@ -88,6 +88,7 @@ label_settings = SubResource("LabelSettings_6ll6g")
 horizontal_alignment = 2
 
 [node name="Separator" type="Label" parent="WaveContainer/GridContainer" unique_id=883040629]
+unique_name_in_owner = true
 layout_mode = 2
 text = "-"
 label_settings = SubResource("LabelSettings_ig75s")

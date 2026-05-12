@@ -5,12 +5,11 @@ extends Area3D
 @onready var animation_player: AnimationPlayer = $AnimationPlayer
 
 func _ready():
-	# caché au début
 	monitorable = false
 	monitoring = false
 	hide()
-	body_entered.connect(_on_body_entered)
-
+	if not body_entered.is_connected(_on_body_entered):
+		body_entered.connect(_on_body_entered)
 
 func activate():
 	monitoring = true
@@ -19,7 +18,6 @@ func activate():
 	if animation_player and animation_player.has_animation("direction_animation"):
 		animation_player.play("direction_animation")
 
-
 func _on_body_entered(body: Node3D):
-	if body is Player:
+	if body is Player and next_scene != "":
 		SceneManager.load_level(next_scene)
