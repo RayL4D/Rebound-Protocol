@@ -47,7 +47,6 @@
 [ext_resource type="PackedScene" uid="uid://pbrlw8kcrlq4" path="res://scenes/ui/game_over.tscn" id="43_om3xt"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="44_ctbie"]
 [ext_resource type="PackedScene" uid="uid://bxss4q4q2p5dq" path="res://scenes/ui/mobile_controls.tscn" id="45_hrfqu"]
-[ext_resource type="PackedScene" uid="uid://bhgvjljgxud1e" path="res://scenes/enemies/enemy_patrol_dog.tscn" id="49_yfmpj"]
 [ext_resource type="PackedScene" uid="uid://c1stu4jqgvuns" path="res://assets/models/environments/tutorial_and_first_level/hangar_smallA.glb" id="50_260nm"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tbebd"]
@@ -200,20 +199,6 @@ height = 0.001
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_8hb0y"]
 height = 0.1
 radius = 2.5
-
-[sub_resource type="Curve3D" id="Curve3D_260nm"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -30.273, -1, -9.480999, 0, 0, 0, 0, 0, 0, 20.716003, -1, -0.8389969),
-"tilts": PackedFloat32Array(0, 0)
-}
-point_count = 2
-
-[sub_resource type="Curve3D" id="Curve3D_yfmpj"]
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0, 0, 0, -4.503, -1, -35.075, 0, 0, 0, 0, 0, 0, -4, -1, 19, 0, 0, 0, 0, 0, 0, 7.466, -1, 35.641, 0, 0, 0, 0, 0, 0, 30.603, 0, 26.368),
-"tilts": PackedFloat32Array(0, 0, 0, 0)
-}
-point_count = 4
 
 [node name="ArenaFirstLevel1" type="Node3D" unique_id=1626442709]
 script = ExtResource("1_doyx5")
@@ -1182,32 +1167,19 @@ transform = Transform3D(-0.002219064, 0, -0.7142823, 0, 0.7142857, 0, 0.7142823,
 [node name="stairs_short_1" parent="WorldObjects_container/outpost_large" unique_id=1913800888 instance=ExtResource("35_jtgeh")]
 transform = Transform3D(-0.4447377, 0, 9.990108, 0, 10.000001, 0, -9.990108, 0, -0.4447377, 234.84935, 18.967346, -13.937523)
 
-[node name="Patrol_dog_1" parent="." unique_id=437757490 node_paths=PackedStringArray("path_follow") instance=ExtResource("49_yfmpj")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42.51689, 0, 17.926811)
-path_follow = NodePath("../Path3D_1/PathFollow3D")
-
-[node name="Patrol_dog_2" parent="." unique_id=1174512677 node_paths=PackedStringArray("path_follow") instance=ExtResource("49_yfmpj")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 54, 0, 19)
-path_follow = NodePath("../Path3D2/PathFollow3D_2")
-
-[node name="Path3D_1" type="Path3D" parent="." unique_id=395873735]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 54.155, 0.57298565, 67.523)
-curve = SubResource("Curve3D_260nm")
-
-[node name="PathFollow3D" type="PathFollow3D" parent="Path3D_1" unique_id=1455360268]
-transform = Transform3D(-0.16710345, 0, -0.9859337, 0, 0.9999953, 0, 0.9859337, 0, -0.16710345, -30.273, -1, -9.480999)
-
-[node name="Path3D2" type="Path3D" parent="." unique_id=867561209]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 95, 0.573, 122)
-curve = SubResource("Curve3D_yfmpj")
-
-[node name="PathFollow3D_2" type="PathFollow3D" parent="Path3D2" unique_id=155247006]
-transform = Transform3D(-0.9999511, 0, -0.009301369, 0, 0.9999989, 0, 0.009301389, 0, -0.99994904, -4.503, -1, -35.075)
-
 [node name="Player" parent="." unique_id=222719199 instance=ExtResource("1_ha378")]
 transform = Transform3D(-0.9873115, 0, -0.15879565, 0, 1, 0, 0.15879565, 0, -0.9873115, -3.5227365, 0.43636608, -22.382069)
 move_speed = 20.0
 max_hp = 10000
+
+[node name="Pet_Cow_1" parent="." unique_id=1156179715 instance=ExtResource("5_260nm")]
+transform = Transform3D(0.24782768, 0, -0.9688041, 0, 1, 0, 0.9688041, 0, 0.24782768, 92.61157, -0.3308797, 95.63044)
+
+[node name="Pet_Cow_2" parent="." unique_id=2054159834 instance=ExtResource("5_260nm")]
+transform = Transform3D(0.8095501, 0, -0.58705074, 0, 1, 0, 0.58705074, 0, 0.8095501, 25.524864, -0.67723846, 59.22924)
+
+[node name="Pet_Cow_3" parent="." unique_id=1659004844 instance=ExtResource("5_260nm")]
+transform = Transform3D(0.7381964, 0, -0.6745859, 0, 1, 0, 0.6745859, 0, 0.7381964, 42.197075, 0.29960012, 156.95418)
 
 [node name="HUD" parent="." unique_id=1994348935 instance=ExtResource("42_ayx3v")]
 
