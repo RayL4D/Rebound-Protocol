@@ -14,10 +14,41 @@ extends Control
 @onready var btn_flag_en = $CenterContainer/MainVBox/LanguageVBox/FlagsContainer/BtnFlagEN
 @onready var btn_flag_es = $CenterContainer/MainVBox/LanguageVBox/FlagsContainer/BtnFlagES
 
+# --- Audio ------------------------------------------------------
+const _SFX_HOVER: AudioStream = preload("res://audio/sfx/ui/btn_hover.wav")
+const _SFX_CLICK: AudioStream = preload("res://audio/sfx/ui/btn_click.wav")
+var _sfx_player: AudioStreamPlayer = null
+
 
 func _ready() -> void:
 	MusicManager.play("menu")
 	flags_container.hide()
+
+	_sfx_player     = AudioStreamPlayer.new()
+	_sfx_player.bus = "SFX"
+	add_child(_sfx_player)
+
+	# Connecter hover/click à tous les boutons du menu
+	for btn in [btn_new_game, btn_continue, btn_options, btn_quit,
+				btn_toggle_language, btn_flag_fr, btn_flag_en, btn_flag_es]:
+		btn.mouse_entered.connect(func():
+			if _sfx_player and is_inside_tree():
+				_sfx_player.stream      = _SFX_HOVER
+				_sfx_player.volume_db   = 2.0
+				_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+				_sfx_player.play()
+		)
+		# Floating player — survit au change_scene_to_file qui libère le nœud
+		btn.pressed.connect(func():
+			var p := AudioStreamPlayer.new()
+			p.stream      = _SFX_CLICK
+			p.bus         = "SFX"
+			p.volume_db   = 5.0
+			p.pitch_scale = randf_range(0.97, 1.03)
+			get_tree().root.add_child(p)
+			p.play()
+			p.finished.connect(p.queue_free)
+		)
 
 	# Appliquer les paramètres sauvegardés dès le menu
 	Settings.apply_saved_settings()

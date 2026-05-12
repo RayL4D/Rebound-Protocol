@@ -17,6 +17,16 @@ extends WeaponComponent
 @export var impact_delay: float  = 1.5  # secondes entre le tir et l'impact
 @export var impact_radius: float = 1.8  # rayon de la zone d'explosion
 
+# --- Audio ------------------------------------------------------
+const _SFX_LAUNCH: AudioStream = preload("res://audio/sfx/enemies/mortar_launch.wav")
+var _sfx_player: AudioStreamPlayer = null
+
+
+func _ready() -> void:
+	_sfx_player     = AudioStreamPlayer.new()
+	_sfx_player.bus = "SFX"
+	add_child(_sfx_player)
+
 
 # =============================================================
 # TIR
@@ -44,3 +54,9 @@ func _fire() -> void:
 	var warning := MortarWarning.new()
 	get_tree().current_scene.add_child(warning)
 	warning.init(target_pos, impact_delay, impact_radius, damage)
+
+	if _sfx_player and _SFX_LAUNCH:
+		_sfx_player.stream      = _SFX_LAUNCH
+		_sfx_player.volume_db   = -6.0
+		_sfx_player.pitch_scale = randf_range(0.95, 1.05)
+		_sfx_player.play()

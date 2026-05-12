@@ -39,6 +39,14 @@ const UPGRADE_LABELS: Dictionary = {
 	"xp_bonus":         ["Bonus XP",              "+10 % XP par ennemi tué"],
 }
 
+const _SFX_BUY_1:   AudioStream = preload("res://audio/sfx/ui/shop_buy_1.wav")
+const _SFX_BUY_2:   AudioStream = preload("res://audio/sfx/ui/shop_buy_2.wav")
+const _SFX_BUY_MAX: AudioStream = preload("res://audio/sfx/ui/shop_buy_max.wav")
+const _SFX_HOVER:   AudioStream = preload("res://audio/sfx/ui/btn_hover.wav")
+const _SFX_CLICK:   AudioStream = preload("res://audio/sfx/ui/btn_click.wav")
+const _SFX_CLOSE:   AudioStream = preload("res://audio/sfx/ui/shop_close.wav")
+var _sfx_player: AudioStreamPlayer = null
+
 var _font: FontFile = null
 var _coin_label: Label = null
 var _tab_buttons: Dictionary = {}        # cat → Button
@@ -56,6 +64,12 @@ func _ready() -> void:
 	layer = 10   # s'affiche au-dessus du menu pause (layer 0 par défaut)
 	if ResourceLoader.exists(FONT_PATH):
 		_font = load(FONT_PATH)
+
+	_sfx_player             = AudioStreamPlayer.new()
+	_sfx_player.bus         = "SFX"
+	_sfx_player.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_sfx_player)
+
 	_build_ui()
 	_switch_tab("joueur")
 
@@ -178,7 +192,7 @@ func _switch_tab(cat: String) -> void:
 # LIGNE D'UPGRADE
 # =============================================================
 
-func _build_upgrade_row(id: String, entry: Dictionary) -> Control:
+func _build_upgrade_row(id: String, _entry: Dictionary) -> Control:
 	var labels: Array = UPGRADE_LABELS.get(id, [id, ""])
 	var name_str: String = labels[0]
 	var desc_str: String = labels[1]
@@ -284,8 +298,34 @@ func _on_buy(id: String) -> void:
 	if SaveData.buy_upgrade(id):
 		_refresh_coins()
 
+		# Choisir le son selon le palier atteint
+		var new_tier: int = SaveData.get_upgrade_tier(id)
+		var max_tier: int = SaveData.UPGRADES[id]["max_tier"]
+		var sfx: AudioStream
+		if new_tier >= max_tier:
+			sfx = _SFX_BUY_MAX
+		elif new_tier >= 2:
+			sfx = _SFX_BUY_2
+		else:
+			sfx = _SFX_BUY_1
+		if _sfx_player and sfx:
+			_sfx_player.stream      = sfx
+			_sfx_player.volume_db   = -6.0
+			_sfx_player.pitch_scale = 1.0
+			_sfx_player.play()
+
 
 func _on_close() -> void:
+	# Son de fermeture boutique — floating player car queue_free() suit immédiatement
+	if _SFX_CLOSE != null:
+		var p := AudioStreamPlayer.new()
+		p.stream      = _SFX_CLOSE
+		p.bus         = "SFX"
+		p.volume_db   = 0.0
+		p.pitch_scale = 1.0
+		get_tree().root.add_child(p)
+		p.play()
+		p.finished.connect(p.queue_free)
 	queue_free()
 
 
@@ -328,6 +368,20 @@ func _make_button(text: String, callback: Callable) -> Button:
 	hover.set_border_width_all(1)
 	btn.add_theme_stylebox_override("hover", hover)
 	btn.pressed.connect(callback)
+	btn.mouse_entered.connect(func():
+		if _sfx_player and _SFX_HOVER:
+			_sfx_player.stream      = _SFX_HOVER
+			_sfx_player.volume_db   = 2.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
+	btn.pressed.connect(func():
+		if _sfx_player and _SFX_CLICK:
+			_sfx_player.stream      = _SFX_CLICK
+			_sfx_player.volume_db   = 5.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
 	return btn
 
 

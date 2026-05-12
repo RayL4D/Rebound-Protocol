@@ -23,6 +23,11 @@ var _lang_buttons:      Dictionary = {}  # "fr" / "en" / "es" → Button
 
 var _font: FontFile = null
 
+# --- Audio ------------------------------------------------------
+const _SFX_HOVER: AudioStream = preload("res://audio/sfx/ui/btn_hover.wav")
+const _SFX_CLICK: AudioStream = preload("res://audio/sfx/ui/btn_click.wav")
+var _sfx_player: AudioStreamPlayer = null
+
 
 # =============================================================
 # INIT
@@ -32,7 +37,11 @@ func _ready() -> void:
 	# Chargement de la police (optionnel — fallback sur la police par défaut)
 	if ResourceLoader.exists(FONT_PATH):
 		_font = load(FONT_PATH)
-	
+
+	_sfx_player     = AudioStreamPlayer.new()
+	_sfx_player.bus = "SFX"
+	add_child(_sfx_player)
+
 	_build_ui()
 	_load_and_apply_settings()
 
@@ -210,6 +219,20 @@ func _add_language_buttons(parent: Control) -> void:
 		if _font:
 			btn.add_theme_font_override("font", _font)
 		btn.pressed.connect(_change_language.bind(langs[label]))
+		btn.mouse_entered.connect(func():
+			if _sfx_player and _SFX_HOVER:
+				_sfx_player.stream      = _SFX_HOVER
+				_sfx_player.volume_db   = 2.0
+				_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+				_sfx_player.play()
+		)
+		btn.pressed.connect(func():
+			if _sfx_player and _SFX_CLICK:
+				_sfx_player.stream      = _SFX_CLICK
+				_sfx_player.volume_db   = 5.0
+				_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+				_sfx_player.play()
+		)
 		hbox.add_child(btn)
 		_lang_buttons[langs[label]] = btn
 	
@@ -233,6 +256,21 @@ func _make_button(label_text: String, callback: Callable) -> Button:
 	style.border_width_bottom = 2
 	style.border_color        = COLOR_CYAN
 	btn.add_theme_stylebox_override("normal", style)
+	btn.mouse_entered.connect(func():
+		if _sfx_player and _SFX_HOVER and is_inside_tree():
+			_sfx_player.stream      = _SFX_HOVER
+			_sfx_player.volume_db   = 2.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
+	# Son connecté EN PREMIER — joue avant que le callback change de scène
+	btn.pressed.connect(func():
+		if _sfx_player and _SFX_CLICK and is_inside_tree():
+			_sfx_player.stream      = _SFX_CLICK
+			_sfx_player.volume_db   = 5.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
 	btn.pressed.connect(callback)
 	return btn
 

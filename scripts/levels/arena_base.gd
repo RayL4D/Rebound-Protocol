@@ -15,6 +15,7 @@ var _boss: BossLion = null
 
 func _ready() -> void:
 	MusicManager.play("gameplay")
+	AmbientManager.play("arena")
 
 	TranslationServer.set_locale(SceneManager.current_lang)
 

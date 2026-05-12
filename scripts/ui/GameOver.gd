@@ -45,6 +45,11 @@ var _is_glitching:  bool   = false
 var _accent_color:  Color  = COLOR_RED
 var _panel_visible: bool   = false
 
+# --- Audio ------------------------------------------------------
+const _SFX_HOVER:  AudioStream = preload("res://audio/sfx/ui/btn_hover.wav")
+const _SFX_CLICK:  AudioStream = preload("res://audio/sfx/ui/btn_click.wav")
+var _sfx_player: AudioStreamPlayer = null
+
 
 # =============================================================
 # LIFECYCLE
@@ -52,6 +57,10 @@ var _panel_visible: bool   = false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_sfx_player              = AudioStreamPlayer.new()
+	_sfx_player.bus          = "SFX"
+	_sfx_player.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_sfx_player)
 	_build_ui()
 	var player := get_tree().get_first_node_in_group("player") as Player
 	if player:
@@ -83,6 +92,7 @@ func show_game_over() -> void:
 	_title.text     = tr("UI_GAME_OVER")
 	_subtitle.text  = tr("UI_SYS_NEUTRALIZED")
 	_btn_retry.text = tr("UI_RETRY")
+	AmbientManager.stop()
 	_play_death_sequence()
 
 
@@ -118,10 +128,11 @@ func _play_death_sequence() -> void:
 	# 3. Attendre la fin de l'animation de mort (~2 s) avant le panneau
 	await get_tree().create_timer(2.0).timeout
 
-	# 4. Afficher le panneau + pauser
+	# 4. Afficher le panneau + musique game over + pauser
 	_panel.visible   = true
 	_panel_visible   = true
 	_animate_panel_in()
+	MusicManager.play("game_over")
 	get_tree().paused = true
 
 
@@ -287,6 +298,20 @@ func _make_button(label: String, pos: Vector2, sz: Vector2, primary: bool) -> Bu
 	hover.set_border_width_all(1)
 	btn.add_theme_stylebox_override("hover",   hover)
 	btn.add_theme_stylebox_override("pressed", normal)
+	btn.mouse_entered.connect(func():
+		if _sfx_player and _SFX_HOVER:
+			_sfx_player.stream      = _SFX_HOVER
+			_sfx_player.volume_db   = 2.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
+	btn.pressed.connect(func():
+		if _sfx_player and _SFX_CLICK:
+			_sfx_player.stream      = _SFX_CLICK
+			_sfx_player.volume_db   = 5.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
 	return btn
 
 

@@ -15,7 +15,6 @@ extends CanvasLayer
 
 const SETTINGS_PATH := "user://settings.cfg"
 const FONT_PATH     := "res://ui_theme/fonts/Xolonium-Regular.ttf"
-const ShopScript    := preload("res://scripts/ui/shop.gd")
 
 const COLOR_CYAN  := Color(0.0,  0.851, 1.0,  1.0)
 const COLOR_BG    := Color(0.0,  0.0,   0.0,  0.65)   # overlay semi-transparent
@@ -30,9 +29,14 @@ var _music_slider:     HSlider
 var _sfx_slider:       HSlider
 var _fullscreen_check: CheckButton
 var _lang_buttons:     Dictionary = {}
-var _is_shop_open: bool = false
-
 var _font: FontFile = null
+
+# --- Audio ------------------------------------------------------
+const _SFX_HOVER:       AudioStream = preload("res://audio/sfx/ui/btn_hover.wav")
+const _SFX_CLICK:       AudioStream = preload("res://audio/sfx/ui/btn_click.wav")
+const _SFX_PAUSE_OPEN:  AudioStream = preload("res://audio/sfx/ui/pause_open.wav")
+const _SFX_PAUSE_CLOSE: AudioStream = preload("res://audio/sfx/ui/pause_close.wav")
+var _sfx_player: AudioStreamPlayer = null
 
 
 # =============================================================
@@ -45,16 +49,17 @@ func _ready() -> void:
 	if ResourceLoader.exists(FONT_PATH):
 		_font = load(FONT_PATH)
 
+	_sfx_player              = AudioStreamPlayer.new()
+	_sfx_player.bus          = "SFX"
+	_sfx_player.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_sfx_player)
+
 	_build_ui()
 	hide()
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and not event.is_echo():
-		# --- ON BLOQUE ICI SI LA BOUTIQUE EST OUVERTE ---
-		if _is_shop_open:
-			return
-			
 		# Ne pas interferer avec l'écran GameOver si le joueur est mort
 		var player := get_tree().get_first_node_in_group("player") as Player
 		if player != null and player.is_dead:
@@ -72,11 +77,21 @@ func _unhandled_input(event: InputEvent) -> void:
 func _open() -> void:
 	_show_main_panel()
 	get_tree().paused = true
+	if _sfx_player and _SFX_PAUSE_OPEN:
+		_sfx_player.stream      = _SFX_PAUSE_OPEN
+		_sfx_player.volume_db   = -6.0
+		_sfx_player.pitch_scale = 1.0
+		_sfx_player.play()
 	show()
 
 
 func _resume() -> void:
 	get_tree().paused = false
+	if _sfx_player and _SFX_PAUSE_CLOSE:
+		_sfx_player.stream      = _SFX_PAUSE_CLOSE
+		_sfx_player.volume_db   = -6.0
+		_sfx_player.pitch_scale = 1.0
+		_sfx_player.play()
 	hide()
 
 
@@ -117,7 +132,6 @@ func _build_main_panel() -> Control:
 	_add_title(inner, "PAUSE_TITLE")
 	inner.add_child(HSeparator.new())
 	inner.add_child(_make_button("PAUSE_RESUME",   _resume))
-	inner.add_child(_make_button("PAUSE_SHOP",     _open_shop))
 	inner.add_child(_make_button("PAUSE_SETTINGS", _show_settings_panel))
 	inner.add_child(_make_button("PAUSE_QUIT_MENU",  _quit_to_menu))
 
@@ -190,22 +204,6 @@ func _show_main_panel() -> void:
 func _show_settings_panel() -> void:
 	_panel_main.hide()
 	_panel_settings.show()
-
-
-func _open_shop() -> void:
-	# Cacher tout le CanvasLayer pause (overlay inclus) pendant que le shop est ouvert
-	hide()
-	_is_shop_open = true # On verrouille le menu pause
-
-	var shop: CanvasLayer = ShopScript.new()
-	get_tree().root.add_child(shop)
-
-	# Quand le shop se ferme, ré-afficher le menu pause (panel principal)
-	shop.tree_exiting.connect(func():
-		_is_shop_open = false # On déverrouille le menu pause
-		show()
-		_show_main_panel()
-	)
 
 
 func _quit_to_menu() -> void:
@@ -445,5 +443,20 @@ func _make_button(label_text: String, callback: Callable) -> Button:
 	style.border_width_bottom = 2
 	style.border_color       = COLOR_CYAN
 	btn.add_theme_stylebox_override("normal", style)
+	btn.mouse_entered.connect(func():
+		if _sfx_player and _SFX_HOVER and is_inside_tree():
+			_sfx_player.stream      = _SFX_HOVER
+			_sfx_player.volume_db   = 2.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
+	# Son connecté EN PREMIER pour jouer avant que le callback quitte la scène
+	btn.pressed.connect(func():
+		if _sfx_player and _SFX_CLICK and is_inside_tree():
+			_sfx_player.stream      = _SFX_CLICK
+			_sfx_player.volume_db   = 5.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
 	btn.pressed.connect(callback)
 	return btn

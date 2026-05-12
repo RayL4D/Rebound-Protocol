@@ -67,16 +67,16 @@ spring_length = 8.0
 transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, -0.8, 0)
 
 [node name="torso" parent="RobotModel/character-g/root" parent_id_path=PackedInt32Array(1575018680, 91212867) index="2" unique_id=1572204047]
-transform = Transform3D(1, 0, 0, 0, 0.99998915, -0.004621663, 0, 0.004621663, 0.99998915, 0, 0.7, 0)
+transform = Transform3D(1, 0, 0, 0, 0.99968076, -0.025260165, 0, 0.025260165, 0.99968076, 0, 0.7, 0)
 
 [node name="arm-left" parent="RobotModel/character-g/root/torso" index="0" unique_id=1539902478]
-transform = Transform3D(1, 0, 0, 0, 0.99990374, -0.013864574, 0, 0.013864574, 0.99990374, 0.4000001, 1.1, -0.099999905)
+transform = Transform3D(1, 0, 0, 0, 0.99712926, -0.07571603, 0, 0.07571603, 0.99712926, 0.4000001, 1.1, -0.099999905)
 
 [node name="arm-right" parent="RobotModel/character-g/root/torso" index="1" unique_id=822799953]
-transform = Transform3D(1, 0, 0, 0, 0.99990374, -0.013864574, 0, 0.013864574, 0.99990374, -0.4000001, 1.1, -0.099999905)
+transform = Transform3D(1, 0, 0, 0, 0.99712926, -0.07571603, 0, 0.07571603, 0.99712926, -0.4000001, 1.1, -0.099999905)
 
 [node name="head" parent="RobotModel/character-g/root/torso" index="2" unique_id=793382359]
-transform = Transform3D(0.09999039, 0, -0.0013864576, 0, 0.1, 0, 0.0013864576, 0, 0.09999039, 0, 1.2, 0)
+transform = Transform3D(0.099712946, 0, -0.007571605, 0, 0.1, 0, 0.007571605, 0, 0.099712946, 0, 1.2, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=836211236]
 shape = SubResource("CapsuleShape3D_8afob")

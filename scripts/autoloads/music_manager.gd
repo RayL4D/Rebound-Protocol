@@ -23,16 +23,25 @@ const FADE_DURATION := 1.5
 # volume_db : offset en dB pour équilibrer les volumes entre pistes
 const _TRACKS: Dictionary = {
 	"menu": {
-		"stream":    preload("res://audio/music/menu.ogg"),
-		"volume_db": 0.0,
+		"stream":      preload("res://audio/music/menu.ogg"),
+		"volume_db":   0.0,
+		"pitch_scale": 1.0,
 	},
 	"gameplay": {
-		"stream":    preload("res://audio/music/gameplay.ogg"),
-		"volume_db": 6.0,
+		"stream":      preload("res://audio/music/gameplay.ogg"),
+		"volume_db":   6.0,
+		"pitch_scale": 1.0,
 	},
 	"boss": {
-		"stream":    preload("res://audio/music/boss.ogg"),
-		"volume_db": 6.0,
+		"stream":      preload("res://audio/music/boss.ogg"),
+		"volume_db":   18.0,
+		"pitch_scale": 1.0,
+	},
+	"game_over": {
+		"stream":      preload("res://audio/music/game_over.wav"),
+		"volume_db":   0.0,
+		"pitch_scale": 1.0,
+		"loop":        true,
 	},
 }
 
@@ -76,7 +85,9 @@ func play(track_name: String) -> void:
 
 	_current_track     = track_name
 	_current_volume_db = entry.get("volume_db", 0.0)
-	_crossfade_to(stream, _current_volume_db)
+	var pitch: float   = entry.get("pitch_scale", 1.0)
+	var loop:  bool    = entry.get("loop", false)
+	_crossfade_to(stream, _current_volume_db, pitch, loop)
 
 
 func stop() -> void:
@@ -97,12 +108,20 @@ func _make_player() -> AudioStreamPlayer:
 	return p
 
 
-func _crossfade_to(stream: AudioStream, target_db: float) -> void:
+func _crossfade_to(stream: AudioStream, target_db: float, pitch: float = 1.0, loop: bool = false) -> void:
 	var incoming: AudioStreamPlayer = _player_b if _active == _player_a else _player_a
 
-	incoming.stream    = stream
-	incoming.volume_db = -80.0
+	# Déconnecter l'ancien signal de loop s'il existe
+	if incoming.finished.is_connected(_on_loop_finished.bind(incoming)):
+		incoming.finished.disconnect(_on_loop_finished.bind(incoming))
+
+	incoming.stream      = stream
+	incoming.pitch_scale = pitch
+	incoming.volume_db   = -80.0
 	incoming.play()
+
+	if loop:
+		incoming.finished.connect(_on_loop_finished.bind(incoming))
 
 	var tween := create_tween().set_parallel()
 	tween.tween_property(_active,  "volume_db", -80.0,     FADE_DURATION)
@@ -115,6 +134,11 @@ func _crossfade_to(stream: AudioStream, target_db: float) -> void:
 	await tween.finished
 	outgoing.stop()
 	_fading = false
+
+
+func _on_loop_finished(player: AudioStreamPlayer) -> void:
+	if player == _active:
+		player.play()
 
 
 func _fade_out(player: AudioStreamPlayer) -> void:

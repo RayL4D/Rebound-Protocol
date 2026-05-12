@@ -19,6 +19,16 @@ extends WeaponComponent
 @export var bullet_speed:      float = 9.0
 @export var bullet_scene: PackedScene = preload("res://scenes/enemies/bullet_enemy.tscn")
 
+# --- Audio ------------------------------------------------------
+const _SFX_SHOOT: AudioStream = preload("res://audio/sfx/enemies/shotgun_shoot.wav")
+var _sfx_player: AudioStreamPlayer = null
+
+
+func _ready() -> void:
+	_sfx_player     = AudioStreamPlayer.new()
+	_sfx_player.bus = "SFX"
+	add_child(_sfx_player)
+
 
 # =============================================================
 # TIR — éventail de balles centré sur la cible
@@ -48,3 +58,9 @@ func _fire() -> void:
 		bullet.speed  = bullet_speed
 		bullet.damage = damage
 		bullet.init(global_position, shot_dir)
+
+	if _sfx_player and _SFX_SHOOT:
+		_sfx_player.stream      = _SFX_SHOOT
+		_sfx_player.volume_db   = -4.0 + randf_range(-1.0, 1.0)
+		_sfx_player.pitch_scale = randf_range(0.93, 1.07)
+		_sfx_player.play()
