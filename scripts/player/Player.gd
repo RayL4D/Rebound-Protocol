@@ -94,17 +94,18 @@ func request_parry() -> void:
 		s.parry_timer.notify_mobile_press()
 
 # --- Stomp -------------------------------------------------------
-const STOMP_DAMAGE:         int   = 25
+const STOMP_DAMAGE_BASE:    int   = 25
 const STOMP_FALL_THRESHOLD: float = -4.0   # vitesse Y min pour déclencher
 const STOMP_BOUNCE:         float = 7.0    # rebond vertical après stomp
 var   _stomp_hit_this_jump: bool  = false  # 1 stomp max par mise en l'air — reset à l'atterrissage sol
+var   _stomp_damage_eff:    int   = STOMP_DAMAGE_BASE  # Dégâts effectifs (modifiés par upgrade)
 
 # --- Dash-bouclier -----------------------------------------------
-const DASH_SPEED:     float = 20.0
-const DASH_DURATION:  float = 0.20   # secondes
-const DASH_COOLDOWN:  float = 1.20   # secondes
-const DASH_DAMAGE:    int   = 12
-const DASH_KNOCKBACK: float = 9.0
+const DASH_SPEED:      float = 20.0
+const DASH_DURATION:   float = 0.20   # secondes
+const DASH_COOLDOWN:   float = 1.20   # secondes
+const DASH_DAMAGE:     int   = 12
+const DASH_KNOCKBACK:  float = 9.0
 
 var _is_dashing:           bool  = false
 var _dash_timer:           float = 0.0
@@ -113,6 +114,11 @@ var _dash_dir:             Vector3 = Vector3.ZERO
 var _dash_hit_enemies:     Array  = []   # ennemis déjà touchés dans ce dash
 var _dash_ghost_timer:     float = 0.0   # timer pour l'espacement des afterimages
 const DASH_GHOST_INTERVAL: float = 0.04  # une afterimage toutes les 40 ms
+
+# Dash upgrades — calculés depuis _apply_save_upgrades()
+var _dash_cooldown_eff:  float = DASH_COOLDOWN  # Cooldown effectif (réduit par upgrade)
+var _dash_invincible:    bool  = false           # True pendant le dash (upgrade tier ≥ 1)
+var _dash_armor_timer:   float = 0.0             # Invincibilité prolongée après le dash (tier ≥ 2)
 
 # Gravité récupérée depuis les paramètres projet Godot
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -259,12 +265,18 @@ func _apply_save_upgrades() -> void:
 	if SaveData.active_slot < 0:
 		return   # Pas de slot actif (ex. lancement direct depuis l'éditeur)
 
-	# HP maximum : +1 HP par palier (à partir de la base)
+	# HP maximum : +5 HP par palier (à partir de la base)
 	max_hp = _base_max_hp + int(SaveData.get_upgrade_value("hp_max"))
 
 	# Vitesse : +5 % par palier — toujours depuis _base_move_speed pour éviter
 	# les multiplications en cascade si la fonction est rappelée
 	move_speed = _base_move_speed * (1.0 + SaveData.get_upgrade_value("move_speed"))
+
+	# Stomp : +15 % de dégâts par palier
+	_stomp_damage_eff = int(round(float(STOMP_DAMAGE_BASE) * (1.0 + SaveData.get_upgrade_value("stomp_damage"))))
+
+	# Dash cooldown : −10 % par palier, plancher à 0.30 s
+	_dash_cooldown_eff = max(DASH_COOLDOWN * (1.0 - SaveData.get_upgrade_value("dash_cooldown")), 0.30)
 
 	# Régénération HP passive — initialiser le timer au démarrage
 	_update_regen_timer()
@@ -281,6 +293,10 @@ func refresh_upgrades() -> void:
 	max_hp     = _base_max_hp + int(SaveData.get_upgrade_value("hp_max"))
 	move_speed = _base_move_speed * (1.0 + SaveData.get_upgrade_value("move_speed"))
 
+	# Stomp + Dash cooldown
+	_stomp_damage_eff  = int(round(float(STOMP_DAMAGE_BASE) * (1.0 + SaveData.get_upgrade_value("stomp_damage"))))
+	_dash_cooldown_eff = max(DASH_COOLDOWN * (1.0 - SaveData.get_upgrade_value("dash_cooldown")), 0.30)
+
 	# Si max_hp a augmenté, les HP supplémentaires sont donnés au joueur directement
 	if max_hp > old_max_hp:
 		current_hp = min(current_hp + (max_hp - old_max_hp), max_hp)
@@ -296,7 +312,7 @@ func refresh_upgrades() -> void:
 
 
 func _update_regen_timer() -> void:
-	var tier := SaveData.get_upgrade_tier("hp_regen")
+	var tier: int = SaveData.get_upgrade_tier("hp_regen")
 	if tier <= 0 or tier >= _REGEN_INTERVALS.size():
 		_regen_interval = 0.0
 	else:
@@ -696,7 +712,7 @@ func _check_stomp() -> void:
 	# Dégâts uniquement au premier contact depuis le dernier atterrissage sol
 	if not _stomp_hit_this_jump:
 		_stomp_hit_this_jump = true
-		enemy.take_damage(STOMP_DAMAGE, true)   # silent_hurt — le stomp a son propre son
+		enemy.take_damage(_stomp_damage_eff, true)   # silent_hurt — le stomp a son propre son
 
 
 # =============================================================
@@ -710,6 +726,12 @@ func _handle_dash(delta: float) -> void:
 	if _dash_cooldown_timer > 0.0:
 		_dash_cooldown_timer -= delta
 
+	# Tick de l'armure post-dash (tier ≥ 2)
+	if _dash_armor_timer > 0.0:
+		_dash_armor_timer -= delta
+		if _dash_armor_timer <= 0.0:
+			_dash_invincible = false
+
 	# Dash en cours : décompte la durée et écrase velocity horizontale.
 	# NOTE : appelé APRÈS _handle_movement(), donc cet override est définitif.
 	if _is_dashing:
@@ -717,6 +739,13 @@ func _handle_dash(delta: float) -> void:
 		if _dash_timer <= 0.0:
 			_is_dashing = false
 			_dash_hit_enemies.clear()
+			# Fin du dash — gérer l'armure résiduelle (tier 2-3) ou couper l'invincibilité
+			var armor_tier: int = SaveData.get_upgrade_tier("dash_armor") if SaveData.active_slot >= 0 else 0
+			if armor_tier >= 2:
+				# Prolonger l'invincibilité 0.2 s (tier 2) ou 0.4 s (tier 3)
+				_dash_armor_timer = 0.2 + (0.2 * float(armor_tier - 2))
+			else:
+				_dash_invincible = false
 		else:
 			velocity.x = _dash_dir.x * DASH_SPEED
 			velocity.z = _dash_dir.z * DASH_SPEED
@@ -753,9 +782,14 @@ func _start_dash() -> void:
 
 	_is_dashing          = true
 	_dash_timer          = DASH_DURATION
-	_dash_cooldown_timer = DASH_COOLDOWN
+	_dash_cooldown_timer = _dash_cooldown_eff
 	_dash_ghost_timer    = 0.0
 	_dash_hit_enemies.clear()
+
+	# Armure pendant le dash (upgrade tier ≥ 1)
+	var dash_armor_tier: int = SaveData.get_upgrade_tier("dash_armor") if SaveData.active_slot >= 0 else 0
+	if dash_armor_tier >= 1:
+		_dash_invincible = true
 
 	if _SFX_DASH and _sfx_dash:
 		_sfx_dash.stream      = _SFX_DASH
@@ -849,7 +883,7 @@ func _check_dash_hits() -> void:
 # =============================================================
 
 func take_damage(amount: int) -> void:
-	if is_dead or _invincible:
+	if is_dead or _invincible or _dash_invincible:
 		return
 
 	# Réduction de dégâts permanente (upgrade "damage_reduction")

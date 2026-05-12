@@ -229,6 +229,10 @@ func _on_parry_resolved(state: ParryTimer.ParryState) -> void:
 			_reflect_combo        = min(_reflect_combo + 1, _COMBO_MAX)
 			_reflect_combo_timer  = _COMBO_WINDOW
 			_play_shield_sfx(_SFX_REFLECT, 0.0, randf_range(0.88, 0.94))
+			# Soin de parade critique (upgrade "parry_heal")
+			var heal_amount: int = int(SaveData.get_upgrade_value("parry_heal")) if SaveData.active_slot >= 0 else 0
+			if heal_amount > 0 and player is Player:
+				(player as Player).heal(heal_amount)
 
 	_pending_bullet = null
 

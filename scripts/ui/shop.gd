@@ -27,16 +27,22 @@ const FONT_PATH   := "res://ui_theme/fonts/Xolonium-Regular.ttf"
 
 # Noms affichables des upgrades (clé → [nom, description])
 const UPGRADE_LABELS: Dictionary = {
-	"hp_max":           ["HP Maximum",          "+1 HP max par palier"],
+	"hp_max":           ["HP Maximum",          "+5 HP max par palier"],
 	"move_speed":       ["Vitesse",              "+5 % vitesse de déplacement"],
 	"damage_reduction": ["Réduction dégâts",     "−5 % dégâts reçus par palier"],
-	"pickup_radius":    ["Rayon collecte",        "+20 % portée des pièces"],
+	"pickup_radius":    ["Rayon collecte",        "+15 % portée des pièces"],
 	"shield_size":      ["Taille bouclier",       "+8 % rayon du bouclier"],
 	"shield_duration":  ["Durée activation",     "+10 % durée de parade active"],
 	"parry_damage":     ["Dégâts renvoi",         "+10 % dégâts balles renvoyées"],
 	"parry_window":     ["Fenêtre critique",      "+1 frame de fenêtre critique"],
 	"hp_regen":         ["Régén. HP",             "Palier 1→30s, 2→20s, 3→12s"],
 	"xp_bonus":         ["Bonus XP",              "+10 % XP par ennemi tué"],
+	"dash_cooldown":    ["Cooldown Dash",         "−10 % de rechargement du dash par palier"],
+	"stomp_damage":     ["Dégâts Stomp",          "+15 % de dégâts de saut écrasant par palier"],
+	"parry_heal":       ["Soin Parade",           "+1 HP soigné sur chaque parade critique"],
+	"reflect_speed":    ["Vitesse Renvoi",        "+20 % de vitesse des balles renvoyées"],
+	"coin_bonus":       ["Bonus Pièces",          "+1 pièce droppée par ennemi vaincu"],
+	"dash_armor":       ["Armure Dash",           "1: invincible pendant le dash, 2-3: +durée après"],
 }
 
 const _SFX_BUY:   AudioStream = preload("res://audio/sfx/ui/shop_buy.wav")
@@ -91,20 +97,20 @@ func _build_ui() -> void:
 	add_child(center)
 
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(600, 520)
+	panel.custom_minimum_size = Vector2(860, 670)
 	var style := StyleBoxFlat.new()
 	style.bg_color    = COLOR_PANEL
 	style.border_color = COLOR_CYAN
 	style.set_border_width_all(2)
 	style.content_margin_left   = 28.0
 	style.content_margin_right  = 28.0
-	style.content_margin_top    = 22.0
-	style.content_margin_bottom = 22.0
+	style.content_margin_top    = 20.0
+	style.content_margin_bottom = 20.0
 	panel.add_theme_stylebox_override("panel", style)
 	center.add_child(panel)
 
 	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 16)
+	root.add_theme_constant_override("separation", 12)
 	panel.add_child(root)
 
 	# ── En-tête : titre + pièces ─────────────────────────────
@@ -138,11 +144,10 @@ func _build_ui() -> void:
 	# ── Liste scrollable ─────────────────────────────────────
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.custom_minimum_size = Vector2(0, 300)
 	root.add_child(scroll)
 
 	_list_container = VBoxContainer.new()
-	_list_container.add_theme_constant_override("separation", 10)
+	_list_container.add_theme_constant_override("separation", 6)
 	_list_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(_list_container)
 
@@ -192,52 +197,81 @@ func _switch_tab(cat: String) -> void:
 # =============================================================
 
 func _build_upgrade_row(id: String, _entry: Dictionary) -> Control:
-	var labels: Array = UPGRADE_LABELS.get(id, [id, ""])
+	var labels: Array   = UPGRADE_LABELS.get(id, [id, ""])
 	var name_str: String = labels[0]
 	var desc_str: String = labels[1]
+	var max_tier: int    = SaveData.CATALOG[id]["max_tier"]
 
 	var panel := PanelContainer.new()
 	var style := StyleBoxFlat.new()
-	style.bg_color    = Color(0.06, 0.10, 0.15, 0.9)
-	style.border_color = Color(COLOR_CYAN, 0.25)
+	style.bg_color     = Color(0.05, 0.09, 0.14, 0.95)
+	style.border_color = Color(COLOR_CYAN, 0.2)
 	style.set_border_width_all(1)
 	style.content_margin_left   = 14.0
 	style.content_margin_right  = 14.0
-	style.content_margin_top    = 10.0
-	style.content_margin_bottom = 10.0
+	style.content_margin_top    = 7.0
+	style.content_margin_bottom = 7.0
 	panel.add_theme_stylebox_override("panel", style)
 
 	var hbox := HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 12)
+	hbox.add_theme_constant_override("separation", 14)
 	panel.add_child(hbox)
 
-	# Nom + description
+	# ── Nom + description ────────────────────────────────────────
 	var info_vbox := VBoxContainer.new()
 	info_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info_vbox.add_theme_constant_override("separation", 2)
 	hbox.add_child(info_vbox)
-	info_vbox.add_child(_make_label(name_str, 15, Color(0.9, 0.95, 1.0)))
-	info_vbox.add_child(_make_label(desc_str, 11, COLOR_DIM))
+	info_vbox.add_child(_make_label(name_str, 14, Color(0.92, 0.97, 1.0)))
+	var desc_lbl := _make_label(desc_str, 10, COLOR_DIM)
+	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info_vbox.add_child(desc_lbl)
 
-	# Palier actuel
-	var tier_lbl := _make_label("", 13, COLOR_CYAN)
-	tier_lbl.custom_minimum_size = Vector2(70, 0)
+	# ── Barre de progression + compteur ─────────────────────────
+	var bar_vbox := VBoxContainer.new()
+	bar_vbox.custom_minimum_size = Vector2(130, 0)
+	bar_vbox.add_theme_constant_override("separation", 4)
+	bar_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	hbox.add_child(bar_vbox)
+
+	var tier_lbl := _make_label("", 10, COLOR_DIM)
 	tier_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hbox.add_child(tier_lbl)
+	bar_vbox.add_child(tier_lbl)
 
-	# Prix
+	# Rangée de segments — largeur adaptée au nombre de paliers
+	var bar_row := HBoxContainer.new()
+	bar_row.add_theme_constant_override("separation", 2)
+	bar_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	bar_vbox.add_child(bar_row)
+
+	var seg_w: int = clamp(int(126.0 / max_tier) - 2, 6, 26)
+	var segments: Array = []
+	for _i in max_tier:
+		var seg := ColorRect.new()
+		seg.custom_minimum_size = Vector2(seg_w, 7)
+		seg.color = Color(0.12, 0.18, 0.24)
+		bar_row.add_child(seg)
+		segments.append(seg)
+
+	# ── Prix ─────────────────────────────────────────────────────
 	var price_lbl := _make_label("", 13, COLOR_GOLD)
-	price_lbl.custom_minimum_size = Vector2(80, 0)
+	price_lbl.custom_minimum_size = Vector2(72, 0)
 	price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hbox.add_child(price_lbl)
 
-	# Bouton acheter
+	# ── Bouton acheter ────────────────────────────────────────────
 	var btn := _make_button("ACHETER", func(): _on_buy(id))
 	btn.custom_minimum_size = Vector2(90, 34)
 	hbox.add_child(btn)
 
-	_buy_rows[id] = {"tier_lbl": tier_lbl, "price_lbl": price_lbl, "btn": btn}
+	_buy_rows[id] = {
+		"tier_lbl":  tier_lbl,
+		"price_lbl": price_lbl,
+		"btn":       btn,
+		"segments":  segments,
+		"max_tier":  max_tier,
+	}
 	_refresh_row(id)
-
 	return panel
 
 
@@ -258,21 +292,30 @@ func _refresh_coins() -> void:
 func _refresh_row(id: String) -> void:
 	if not _buy_rows.has(id):
 		return
-	var row: Dictionary    = _buy_rows[id]
-	var entry: Dictionary  = SaveData.CATALOG[id]
-	var tier: int          = SaveData.get_upgrade_tier(id)
-	var max_tier: int      = entry["max_tier"]
-	var price: int         = SaveData.get_next_tier_price(id)
-	var coins: int         = SaveData.get_coins()
+	var row: Dictionary   = _buy_rows[id]
+	var entry: Dictionary = SaveData.CATALOG[id]
+	var tier: int         = SaveData.get_upgrade_tier(id)
+	var max_tier: int     = row["max_tier"]
+	var price: int        = SaveData.get_next_tier_price(id)
+	var coins: int        = SaveData.get_coins()
 
 	var tier_lbl:  Label  = row["tier_lbl"]
 	var price_lbl: Label  = row["price_lbl"]
 	var btn:       Button = row["btn"]
+	var segments:  Array  = row["segments"]
 
 	tier_lbl.text = "%d / %d" % [tier, max_tier]
 
+	# Segments : gradient cyan → or selon la progression
+	for i in segments.size():
+		var seg: ColorRect = segments[i]
+		if i < tier:
+			var t := float(i) / float(max(max_tier - 1, 1))
+			seg.color = COLOR_CYAN.lerp(COLOR_GOLD, t * 0.7)
+		else:
+			seg.color = Color(0.12, 0.18, 0.24)
+
 	if price < 0:
-		# Palier max
 		price_lbl.text = "MAX"
 		price_lbl.add_theme_color_override("font_color", COLOR_GREEN)
 		btn.disabled = true
@@ -421,3 +464,4 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and not event.is_echo():
 		_on_close()
 		get_viewport().set_input_as_handled() # Indique à Godot que l'action a été traitée
+                                                                                      
