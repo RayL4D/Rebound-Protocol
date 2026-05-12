@@ -245,8 +245,6 @@ func _finish_all_waves() -> void:
 func _on_player_died() -> void:
 	_is_running = false
 	_show_message(tr("UI_DEATH_MSG"))
-	await get_tree().create_timer(2.5).timeout
-	get_tree().reload_current_scene()
 
 
 # =============================================================

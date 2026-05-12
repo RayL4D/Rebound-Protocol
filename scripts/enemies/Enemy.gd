@@ -35,6 +35,12 @@ extends CharacterBody3D
 var _enemy_texture:  Texture2D = preload("res://assets/textures/enemies/colormap.png")
 var _weapon_texture: Texture2D = preload("res://assets/textures/weapons/colormap.png")
 
+# --- Audio ------------------------------------------------------
+const _SFX_HURT:       AudioStream = preload("res://audio/sfx/enemies/enemy_hurt.wav")
+const _SFX_DIE:        AudioStream = preload("res://audio/sfx/enemies/enemy_die.wav")
+const _SFX_COIN_SPAWN: AudioStream = preload("res://audio/sfx/enemies/coin_spawn.wav")
+var _sfx_player: AudioStreamPlayer = null
+
 # --- État -------------------------------------------------------
 var current_hp: int
 var player: Player          = null
@@ -70,6 +76,11 @@ func _ready() -> void:
 
 	player = get_tree().get_first_node_in_group("player")
 	_setup_model()
+
+	_sfx_player     = AudioStreamPlayer.new()
+	_sfx_player.bus = "SFX"
+	add_child(_sfx_player)
+
 	_on_ready()  # Hook pour les sous-classes
 
 
@@ -214,7 +225,8 @@ func _update_animation() -> void:
 # SANTÉ
 # =============================================================
 
-func take_damage(amount: int) -> void:
+## silent_hurt : passer true pour supprimer le son hurt (ex. stomp/dash — le joueur a son propre son d'impact)
+func take_damage(amount: int, silent_hurt: bool = false) -> void:
 	if not is_inside_tree():
 		return
 	current_hp = max(0, current_hp - amount)
@@ -222,6 +234,12 @@ func take_damage(amount: int) -> void:
 	if current_hp <= 0:
 		_die()
 		return
+
+	if not silent_hurt and _sfx_player and _SFX_HURT:
+		_sfx_player.stream      = _SFX_HURT
+		_sfx_player.volume_db   = -8.0 + randf_range(-1.5, 1.5)
+		_sfx_player.pitch_scale = randf_range(0.92, 1.08)
+		_sfx_player.play()
 
 	# Flash coloré selon l'intensité du coup
 	var flash_col: Color
@@ -274,10 +292,72 @@ func _spawn_damage_number(amount: int) -> void:
 	fade.tween_property(label, "modulate:a", 0.0, 0.75)
 
 
+## Nombre de pièces droppées à la mort.
+## Surcharge dans les sous-classes (Boss, mini-boss…) pour des drops plus gros.
+@export var coin_drop_min: int = 1
+@export var coin_drop_max: int = 2
+
+
 func _die() -> void:
 	enemy_died.emit()
+	_drop_coins()
+
+	# Player flottant pour que le son survive au queue_free de l'ennemi
+	if _SFX_DIE != null:
+		var p := AudioStreamPlayer.new()
+		p.stream      = _SFX_DIE
+		p.bus         = "SFX"
+		p.volume_db   = -6.0 + randf_range(-1.5, 1.5)
+		p.pitch_scale = randf_range(0.90, 1.10)
+		get_tree().root.add_child(p)
+		p.play()
+		p.finished.connect(p.queue_free)
+
 	_play_death_sequence()
 
+
+# Dans Enemy.gd
+func _drop_coins() -> void:
+	if not is_inside_tree():
+		return
+		
+	# On récupère la valeur totale voulue (ex: 500)
+	var total_value := randi_range(coin_drop_min, coin_drop_max)
+
+	# Son de spawn des pièces
+	if _SFX_COIN_SPAWN != null:
+		var p := AudioStreamPlayer.new()
+		p.stream      = _SFX_COIN_SPAWN
+		p.bus         = "SFX"
+		p.volume_db   = 4.0
+		p.pitch_scale = randf_range(0.95, 1.05)
+		get_tree().root.add_child(p)
+		p.play()
+		p.finished.connect(p.queue_free)
+
+	var parent  := get_tree().current_scene
+	
+	# On limite le nombre de pièces physiques générées à 10 maximum pour les perfs
+	var physical_coins_to_spawn := mini(total_value, 10)
+	
+	# On répartit la valeur (ex: 500 / 10 = 50 de valeur par pièce visuelle)
+	var value_per_coin := int(float(total_value) / physical_coins_to_spawn)
+	var remainder := total_value % physical_coins_to_spawn
+	
+	for i in physical_coins_to_spawn:
+		if i > 0:
+			await get_tree().create_timer(0.05).timeout
+			
+		if not is_inside_tree() or not is_instance_valid(parent):
+			break
+			
+		# La première pièce prend le "reste" de la division au cas où ce n'est pas un chiffre rond
+		var current_coin_value = value_per_coin
+		if i == 0:
+			current_coin_value += remainder
+			
+		# On passe la valeur correcte à ta méthode spawn
+		Coin.spawn(parent, global_position, current_coin_value)
 
 func _play_death_sequence() -> void:
 	# Désactiver la physique et les collisions pour que le corps ne bloque plus
@@ -395,11 +475,10 @@ func stomp_squish() -> void:
 	var orig := _model.scale
 	# Aplatissement immédiat
 	_model.scale = Vector3(orig.x * 1.5, orig.y * 0.15, orig.z * 1.5)
-	# Flash blanc sur tous les MeshInstance3D
-	_flash_hit(Color.WHITE, 0.08)
-	# Retour élastique à l'échelle normale
+	# Pause pour profiter de l'écrasement, puis retour élastique
 	var tw := create_tween()
-	tw.tween_property(_model, "scale", orig, 0.35) \
+	tw.tween_interval(0.12)
+	tw.tween_property(_model, "scale", orig, 0.6) \
 		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 

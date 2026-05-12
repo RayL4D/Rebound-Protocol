@@ -29,8 +29,14 @@ var _music_slider:     HSlider
 var _sfx_slider:       HSlider
 var _fullscreen_check: CheckButton
 var _lang_buttons:     Dictionary = {}
-
 var _font: FontFile = null
+
+# --- Audio ------------------------------------------------------
+const _SFX_HOVER:       AudioStream = preload("res://audio/sfx/ui/btn_hover.wav")
+const _SFX_CLICK:       AudioStream = preload("res://audio/sfx/ui/btn_click.wav")
+const _SFX_PAUSE_OPEN:  AudioStream = preload("res://audio/sfx/ui/pause_open.wav")
+const _SFX_PAUSE_CLOSE: AudioStream = preload("res://audio/sfx/ui/pause_close.wav")
+var _sfx_player: AudioStreamPlayer = null
 
 
 # =============================================================
@@ -43,12 +49,21 @@ func _ready() -> void:
 	if ResourceLoader.exists(FONT_PATH):
 		_font = load(FONT_PATH)
 
+	_sfx_player              = AudioStreamPlayer.new()
+	_sfx_player.bus          = "SFX"
+	_sfx_player.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_sfx_player)
+
 	_build_ui()
 	hide()
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and not event.is_echo():
+		# Ne pas interferer avec l'écran GameOver si le joueur est mort
+		var player := get_tree().get_first_node_in_group("player") as Player
+		if player != null and player.is_dead:
+			return
 		if visible:
 			_resume()
 		else:
@@ -62,11 +77,21 @@ func _unhandled_input(event: InputEvent) -> void:
 func _open() -> void:
 	_show_main_panel()
 	get_tree().paused = true
+	if _sfx_player and _SFX_PAUSE_OPEN:
+		_sfx_player.stream      = _SFX_PAUSE_OPEN
+		_sfx_player.volume_db   = -6.0
+		_sfx_player.pitch_scale = 1.0
+		_sfx_player.play()
 	show()
 
 
 func _resume() -> void:
 	get_tree().paused = false
+	if _sfx_player and _SFX_PAUSE_CLOSE:
+		_sfx_player.stream      = _SFX_PAUSE_CLOSE
+		_sfx_player.volume_db   = -6.0
+		_sfx_player.pitch_scale = 1.0
+		_sfx_player.play()
 	hide()
 
 
@@ -418,5 +443,20 @@ func _make_button(label_text: String, callback: Callable) -> Button:
 	style.border_width_bottom = 2
 	style.border_color       = COLOR_CYAN
 	btn.add_theme_stylebox_override("normal", style)
+	btn.mouse_entered.connect(func():
+		if _sfx_player and _SFX_HOVER and is_inside_tree():
+			_sfx_player.stream      = _SFX_HOVER
+			_sfx_player.volume_db   = 2.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
+	# Son connecté EN PREMIER pour jouer avant que le callback quitte la scène
+	btn.pressed.connect(func():
+		if _sfx_player and _SFX_CLICK and is_inside_tree():
+			_sfx_player.stream      = _SFX_CLICK
+			_sfx_player.volume_db   = 5.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
 	btn.pressed.connect(callback)
 	return btn

@@ -14,6 +14,13 @@
 # =============================================================
 extends CanvasLayer
 
+const ShopScript      := preload("res://scripts/ui/shop.gd")
+const _SFX_HOVER:      AudioStream = preload("res://audio/sfx/ui/btn_hover.wav")
+const _SFX_CLICK:      AudioStream = preload("res://audio/sfx/ui/btn_click.wav")
+const _SFX_SHOP_OPEN:  AudioStream = preload("res://audio/sfx/ui/shop_open.wav")
+const _SFX_SHOP_CLOSE: AudioStream = preload("res://audio/sfx/ui/shop_close.wav")
+var _sfx_player: AudioStreamPlayer = null
+
 # --- Dimensions du panel HP -----------------------------------
 const PANEL_W    := 260.0
 const PANEL_H    := 74.0
@@ -79,6 +86,11 @@ var _vignette_tween: Tween         = null
 var _guide_icon:  TextureRect = null
 var guide_target: Node3D      = null
 
+# --- Coin counter + boutique ----------------------------------
+var _coin_label_hud:  Label        = null
+var _shop_open:       bool         = false
+var _shop_instance:   CanvasLayer  = null   # référence pour fermer via B
+
 # --- Barre boss -----------------------------------------------
 var _boss_bar_container: Control   = null
 var _boss_bar_bg:        ColorRect = null
@@ -95,6 +107,12 @@ var _boss_current_fill:  float     = 1.0
 # =============================================================
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS   # reçoit l'input même quand le jeu est en pause
+
+	_sfx_player     = AudioStreamPlayer.new()
+	_sfx_player.bus = "SFX"
+	add_child(_sfx_player)
+
 	_build_ui()
 	_player = get_tree().get_first_node_in_group("player") as Player
 	if _player == null:
@@ -112,6 +130,10 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _player == null:
 		return
+
+	# --- Pièces ---
+	if _coin_label_hud != null:
+		_coin_label_hud.text = "🪙  %d" % SaveData.get_coins()
 
 	# --- Barre HP boss (interpolée) ---
 	if _boss_bar_container != null and _boss_bar_container.visible:
@@ -158,6 +180,8 @@ func _process(delta: float) -> void:
 # =============================================================
 
 func _build_ui() -> void:
+	_build_coin_panel()
+
 	# --- Vignette dégât (plein écran, derrière tout) ---
 	var shader         := Shader.new()
 	shader.code         = DAMAGE_VIGNETTE_SHADER
@@ -296,6 +320,138 @@ func _build_ui() -> void:
 	for c in _corners:
 		c.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_container.add_child(c)
+
+
+# =============================================================
+# COIN COUNTER + BOUTIQUE
+# =============================================================
+
+func _build_coin_panel() -> void:
+	const COIN_W := 180.0
+	const COIN_H := 36.0
+	const COIN_X := PANEL_X
+	const COIN_Y := PANEL_Y + PANEL_H + 6.0
+
+	var container := Control.new()
+	container.name         = "CoinPanel"
+	container.position     = Vector2(COIN_X, COIN_Y)
+	container.size         = Vector2(COIN_W, COIN_H)
+	container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(container)
+
+	# Fond
+	var bg := ColorRect.new()
+	bg.color        = COLOR_BG
+	bg.size         = Vector2(COIN_W, COIN_H)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_child(bg)
+
+	# Ligne décorative gauche
+	var accent := ColorRect.new()
+	accent.color       = Color(COLOR_GOLD, 0.85)
+	accent.position    = Vector2(0.0, 0.0)
+	accent.size        = Vector2(3.0, COIN_H)
+	accent.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_child(accent)
+
+	# Label icône + montant
+	_coin_label_hud = Label.new()
+	_coin_label_hud.text     = "🪙  0"
+	_coin_label_hud.position = Vector2(10.0, 0.0)
+	_coin_label_hud.size     = Vector2(COIN_W - 10.0, COIN_H)
+	_coin_label_hud.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_coin_label_hud.add_theme_font_size_override("font_size", 14)
+	_coin_label_hud.add_theme_color_override("font_color", COLOR_GOLD)
+	_coin_label_hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_child(_coin_label_hud)
+
+	# Bouton BOUTIQUE (sous le counter)
+	var shop_btn             := Button.new()
+	shop_btn.text             = "BOUTIQUE  [B]"
+	shop_btn.position         = Vector2(COIN_X, COIN_Y + COIN_H + 4.0)
+	shop_btn.size             = Vector2(COIN_W, 28.0)
+	shop_btn.process_mode     = Node.PROCESS_MODE_ALWAYS
+	shop_btn.add_theme_font_size_override("font_size", 11)
+	shop_btn.add_theme_color_override("font_color", COLOR_CYAN)
+	var style_n               := StyleBoxFlat.new()
+	style_n.bg_color           = Color(0.0, 0.08, 0.14, 0.90)
+	style_n.border_color       = Color(COLOR_CYAN, 0.55)
+	style_n.set_border_width_all(1)
+	shop_btn.add_theme_stylebox_override("normal", style_n)
+	var style_h               := StyleBoxFlat.new()
+	style_h.bg_color           = Color(0.0, 0.20, 0.32, 0.95)
+	style_h.border_color       = COLOR_CYAN
+	style_h.set_border_width_all(1)
+	shop_btn.add_theme_stylebox_override("hover", style_h)
+	shop_btn.pressed.connect(_open_shop_from_hud)
+	shop_btn.mouse_entered.connect(func():
+		if _sfx_player and _SFX_HOVER:
+			_sfx_player.stream      = _SFX_HOVER
+			_sfx_player.volume_db   = 2.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
+	shop_btn.pressed.connect(func():
+		if _sfx_player and _SFX_CLICK:
+			_sfx_player.stream      = _SFX_CLICK
+			_sfx_player.volume_db   = 5.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
+	add_child(shop_btn)
+
+
+func _open_shop_from_hud() -> void:
+	if _shop_open or get_tree().paused:
+		return
+	# Bloquer l'accès si le joueur est mort
+	if _player != null and _player.is_dead:
+		return
+	_shop_open = true
+	get_tree().paused = true
+
+	# Son d'ouverture boutique
+	if _sfx_player and _SFX_SHOP_OPEN:
+		_sfx_player.stream      = _SFX_SHOP_OPEN
+		_sfx_player.volume_db   = 0.0
+		_sfx_player.pitch_scale = 1.0
+		_sfx_player.play()
+
+	_shop_instance = ShopScript.new()
+	get_tree().root.add_child(_shop_instance)
+	_shop_instance.tree_exiting.connect(func():
+		get_tree().paused = false
+		_shop_open    = false
+		_shop_instance = null
+	)
+
+
+func _close_shop_from_hud() -> void:
+	if not _shop_open or _shop_instance == null:
+		return
+	# Son de fermeture boutique
+	if _SFX_SHOP_CLOSE != null:
+		var p := AudioStreamPlayer.new()
+		p.stream      = _SFX_SHOP_CLOSE
+		p.bus         = "SFX"
+		p.volume_db   = 0.0
+		p.pitch_scale = 1.0
+		get_tree().root.add_child(p)
+		p.play()
+		p.finished.connect(p.queue_free)
+	_shop_instance.queue_free()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_B:
+			if _shop_open:
+				_close_shop_from_hud()
+			else:
+				_open_shop_from_hud()
+
+
+const COLOR_GOLD := Color(1.0, 0.82, 0.0, 1.0)
 
 
 func _make_corners(origin: Vector2, sz: Vector2, color: Color) -> Array[ColorRect]:

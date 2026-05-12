@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://chm01swb33150"]
 
-[ext_resource type="Script" uid="uid://cnc1o5a4j1cp0" path="res://scripts/ui/HUD.gd" id="1_kw0id"]
+[ext_resource type="Script" uid="uid://b2kldxtdv8abk" path="res://scripts/ui/HUD.gd" id="1_kw0id"]
 [ext_resource type="FontFile" uid="uid://ci0o36dhvuhqf" path="res://ui_theme/fonts/Xolonium-Regular.ttf" id="2_atyv1"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_atyv1"]

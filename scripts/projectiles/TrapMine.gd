@@ -111,6 +111,8 @@ func _process(delta: float) -> void:
 		queue_free()
 
 
+const _SFX_EXPLODE: AudioStream = preload("res://audio/sfx/enemies/mine_explode.wav")
+
 func _on_body_entered(body: Node3D) -> void:
 	if _triggered:
 		return
@@ -119,4 +121,16 @@ func _on_body_entered(body: Node3D) -> void:
 
 	_triggered = true
 	body.take_damage(_damage)
-	queue_free()
+
+	# Player flottant ajouté à /root (plus stable que current_scene lors d'un queue_free)
+	if _SFX_EXPLODE != null:
+		var p := AudioStreamPlayer.new()
+		p.stream      = _SFX_EXPLODE
+		p.bus         = "SFX"
+		p.volume_db   = -5.0
+		p.pitch_scale = randf_range(0.95, 1.05)
+		get_tree().root.add_child(p)
+		p.play()
+		p.finished.connect(p.queue_free)
+
+	call_deferred("queue_free")

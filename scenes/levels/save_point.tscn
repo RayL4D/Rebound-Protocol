@@ -1,0 +1,210 @@
+[gd_scene format=3 uid="uid://c1ba4apgy2p4p"]
+
+[ext_resource type="Script" uid="uid://bu3tigewwous2" path="res://scripts/levels/save_point.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://dbjv3of283l8i" path="res://assets/models/platformerkit/flag.glb" id="2_flag"]
+[ext_resource type="Shader" uid="uid://clq1clgeexomk" path="res://assets/shaders/save_point_ring.gdshader" id="3_shader"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_beam"]
+transparency = 1
+cull_mode = 2
+albedo_color = Color(0, 0.851, 1, 0)
+emission_enabled = true
+emission = Color(0, 0.851, 1, 1)
+emission_energy_multiplier = 1.5
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_beam"]
+top_radius = 0.022
+bottom_radius = 0.022
+height = 3.5
+radial_segments = 8
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ring"]
+render_priority = 0
+shader = ExtResource("3_shader")
+shader_parameter/ring_color = Color(0, 0.851, 1, 0.55)
+shader_parameter/inner_ratio = 0.72
+shader_parameter/pulse = 0.0
+shader_parameter/rotation_speed = 1.5
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_ring"]
+top_radius = 2.0
+bottom_radius = 2.0
+height = 0.02
+rings = 1
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_boundary"]
+transparency = 1
+cull_mode = 2
+albedo_color = Color(0, 0.851, 1, 0.04)
+emission_enabled = true
+emission = Color(0, 0.851, 1, 1)
+emission_energy_multiplier = 0.25
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_boundary"]
+top_radius = 2.0
+bottom_radius = 2.0
+height = 1.8
+rings = 1
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hover_ring"]
+transparency = 1
+cull_mode = 2
+albedo_color = Color(0, 0.851, 1, 0.2)
+emission_enabled = true
+emission = Color(0, 0.851, 1, 1)
+emission_energy_multiplier = 0.7
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_hover_ring"]
+top_radius = 1.55
+bottom_radius = 1.55
+height = 0.018
+radial_segments = 48
+rings = 1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_hover_ring2"]
+top_radius = 1.1
+bottom_radius = 1.1
+height = 0.018
+radial_segments = 48
+rings = 1
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pillars"]
+albedo_color = Color(0, 0.851, 1, 1)
+emission_enabled = true
+emission = Color(0, 0.851, 1, 1)
+emission_energy_multiplier = 2.5
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_pillar"]
+top_radius = 0.032
+bottom_radius = 0.032
+height = 1.6
+radial_segments = 8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_caps"]
+albedo_color = Color(0, 0.851, 1, 1)
+emission_enabled = true
+emission = Color(0, 0.851, 1, 1)
+emission_energy_multiplier = 4.0
+
+[sub_resource type="SphereMesh" id="SphereMesh_cap"]
+radius = 0.07
+height = 0.14
+radial_segments = 8
+rings = 4
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_orbiters"]
+albedo_color = Color(0, 0.851, 1, 1)
+emission_enabled = true
+emission = Color(0, 0.851, 1, 1)
+emission_energy_multiplier = 3.0
+
+[sub_resource type="SphereMesh" id="SphereMesh_orbiter"]
+radius = 0.055
+height = 0.11
+radial_segments = 6
+rings = 4
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_trigger"]
+radius = 2.0
+
+[node name="SavePoint" type="Node3D" unique_id=1095395053]
+script = ExtResource("1_script")
+
+[node name="Flag" parent="." unique_id=637727294 instance=ExtResource("2_flag")]
+transform = Transform3D(1.3, 0, 0, 0, 1.3, 0, 0, 0, 1.3, 0, 0, 0)
+
+[node name="Visuals" type="Node3D" parent="." unique_id=710164493]
+
+[node name="Beam" type="MeshInstance3D" parent="Visuals" unique_id=1872730225]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.55, 0)
+material_override = SubResource("StandardMaterial3D_beam")
+mesh = SubResource("CylinderMesh_beam")
+
+[node name="ZoneRing" type="MeshInstance3D" parent="Visuals" unique_id=1260213586]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 0)
+material_override = SubResource("ShaderMaterial_ring")
+mesh = SubResource("CylinderMesh_ring")
+
+[node name="ZoneBoundary" type="MeshInstance3D" parent="Visuals" unique_id=251302665]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+material_override = SubResource("StandardMaterial3D_boundary")
+mesh = SubResource("CylinderMesh_boundary")
+
+[node name="HoverRing" type="MeshInstance3D" parent="Visuals" unique_id=1532997016]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
+material_override = SubResource("StandardMaterial3D_hover_ring")
+mesh = SubResource("CylinderMesh_hover_ring")
+
+[node name="HoverRing2" type="MeshInstance3D" parent="Visuals" unique_id=1532997017]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9, 0)
+material_override = SubResource("StandardMaterial3D_hover_ring")
+mesh = SubResource("CylinderMesh_hover_ring2")
+
+[node name="ZonePillars" type="Node3D" parent="Visuals" unique_id=1950633386]
+
+[node name="Pillar_N" type="MeshInstance3D" parent="Visuals/ZonePillars" unique_id=538930454]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, -2)
+material_override = SubResource("StandardMaterial3D_pillars")
+mesh = SubResource("CylinderMesh_pillar")
+
+[node name="Cap_N" type="MeshInstance3D" parent="Visuals/ZonePillars/Pillar_N" unique_id=281448862]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+material_override = SubResource("StandardMaterial3D_caps")
+mesh = SubResource("SphereMesh_cap")
+
+[node name="Pillar_E" type="MeshInstance3D" parent="Visuals/ZonePillars" unique_id=70694333]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0.8, 0)
+material_override = SubResource("StandardMaterial3D_pillars")
+mesh = SubResource("CylinderMesh_pillar")
+
+[node name="Cap_E" type="MeshInstance3D" parent="Visuals/ZonePillars/Pillar_E" unique_id=827882211]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+material_override = SubResource("StandardMaterial3D_caps")
+mesh = SubResource("SphereMesh_cap")
+
+[node name="Pillar_S" type="MeshInstance3D" parent="Visuals/ZonePillars" unique_id=824232471]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 2)
+material_override = SubResource("StandardMaterial3D_pillars")
+mesh = SubResource("CylinderMesh_pillar")
+
+[node name="Cap_S" type="MeshInstance3D" parent="Visuals/ZonePillars/Pillar_S" unique_id=97458452]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+material_override = SubResource("StandardMaterial3D_caps")
+mesh = SubResource("SphereMesh_cap")
+
+[node name="Pillar_W" type="MeshInstance3D" parent="Visuals/ZonePillars" unique_id=325267020]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0.8, 0)
+material_override = SubResource("StandardMaterial3D_pillars")
+mesh = SubResource("CylinderMesh_pillar")
+
+[node name="Cap_W" type="MeshInstance3D" parent="Visuals/ZonePillars/Pillar_W" unique_id=67894789]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0)
+material_override = SubResource("StandardMaterial3D_caps")
+mesh = SubResource("SphereMesh_cap")
+
+[node name="Orbiters" type="Node3D" parent="Visuals" unique_id=1334677903]
+
+[node name="Orbiter1" type="MeshInstance3D" parent="Visuals/Orbiters" unique_id=734783170]
+material_override = SubResource("StandardMaterial3D_orbiters")
+mesh = SubResource("SphereMesh_orbiter")
+
+[node name="Orbiter2" type="MeshInstance3D" parent="Visuals/Orbiters" unique_id=1307891448]
+material_override = SubResource("StandardMaterial3D_orbiters")
+mesh = SubResource("SphereMesh_orbiter")
+
+[node name="Orbiter3" type="MeshInstance3D" parent="Visuals/Orbiters" unique_id=2084512993]
+material_override = SubResource("StandardMaterial3D_orbiters")
+mesh = SubResource("SphereMesh_orbiter")
+
+[node name="Light" type="OmniLight3D" parent="Visuals" unique_id=1672341785]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.2, 0)
+light_color = Color(0, 0.851, 1, 1)
+light_energy = 0.8
+omni_range = 4.0
+
+[node name="Trigger" type="Area3D" parent="." unique_id=1493822756]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Trigger" unique_id=1856432981]
+shape = SubResource("CylinderShape3D_trigger")
+
+[connection signal="body_entered" from="Trigger" to="." method="_on_player_entered"]

@@ -36,7 +36,20 @@ var _player_texture: Texture2D = preload("res://assets/textures/player/texture-g
 var current_hp: int
 var is_dead: bool          = false
 var _parry_requested: bool = false
-var _was_on_floor: bool    = true   # Pour détecter l'atterrissage
+var _was_on_floor: bool       = true   # Pour détecter l'atterrissage
+var _land_sfx_anticipated: bool = false  # Vrai si le son de land a déjà été joué en anticipation
+
+# --- Combo parry SFX -----------------------------------------------
+const _PARRY_COMBO_WINDOW: float = 0.6   # Secondes avant que le combo reset
+const _PARRY_COMBO_MAX:    int   = 5     # Nombre de hits max pour la montée de pitch
+var _parry_combo:       int   = 0
+var _parry_combo_timer: float = 0.0
+
+# --- Pas de course -------------------------------------------------
+# Intervalle entre deux pas — à ajuster selon la cadence de l'animation sprint
+const _STEP_INTERVAL: float = 0.38
+var _step_timer: float = 0.0   # Temps restant avant le prochain pas
+var _step_foot:  bool  = false # false = step_a, true = step_b (alternance)
 var _model_base_scale: Vector3     # Scale originale du RobotModel (lue dans _ready)
 var _model_base_y: float = 0.0     # Offset Y du modèle dans l'éditeur (pour éviter le flottement)
 var _invincible: bool    = false    # True pendant les iframes
@@ -104,6 +117,26 @@ const DASH_GHOST_INTERVAL: float = 0.04  # une afterimage toutes les 40 ms
 # Gravité récupérée depuis les paramètres projet Godot
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
+# --- Sons joueur (null = pas encore chargé, pas de crash) --------
+const _SFX_JUMP      : AudioStream = preload("res://audio/sfx/player/jump.wav")
+const _SFX_LAND      : AudioStream = preload("res://audio/sfx/player/land.wav")
+const _SFX_DASH      : AudioStream = preload("res://audio/sfx/player/dash.wav")
+const _SFX_PARRY     : AudioStream = preload("res://audio/sfx/player/parry.wav")
+const _SFX_HURT      : AudioStream = preload("res://audio/sfx/player/hurt.wav")
+const _SFX_DIE       : AudioStream = preload("res://audio/sfx/player/die.wav")
+const _SFX_STEP_A    : AudioStream = preload("res://audio/sfx/player/step_a.ogg")
+const _SFX_STEP_B    : AudioStream = preload("res://audio/sfx/player/step_b.ogg")
+const _SFX_STOMP_HIT : AudioStream = preload("res://audio/sfx/player/stomp_hit.wav")
+const _SFX_DASH_HIT  : AudioStream = preload("res://audio/sfx/player/dash_hit.wav")
+
+var _sfx:        AudioStreamPlayer = null   # Jump et effets généraux
+var _sfx_land:   AudioStreamPlayer = null   # Land — séparé pour ne pas couper le jump
+var _sfx_dash:   AudioStreamPlayer = null   # Dash — séparé pour ne pas couper le jump
+var _sfx_parry:  AudioStreamPlayer = null   # Parry — séparé pour ne pas couper les autres
+var _sfx_hurt:   AudioStreamPlayer = null   # Hurt — séparé pour ne pas couper les autres
+var _sfx_step:   AudioStreamPlayer = null   # Pas de course (step_a / step_b)
+var _sfx_impact: AudioStreamPlayer = null   # Stomp sur ennemi + dash hit
+
 # --- Signaux -----------------------------------------------------
 signal player_died
 signal hp_changed(new_hp: int)
@@ -116,6 +149,9 @@ signal parried         # Émis à chaque appui parade (clavier ET mobile)
 # =============================================================
 
 func _ready() -> void:
+	# ── Appliquer les upgrades permanentes avant tout le reste ──
+	_apply_save_upgrades()
+
 	current_hp = max_hp
 	floor_snap_length = 0.3
 	spring_arm.set_as_top_level(true)
@@ -137,15 +173,19 @@ func _ready() -> void:
 	_target_snap_yaw  = _cam_yaw   # Synchroniser la cible sur l'angle initial
 	_target_zoom      = spring_arm.spring_length
 
-	# Positionner le spring arm immédiatement — évite que la caméra soit
-	# dans le corps du joueur pendant le premier frame rendu (notamment après Retry).
-	# Sans ça, le spring arm reste à la position locale (0,0,0) du joueur
-	# jusqu'au premier _physics_process, et SpringArm3D place la caméra
-	# à spring_length le long de son axe Z local → à l'intérieur du modèle.
-	spring_arm.global_position    = global_position + Vector3(0, 0.9, 0)
-	spring_arm.rotation_degrees.x = _cam_pitch
-	spring_arm.rotation_degrees.y = _cam_yaw
-	spring_arm.spring_length      = _target_zoom
+	# Restaurer la position du checkpoint IMMÉDIATEMENT, avant le premier frame
+	# de physique. Sans ça, le joueur spawne à la position par défaut de la scène
+	# pendant au moins un frame avant d'être téléporté.
+	if SaveData.active_slot >= 0:
+		var saved_pos := SaveData.get_player_position()
+		if saved_pos != Vector3.ZERO:
+			global_position = saved_pos
+
+	# Positionner le spring arm sur la position finale du joueur (checkpoint ou défaut).
+	# Évite que la caméra soit dans le corps du joueur pendant le premier frame rendu.
+	spring_arm.global_position  = global_position + Vector3(0, 0.9, 0)
+	spring_arm.rotation_degrees = Vector3(_cam_pitch, _cam_yaw, 0.0)
+	spring_arm.spring_length    = _target_zoom
 
 	# Stoppe l'AnimationPlayer brut du GLB — c'est l'AnimationTree qui prend
 	# le relais pour piloter les états (idle/sprint/parry/die).
@@ -153,9 +193,89 @@ func _ready() -> void:
 	if anim_player:
 		anim_player.stop()
 
-	# Pas besoin de connecter parry_resolved pour les animations :
-	# on détecte l'appui SPACE directement dans _physics_process.
+	# AudioStreamPlayer pour les SFX joueur (bus SFX, polyphonie simple)
+	_sfx = AudioStreamPlayer.new()
+	_sfx.bus = "SFX"
+	add_child(_sfx)
 
+	# Player dédié au land — indépendant pour ne pas couper le son de jump
+	_sfx_land = AudioStreamPlayer.new()
+	_sfx_land.bus = "SFX"
+	add_child(_sfx_land)
+
+	# Player dédié au dash — indépendant pour ne pas couper le son de jump
+	_sfx_dash = AudioStreamPlayer.new()
+	_sfx_dash.bus = "SFX"
+	add_child(_sfx_dash)
+
+	# Player dédié au parry — AudioStreamPolyphonic pour le spam sans coupure
+	_sfx_parry = AudioStreamPlayer.new()
+	_sfx_parry.bus = "SFX"
+	var _parry_poly := AudioStreamPolyphonic.new()
+	_parry_poly.polyphony = 6
+	_sfx_parry.stream = _parry_poly
+	add_child(_sfx_parry)
+	_sfx_parry.play()   # Lance le moteur polyphonique (silencieux en lui-même)
+
+	# Player dédié au hurt
+	_sfx_hurt = AudioStreamPlayer.new()
+	_sfx_hurt.bus = "SFX"
+	add_child(_sfx_hurt)
+
+	# Player dédié aux pas de course
+	_sfx_step = AudioStreamPlayer.new()
+	_sfx_step.bus = "SFX"
+	add_child(_sfx_step)
+
+	# Player dédié aux impacts (stomp sur ennemi + dash hit)
+	_sfx_impact = AudioStreamPlayer.new()
+	_sfx_impact.bus = "SFX"
+	add_child(_sfx_impact)
+
+	# Restaurer les HP en deferred : le HUD (qui écoute hp_changed) n'est pas
+	# encore connecté pendant _ready(), on attend la fin du frame.
+	call_deferred("_restore_hp_from_save")
+
+
+# =============================================================
+# UPGRADES PERMANENTES (SaveData)
+# =============================================================
+
+## Lit les upgrades achetées dans SaveData et modifie les stats du joueur.
+## Appelée une seule fois dans _ready(), avant l'initialisation des HP.
+func _apply_save_upgrades() -> void:
+	if SaveData.active_slot < 0:
+		return   # Pas de slot actif (ex. lancement direct depuis l'éditeur)
+
+	# HP maximum : +1 HP par palier
+	var hp_bonus := int(SaveData.get_upgrade_value("hp_max"))
+	max_hp += hp_bonus
+
+	# Vitesse : +5 % par palier (ex. tier 3 → move_speed * 1.15)
+	var speed_mult := 1.0 + SaveData.get_upgrade_value("move_speed")
+	move_speed = move_speed * speed_mult
+
+
+## Restaure les HP depuis la dernière sauvegarde.
+## Appelée en deferred depuis _ready() — attend que le HUD soit connecté.
+## La position est déjà restaurée directement dans _ready().
+func _restore_hp_from_save() -> void:
+	if SaveData.active_slot < 0:
+		return
+
+	var saved_hp := SaveData.get_player_hp()
+	if saved_hp > 0:
+		current_hp = min(saved_hp, max_hp)
+
+	# Toujours émettre pour que le HUD affiche le bon HP dès le départ.
+	hp_changed.emit(current_hp)
+
+	# Si aucun checkpoint n'a encore été activé (HP sauvegardé = 0),
+	# écrire le HP de départ sur disque pour que le slot affiche une valeur correcte.
+	# Pièces et upgrades ne sont PAS sauvegardées ici — uniquement aux checkpoints.
+	if SaveData.get_player_hp() == 0:
+		SaveData.set_player_hp(current_hp)
+		SaveData.save_current()
 
 # Applique la texture sur tous les MeshInstance3D du modèle (tête, torse,
 # bras, jambes) en un seul appel.
@@ -182,6 +302,7 @@ func _physics_process(delta: float) -> void:
 		return
 
 	_apply_gravity(delta)
+	_check_land_anticipation()
 	_handle_jump()
 	_handle_camera_orbit(delta)
 	_handle_movement()
@@ -221,6 +342,7 @@ func _physics_process(delta: float) -> void:
 	if keyboard_parry or mobile_parry:
 		_parry_requested = true
 		parried.emit()
+		_trigger_parry_sfx_combo()
 		var pb := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
 		pb.travel("parry")
 
@@ -229,6 +351,13 @@ func _physics_process(delta: float) -> void:
 	# robot_model.position.y est géré par _update_lean + l'offset éditeur
 	_update_lean(delta)
 	_update_animation()
+	_tick_footstep(delta)
+
+	# Décrémenter le timer du combo parry
+	if _parry_combo_timer > 0.0:
+		_parry_combo_timer -= delta
+		if _parry_combo_timer <= 0.0:
+			_parry_combo = 0
 
 
 # =============================================================
@@ -236,6 +365,9 @@ func _physics_process(delta: float) -> void:
 # =============================================================
 
 func _input(event: InputEvent) -> void:
+	if is_dead:
+		return   # Bloquer tout input caméra/zoom pendant l'animation de mort
+
 	if event is InputEventMouseButton:
 		match event.button_index:
 			MOUSE_BUTTON_WHEEL_UP:
@@ -295,9 +427,11 @@ func _handle_jump() -> void:
 	_mobile_jump_requested = false   # consommé immédiatement, même si le saut échoue
 
 	if (Input.is_action_just_pressed("jump") or mobile_jump) and on_floor:
-		velocity.y        = jump_force
-		floor_snap_length = 0.0
+		velocity.y             = jump_force
+		floor_snap_length      = 0.0
+		_land_sfx_anticipated  = false   # Réinitialiser pour le prochain atterrissage
 		jumped.emit()
+		_play_sfx(_SFX_JUMP, -9.0, randf_range(0.96, 1.04))
 		_squash_stretch_jump()
 	elif on_floor and not _was_on_floor:
 		floor_snap_length = 0.3
@@ -305,6 +439,9 @@ func _handle_jump() -> void:
 		# pas sur la tête d'un ennemi.
 		if not _standing_on_enemy():
 			_stomp_hit_this_jump = false
+			if not _land_sfx_anticipated:   # Ne pas rejouer si déjà déclenché en anticipation
+				_play_land_sfx()
+			_land_sfx_anticipated = false   # Réinitialiser pour le prochain saut
 			_squash_stretch_land()
 	elif on_floor:
 		floor_snap_length = 0.3
@@ -491,11 +628,18 @@ func _check_stomp() -> void:
 	# Rebond — toujours actif, permet de rebondir sur le même ennemi
 	velocity.y = STOMP_BOUNCE
 
+	# Son + animation joués à chaque rebond sur un ennemi
+	enemy.stomp_squish()
+	if _SFX_STOMP_HIT and _sfx_impact:
+		_sfx_impact.stream      = _SFX_STOMP_HIT
+		_sfx_impact.volume_db   = 6.0
+		_sfx_impact.pitch_scale = randf_range(0.95, 1.05)
+		_sfx_impact.play()
+
 	# Dégâts uniquement au premier contact depuis le dernier atterrissage sol
 	if not _stomp_hit_this_jump:
 		_stomp_hit_this_jump = true
-		enemy.stomp_squish()
-		enemy.take_damage(STOMP_DAMAGE)
+		enemy.take_damage(STOMP_DAMAGE, true)   # silent_hurt — le stomp a son propre son
 
 
 # =============================================================
@@ -556,6 +700,11 @@ func _start_dash() -> void:
 	_dash_ghost_timer    = 0.0
 	_dash_hit_enemies.clear()
 
+	if _SFX_DASH and _sfx_dash:
+		_sfx_dash.stream      = _SFX_DASH
+		_sfx_dash.volume_db   = -6.0
+		_sfx_dash.pitch_scale = randf_range(0.97, 1.03)
+		_sfx_dash.play()
 	_dash_fx_start()
 
 
@@ -628,9 +777,14 @@ func _check_dash_hits() -> void:
 		if body is Enemy and not _dash_hit_enemies.has(body):
 			var enemy := body as Enemy
 			_dash_hit_enemies.append(enemy)
-			enemy.take_damage(DASH_DAMAGE)
+			enemy.take_damage(DASH_DAMAGE, true)   # silent_hurt — le dash a son propre son d'impact
 			# Knockback dans la direction du dash
 			enemy.apply_knockback(_dash_dir, DASH_KNOCKBACK)
+			if _SFX_DASH_HIT and _sfx_impact:
+				_sfx_impact.stream      = _SFX_DASH_HIT
+				_sfx_impact.volume_db   = 0.0
+				_sfx_impact.pitch_scale = randf_range(0.95, 1.05)
+				_sfx_impact.play()
 
 
 # =============================================================
@@ -641,12 +795,22 @@ func take_damage(amount: int) -> void:
 	if is_dead or _invincible:
 		return
 
-	current_hp = max(0, current_hp - amount)
+	# Réduction de dégâts permanente (upgrade "damage_reduction")
+	var reduction := SaveData.get_upgrade_value("damage_reduction") if SaveData.active_slot >= 0 else 0.0
+	var final_dmg := int(round(float(amount) * (1.0 - reduction)))
+	final_dmg      = max(1, final_dmg)   # minimum 1 dégât toujours
+
+	current_hp = max(0, current_hp - final_dmg)
 	hp_changed.emit(current_hp)
 
 	if current_hp == 0:
 		_die()
 	else:
+		if _SFX_HURT and _sfx_hurt:
+			_sfx_hurt.stream      = _SFX_HURT
+			_sfx_hurt.volume_db   = -8.0
+			_sfx_hurt.pitch_scale = randf_range(0.94, 1.06)
+			_sfx_hurt.play()
 		_start_iframes()
 
 
@@ -697,7 +861,113 @@ func _die() -> void:
 
 	# Déclenché ici directement car _physics_process retourne immédiatement
 	# quand is_dead est true — _update_animation() ne serait jamais appelée.
+	_play_sfx(_SFX_DIE, -4.0)
 	var playback := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
 	playback.travel("die")
 	player_died.emit()
-                                                                                                                                                                                                                                          
+
+
+# =============================================================
+# SFX HELPER
+# =============================================================
+
+## Gère le timer des pas de course : joue step_a / step_b en alternance quand
+## le joueur est au sol, en mouvement, et hors dash.
+func _tick_footstep(delta: float) -> void:
+	var horiz_speed := Vector2(velocity.x, velocity.z).length()
+	if not is_on_floor() or horiz_speed < 0.5 or _is_dashing:
+		# Réinitialiser le timer pour éviter un double-claquement au retour au sol
+		_step_timer = _STEP_INTERVAL * 0.5
+		return
+
+	# Intervalle dynamique : plus on va vite, plus les pas sont rapides
+	var dynamic_interval: float = clamp(remap(horiz_speed, 0.0, move_speed, 0.45, 0.26), 0.26, 0.45)
+
+	_step_timer -= delta
+	if _step_timer > 0.0:
+		return
+
+	_step_timer = dynamic_interval
+
+	# Alterner pied gauche / pied droit avec légère variation de pitch
+	var stream: AudioStream = _SFX_STEP_B if _step_foot else _SFX_STEP_A
+	_step_foot = not _step_foot
+
+	if _sfx_step == null:
+		return
+	_sfx_step.stream      = stream
+	_sfx_step.volume_db   = -16.0 + randf_range(-1.0, 1.0)
+	_sfx_step.pitch_scale = 1.0   + randf_range(-0.04, 0.04)
+	_sfx_step.play()
+
+
+## Combo parry : pitch et volume montent à chaque parry consécutif dans la fenêtre de temps.
+func _trigger_parry_sfx_combo() -> void:
+	_parry_combo       = min(_parry_combo + 1, _PARRY_COMBO_MAX)
+	_parry_combo_timer = _PARRY_COMBO_WINDOW
+	# Chaque hit dans le combo monte de ~5 % de pitch et +0.8 dB
+	var pitch: float = 1.0 + (_parry_combo - 1) * 0.05 + randf_range(-0.02, 0.02)
+	var vol:   float = -5.0 + (_parry_combo - 1) * 0.8
+	_play_parry_sfx(_SFX_PARRY, vol, pitch)
+
+
+## Joue un son sur le moteur polyphonique du parry — plusieurs instances simultanées possibles.
+func _play_parry_sfx(stream: AudioStream, vol_db: float = 0.0, pitch: float = 1.0) -> void:
+	if stream == null or _sfx_parry == null:
+		return
+	var pb := _sfx_parry.get_stream_playback() as AudioStreamPlaybackPolyphonic
+	if pb:
+		pb.play_stream(stream, 0.0, vol_db, pitch)
+
+
+func _play_sfx(stream: AudioStream, vol_db: float = 0.0, pitch: float = 1.0) -> void:
+	if stream == null or _sfx == null:
+		return
+	_sfx.stream      = stream
+	_sfx.volume_db   = vol_db
+	_sfx.pitch_scale = pitch
+	_sfx.play()
+
+
+## Son de land : volume adapté à la vitesse de chute, silencieux pour les micro-atterrissages.
+func _play_land_sfx() -> void:
+	if _SFX_LAND == null or _sfx_land == null:
+		return
+	var fall_speed: float = absf(_pre_slide_velocity_y)
+	# En dessous de ce seuil (ex. descente d'une légère marche) : pas de son
+	if fall_speed < 1.2:
+		return
+	# Volume qui monte avec la vitesse : chute douce → -14 dB, chute dure → -3 dB
+	var vol:   float = clamp(remap(fall_speed, 1.2, 8.0, -14.0, -3.0), -14.0, -3.0)
+	# Pitch légèrement plus grave pour les atterrissages lourds
+	var pitch: float = clamp(remap(fall_speed, 1.2, 8.0, 1.05, 0.92), 0.92, 1.05)
+	_sfx_land.stream      = _SFX_LAND
+	_sfx_land.volume_db   = vol
+	_sfx_land.pitch_scale = pitch
+	_sfx_land.play()
+
+
+## Joue le son de land légèrement avant l'impact réel pour compenser la latence audio.
+## Utilise un raycast vers le bas : si le sol est à moins de ANTICIPATION_DIST mètres
+## pendant une chute, le son est déclenché immédiatement.
+func _check_land_anticipation() -> void:
+	# Ne pas anticiper si déjà joué, déjà au sol, ou vitesse insuffisante
+	if _land_sfx_anticipated or is_on_floor() or velocity.y > -1.2:
+		return
+
+	# Distance d'anticipation proportionnelle à la vitesse de chute
+	# (plus on tombe vite, plus on anticipe tôt pour garder le même décalage temporel)
+	var anticipation_dist: float = clamp(absf(velocity.y) * 0.30, 0.05, 0.18)
+
+	var space := get_world_3d().direct_space_state
+	var query := PhysicsRayQueryParameters3D.create(
+		global_position,
+		global_position + Vector3.DOWN * anticipation_dist,
+		collision_mask
+	)
+	query.exclude = [get_rid()]
+	var result: Dictionary = space.intersect_ray(query)
+
+	if not result.is_empty():
+		_land_sfx_anticipated = true
+		_play_land_sfx()
