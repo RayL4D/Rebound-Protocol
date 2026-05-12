@@ -117,6 +117,15 @@ const DASH_GHOST_INTERVAL: float = 0.04  # une afterimage toutes les 40 ms
 # Gravité récupérée depuis les paramètres projet Godot
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
+# Valeurs de base avant application des upgrades (pour recalcul idempotent)
+var _base_max_hp:     int   = 0
+var _base_move_speed: float = 0.0
+
+# Régénération HP passive (upgrade "hp_regen")
+const _REGEN_INTERVALS: Array = [0.0, 30.0, 20.0, 12.0]  # index = palier
+var _regen_timer:    float = 0.0
+var _regen_interval: float = 0.0
+
 # --- Sons joueur (null = pas encore chargé, pas de crash) --------
 const _SFX_JUMP      : AudioStream = preload("res://audio/sfx/player/jump.wav")
 const _SFX_LAND      : AudioStream = preload("res://audio/sfx/player/land.wav")
@@ -149,7 +158,10 @@ signal parried         # Émis à chaque appui parade (clavier ET mobile)
 # =============================================================
 
 func _ready() -> void:
-	# ── Appliquer les upgrades permanentes avant tout le reste ──
+	# ── Stocker les valeurs de base AVANT d'appliquer les upgrades ──
+	_base_max_hp     = max_hp
+	_base_move_speed = move_speed
+
 	_apply_save_upgrades()
 
 	current_hp = max_hp
@@ -247,13 +259,50 @@ func _apply_save_upgrades() -> void:
 	if SaveData.active_slot < 0:
 		return   # Pas de slot actif (ex. lancement direct depuis l'éditeur)
 
-	# HP maximum : +1 HP par palier
-	var hp_bonus := int(SaveData.get_upgrade_value("hp_max"))
-	max_hp += hp_bonus
+	# HP maximum : +1 HP par palier (à partir de la base)
+	max_hp = _base_max_hp + int(SaveData.get_upgrade_value("hp_max"))
 
-	# Vitesse : +5 % par palier (ex. tier 3 → move_speed * 1.15)
-	var speed_mult := 1.0 + SaveData.get_upgrade_value("move_speed")
-	move_speed = move_speed * speed_mult
+	# Vitesse : +5 % par palier — toujours depuis _base_move_speed pour éviter
+	# les multiplications en cascade si la fonction est rappelée
+	move_speed = _base_move_speed * (1.0 + SaveData.get_upgrade_value("move_speed"))
+
+	# Régénération HP passive — initialiser le timer au démarrage
+	_update_regen_timer()
+
+
+## Rappelée depuis la boutique après chaque achat pour appliquer l'effet immédiatement.
+func refresh_upgrades() -> void:
+	if SaveData.active_slot < 0:
+		return
+
+	var old_max_hp := max_hp
+
+	# Recalcul idempotent depuis les valeurs de base
+	max_hp     = _base_max_hp + int(SaveData.get_upgrade_value("hp_max"))
+	move_speed = _base_move_speed * (1.0 + SaveData.get_upgrade_value("move_speed"))
+
+	# Si max_hp a augmenté, les HP supplémentaires sont donnés au joueur directement
+	if max_hp > old_max_hp:
+		current_hp = min(current_hp + (max_hp - old_max_hp), max_hp)
+		hp_changed.emit(current_hp)
+
+	# Propager au bouclier (shield_size, shield_duration, parry_window)
+	var s := shield as Shield
+	if s:
+		s.refresh_upgrades()
+
+	# Mettre à jour le timer de régénération HP
+	_update_regen_timer()
+
+
+func _update_regen_timer() -> void:
+	var tier := SaveData.get_upgrade_tier("hp_regen")
+	if tier <= 0 or tier >= _REGEN_INTERVALS.size():
+		_regen_interval = 0.0
+	else:
+		_regen_interval = _REGEN_INTERVALS[tier]
+		if _regen_timer <= 0.0 or _regen_timer > _regen_interval:
+			_regen_timer = _regen_interval   # Réinitialiser le timer
 
 
 ## Restaure les HP depuis la dernière sauvegarde.
@@ -300,6 +349,14 @@ func _physics_process(delta: float) -> void:
 		spring_arm.rotation_degrees = Vector3(_cam_pitch, _cam_yaw, 0.0)
 		spring_arm.spring_length    = _target_zoom
 		return
+
+	# Régénération HP passive
+	if _regen_interval > 0.0:
+		_regen_timer -= delta
+		if _regen_timer <= 0.0:
+			_regen_timer = _regen_interval
+			if current_hp < max_hp:
+				heal(1)
 
 	_apply_gravity(delta)
 	_check_land_anticipation()
