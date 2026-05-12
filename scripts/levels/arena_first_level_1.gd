@@ -67,15 +67,15 @@ func _setup_ui() -> void:
 func _setup_waves() -> void:
 	if wave_manager_zone1:
 		var waves_z1: Array[WaveManager.WaveData] = [
-			WaveManager.WaveData.new(4, 1, "WAVE_NAME_OUTPOST", 0)
+			WaveManager.WaveData.new(5, 1, "WAVE_NAME_OUTPOST", 0)
 		]
 		wave_manager_zone1.setup_waves(waves_z1)
 	
 	if wave_manager_zone2:
 		var waves_z2: Array[WaveManager.WaveData] = [
-			WaveManager.WaveData.new(1, 2, "WAVE_NAME_SQUAD", 0),
-			WaveManager.WaveData.new(1, 3, "WAVE_NAME_REINFORCEMENTS", 1),
-			WaveManager.WaveData.new(1, 3, "WAVE_NAME_MAX_ALERT", 2)
+			WaveManager.WaveData.new(10, 2, "WAVE_NAME_SQUAD", 0),
+			WaveManager.WaveData.new(15, 3, "WAVE_NAME_REINFORCEMENTS", 1),
+			WaveManager.WaveData.new(20, 3, "WAVE_NAME_MAX_ALERT", 2)
 		]
 		wave_manager_zone2.setup_waves(waves_z2)
 
