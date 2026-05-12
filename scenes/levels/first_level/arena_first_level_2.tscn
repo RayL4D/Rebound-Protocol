@@ -15,6 +15,7 @@
 [ext_resource type="PackedScene" uid="uid://pbrlw8kcrlq4" path="res://scenes/ui/game_over.tscn" id="13_gxwpe"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="14_y7xut"]
 [ext_resource type="PackedScene" uid="uid://bxss4q4q2p5dq" path="res://scenes/ui/mobile_controls.tscn" id="15_20h73"]
+[ext_resource type="PackedScene" uid="uid://dgaaan3vs5ujh" path="res://assets/models/environments/tutorial_and_first_level/machine_generator.glb" id="16_gxwpe"]
 
 [sub_resource type="Environment" id="Environment_pxi4t"]
 background_mode = 1
@@ -236,16 +237,19 @@ transform = Transform3D(-0.015533164, 0, -4.9999757, 0, 5, 0, 4.9999757, 0, -0.0
 
 [node name="MeshInstance3D2" type="MeshInstance3D" parent="Portal_1" unique_id=1427041037]
 transform = Transform3D(-0.08143174, -0.9965047, -0.018685132, -0.996567, 0.08112732, 0.01650718, -0.014933541, 0.019965224, -0.9996904, 15.822871, 3.3881333, 2.8826833)
+visible = false
 material_override = SubResource("ShaderMaterial_3muyu")
 mesh = SubResource("PlaneMesh_r5we7")
 
 [node name="MeshInstance3D3" type="MeshInstance3D" parent="Portal_1" unique_id=2012927011]
 transform = Transform3D(-0.0007384623, -0.99980485, -0.019862749, -0.9998881, 0.0004414017, 0.0149430735, -0.014931335, 0.019871593, -0.9996938, 15.992458, 3.1604984, 2.8209107)
+visible = false
 material_override = SubResource("ShaderMaterial_3muyu")
 mesh = SubResource("PlaneMesh_peei8")
 
 [node name="Instant_exit_entry" parent="Portal_1" unique_id=2011490171 instance=ExtResource("3_fmwuw")]
 transform = Transform3D(-0.019197403, 0.015704423, -0.99969244, 0, 0.9998766, 0.01570732, 0.9998158, 0.00030153967, -0.019195033, 15.970448, 3.1484346, 2.7255244)
+visible = false
 next_scene_path = "uid://cndnvc3c1yt7p"
 
 [node name="Portal_2" type="Node3D" parent="." unique_id=1145282739]
@@ -279,14 +283,20 @@ transform = Transform3D(-0.08656177, 0, 3.9990633, 0, 4, 0, -3.9990633, 0, -0.08
 [node name="desk_computerCorner2" parent="WorldObjects_container" unique_id=1412401363 instance=ExtResource("10_r5we7")]
 transform = Transform3D(-3.9999943, 0, -0.006702304, 0, 4, 0, 0.006702304, 0, -3.9999943, 4.774542, 0.44367528, -11.57902)
 
-[node name="PetDog" parent="." unique_id=437757490 instance=ExtResource("11_peei8")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1, -11)
+[node name="hangar_smallA3" parent="WorldObjects_container" unique_id=747068899 instance=ExtResource("8_7nfo1")]
+transform = Transform3D(3.7127235, 0, -1.4885174, 0, 4, 0, 1.4885174, 0, 3.7127235, -18.23953, 0.41410184, 7.323841)
 
-[node name="PetDog2" parent="." unique_id=795046403 instance=ExtResource("11_peei8")]
-transform = Transform3D(-0.327861, 0, 0.944726, 0, 1, 0, -0.944726, 0, -0.327861, -10.858537, 1, 1.9909191)
+[node name="machine_generator2" parent="WorldObjects_container" unique_id=707865282 instance=ExtResource("16_gxwpe")]
+transform = Transform3D(-1.5817976, 0, -3.6739511, 0, 4, 0, 3.6739511, 0, -1.5817976, 0.80420923, 0.34700775, 10.968506)
 
-[node name="PetDog3" parent="." unique_id=2043785393 instance=ExtResource("11_peei8")]
-transform = Transform3D(-0.327861, 0, 0.944726, 0, 1, 0, -0.944726, 0, -0.327861, -12.304983, 1, 12.291742)
+[node name="PetDog_1" parent="." unique_id=437757490 instance=ExtResource("11_peei8")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.618425, 0.99999905, -8.181868)
+
+[node name="PetDog_2" parent="." unique_id=795046403 instance=ExtResource("11_peei8")]
+transform = Transform3D(-0.327861, 0, 0.944726, 0, 1, 0, -0.944726, 0, -0.327861, -6.2586536, 1, 4.329872)
+
+[node name="PetDog_3" parent="." unique_id=2043785393 instance=ExtResource("11_peei8")]
+transform = Transform3D(-0.327861, 0, 0.944726, 0, 1, 0, -0.944726, 0, -0.327861, 4.9441986, 1, 8.712217)
 
 [node name="HUD" parent="." unique_id=1994348935 instance=ExtResource("12_m2tf6")]
 
