@@ -32,16 +32,22 @@ func _ready() -> void:
 	for btn in [btn_new_game, btn_continue, btn_options, btn_quit,
 				btn_toggle_language, btn_flag_fr, btn_flag_en, btn_flag_es]:
 		btn.mouse_entered.connect(func():
-			_sfx_player.stream      = _SFX_HOVER
-			_sfx_player.volume_db   = 2.0
-			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
-			_sfx_player.play()
+			if _sfx_player and is_inside_tree():
+				_sfx_player.stream      = _SFX_HOVER
+				_sfx_player.volume_db   = 2.0
+				_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+				_sfx_player.play()
 		)
+		# Floating player — survit au change_scene_to_file qui libère le nœud
 		btn.pressed.connect(func():
-			_sfx_player.stream      = _SFX_CLICK
-			_sfx_player.volume_db   = 5.0
-			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
-			_sfx_player.play()
+			var p := AudioStreamPlayer.new()
+			p.stream      = _SFX_CLICK
+			p.bus         = "SFX"
+			p.volume_db   = 5.0
+			p.pitch_scale = randf_range(0.97, 1.03)
+			get_tree().root.add_child(p)
+			p.play()
+			p.finished.connect(p.queue_free)
 		)
 
 	# Appliquer les paramètres sauvegardés dès le menu

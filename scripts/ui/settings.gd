@@ -256,21 +256,22 @@ func _make_button(label_text: String, callback: Callable) -> Button:
 	style.border_width_bottom = 2
 	style.border_color        = COLOR_CYAN
 	btn.add_theme_stylebox_override("normal", style)
-	btn.pressed.connect(callback)
 	btn.mouse_entered.connect(func():
-		if _sfx_player and _SFX_HOVER:
+		if _sfx_player and _SFX_HOVER and is_inside_tree():
 			_sfx_player.stream      = _SFX_HOVER
 			_sfx_player.volume_db   = 2.0
 			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
 			_sfx_player.play()
 	)
+	# Son connecté EN PREMIER — joue avant que le callback change de scène
 	btn.pressed.connect(func():
-		if _sfx_player and _SFX_CLICK:
+		if _sfx_player and _SFX_CLICK and is_inside_tree():
 			_sfx_player.stream      = _SFX_CLICK
 			_sfx_player.volume_db   = 5.0
 			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
 			_sfx_player.play()
 	)
+	btn.pressed.connect(callback)
 	return btn
 
 

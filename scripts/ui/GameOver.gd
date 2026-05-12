@@ -92,6 +92,7 @@ func show_game_over() -> void:
 	_title.text     = tr("UI_GAME_OVER")
 	_subtitle.text  = tr("UI_SYS_NEUTRALIZED")
 	_btn_retry.text = tr("UI_RETRY")
+	AmbientManager.stop()
 	_play_death_sequence()
 
 

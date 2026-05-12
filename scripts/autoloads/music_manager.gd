@@ -34,7 +34,7 @@ const _TRACKS: Dictionary = {
 	},
 	"boss": {
 		"stream":      preload("res://audio/music/boss.ogg"),
-		"volume_db":   6.0,
+		"volume_db":   18.0,
 		"pitch_scale": 1.0,
 	},
 	"game_over": {

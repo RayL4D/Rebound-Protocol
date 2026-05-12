@@ -192,7 +192,7 @@ func _switch_tab(cat: String) -> void:
 # LIGNE D'UPGRADE
 # =============================================================
 
-func _build_upgrade_row(id: String, entry: Dictionary) -> Control:
+func _build_upgrade_row(id: String, _entry: Dictionary) -> Control:
 	var labels: Array = UPGRADE_LABELS.get(id, [id, ""])
 	var name_str: String = labels[0]
 	var desc_str: String = labels[1]

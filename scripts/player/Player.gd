@@ -628,7 +628,8 @@ func _check_stomp() -> void:
 	# Rebond — toujours actif, permet de rebondir sur le même ennemi
 	velocity.y = STOMP_BOUNCE
 
-	# Son joué à chaque rebond sur un ennemi
+	# Son + animation joués à chaque rebond sur un ennemi
+	enemy.stomp_squish()
 	if _SFX_STOMP_HIT and _sfx_impact:
 		_sfx_impact.stream      = _SFX_STOMP_HIT
 		_sfx_impact.volume_db   = 6.0
@@ -638,7 +639,6 @@ func _check_stomp() -> void:
 	# Dégâts uniquement au premier contact depuis le dernier atterrissage sol
 	if not _stomp_hit_this_jump:
 		_stomp_hit_this_jump = true
-		enemy.stomp_squish()
 		enemy.take_damage(STOMP_DAMAGE, true)   # silent_hurt — le stomp a son propre son
 
 

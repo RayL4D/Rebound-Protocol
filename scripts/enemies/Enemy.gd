@@ -341,7 +341,7 @@ func _drop_coins() -> void:
 	var physical_coins_to_spawn := mini(total_value, 10)
 	
 	# On répartit la valeur (ex: 500 / 10 = 50 de valeur par pièce visuelle)
-	var value_per_coin := total_value / physical_coins_to_spawn
+	var value_per_coin := int(float(total_value) / physical_coins_to_spawn)
 	var remainder := total_value % physical_coins_to_spawn
 	
 	for i in physical_coins_to_spawn:
@@ -475,11 +475,10 @@ func stomp_squish() -> void:
 	var orig := _model.scale
 	# Aplatissement immédiat
 	_model.scale = Vector3(orig.x * 1.5, orig.y * 0.15, orig.z * 1.5)
-	# Flash blanc sur tous les MeshInstance3D
-	_flash_hit(Color.WHITE, 0.08)
-	# Retour élastique à l'échelle normale
+	# Pause pour profiter de l'écrasement, puis retour élastique
 	var tw := create_tween()
-	tw.tween_property(_model, "scale", orig, 0.35) \
+	tw.tween_interval(0.12)
+	tw.tween_property(_model, "scale", orig, 0.6) \
 		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 
