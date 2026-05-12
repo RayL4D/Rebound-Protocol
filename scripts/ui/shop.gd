@@ -39,8 +39,7 @@ const UPGRADE_LABELS: Dictionary = {
 	"xp_bonus":         ["Bonus XP",              "+10 % XP par ennemi tué"],
 }
 
-const _SFX_BUY_1:   AudioStream = preload("res://audio/sfx/ui/shop_buy_1.wav")
-const _SFX_BUY_2:   AudioStream = preload("res://audio/sfx/ui/shop_buy_2.wav")
+const _SFX_BUY:   AudioStream = preload("res://audio/sfx/ui/shop_buy.wav")
 const _SFX_BUY_MAX: AudioStream = preload("res://audio/sfx/ui/shop_buy_max.wav")
 const _SFX_HOVER:   AudioStream = preload("res://audio/sfx/ui/btn_hover.wav")
 const _SFX_CLICK:   AudioStream = preload("res://audio/sfx/ui/btn_click.wav")
@@ -177,7 +176,7 @@ func _switch_tab(cat: String) -> void:
 
 	# Vider la liste et la reconstruire (free() immédiat, pas queue_free())
 	for child in _list_container.get_children():
-		child.free()
+		child.queue_free()
 
 	for id in SaveData.CATALOG:
 		var entry: Dictionary = SaveData.CATALOG[id]
@@ -298,21 +297,29 @@ func _on_buy(id: String) -> void:
 	if SaveData.buy_upgrade(id):
 		_refresh_coins()
 
-		# Choisir le son selon le palier atteint
+		# Appliquer immédiatement l'upgrade sur le joueur en cours de jeu
+		var player := get_tree().get_first_node_in_group("player") as Player
+		if player:
+			player.refresh_upgrades()
+
+		# Son d'achat : pitch qui monte progressiveme(nt avec le palier
+		# (palier 1 = grave, palier max-1 = aigu) → shop_buy_max à l'ultime palier
 		var new_tier: int = SaveData.get_upgrade_tier(id)
-		var max_tier: int = SaveData.UPGRADES[id]["max_tier"]
-		var sfx: AudioStream
+		var max_tier: int = SaveData.CATALOG[id]["max_tier"]
 		if new_tier >= max_tier:
-			sfx = _SFX_BUY_MAX
-		elif new_tier >= 2:
-			sfx = _SFX_BUY_2
+			if _sfx_player and _SFX_BUY_MAX:
+				_sfx_player.stream      = _SFX_BUY_MAX
+				_sfx_player.volume_db   = -6.0
+				_sfx_player.pitch_scale = 1.0
+				_sfx_player.play()
 		else:
-			sfx = _SFX_BUY_1
-		if _sfx_player and sfx:
-			_sfx_player.stream      = sfx
-			_sfx_player.volume_db   = -6.0
-			_sfx_player.pitch_scale = 1.0
-			_sfx_player.play()
+			# Pitch remappé entre 0.85 (1er palier) et 1.25 (avant-dernier)
+			var pitch := remap(float(new_tier), 1.0, float(max(max_tier - 1, 1)), 0.85, 1.25)
+			if _sfx_player and _SFX_BUY:
+				_sfx_player.stream      = _SFX_BUY
+				_sfx_player.volume_db   = -6.0
+				_sfx_player.pitch_scale = clamp(pitch, 0.85, 1.25)
+				_sfx_player.play()
 
 
 func _on_close() -> void:
@@ -367,7 +374,6 @@ func _make_button(text: String, callback: Callable) -> Button:
 	hover.border_color = COLOR_CYAN
 	hover.set_border_width_all(1)
 	btn.add_theme_stylebox_override("hover", hover)
-	btn.pressed.connect(callback)
 	btn.mouse_entered.connect(func():
 		if _sfx_player and _SFX_HOVER:
 			_sfx_player.stream      = _SFX_HOVER
@@ -375,6 +381,8 @@ func _make_button(text: String, callback: Callable) -> Button:
 			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
 			_sfx_player.play()
 	)
+	# Son de click connecté AVANT le callback : le callback (qui peut jouer
+	# un son d'achat distinct) se connecte en dernier et s'entend en dernier.
 	btn.pressed.connect(func():
 		if _sfx_player and _SFX_CLICK:
 			_sfx_player.stream      = _SFX_CLICK
@@ -382,6 +390,7 @@ func _make_button(text: String, callback: Callable) -> Button:
 			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
 			_sfx_player.play()
 	)
+	btn.pressed.connect(callback)
 	return btn
 
 
