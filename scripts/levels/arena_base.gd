@@ -50,8 +50,11 @@ func _ready() -> void:
 	tutorial_manager.tutorial_completed.connect(_on_tutorial_completed)
 	tutorial_manager.start()
 
-	# --- Connexion de fin de niveau ---
-	wave_manager.all_waves_finished.connect(_on_waves_finished)
+	# Pas de boss dans le tutoriel — la sortie s'active directement après les vagues.
+	wave_manager.all_waves_finished.connect(func():
+		var exit_zone = $LevelExit
+		exit_zone.activate()
+	)
 
 
 func _on_tutorial_completed() -> void:

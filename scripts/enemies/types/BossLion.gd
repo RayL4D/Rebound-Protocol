@@ -92,6 +92,7 @@ var _phase2_triggered: bool = false
 # --- Scène des chiens invoqués --------------------------------
 var dog_scene: PackedScene = preload("res://scenes/enemies/pet_dog.tscn")
 
+
 # --- Audio ----------------------------------------------------
 const _SFX_BOSS_DIE:    AudioStream = preload("res://audio/sfx/enemies/boss_die.wav")
 const _SFX_BOSS_SUMMON: AudioStream = preload("res://audio/sfx/enemies/boss_summon.wav")
@@ -331,6 +332,12 @@ func _die() -> void:
 		summon_timer.stop()
 	boss_died.emit()
 
+	# ── Drop de la clé de boss ────────────────────────────────
+	var key_script: GDScript = load("res://scripts/pickups/boss_key.gd")
+	var key: Node3D = key_script.new()
+	get_tree().current_scene.add_child(key)
+	key.global_position = global_position
+
 	# Player flottant — survit au queue_free du boss
 	if _SFX_BOSS_DIE != null:
 		var p := AudioStreamPlayer.new()
@@ -361,6 +368,10 @@ func _summon_dogs() -> void:
 	for i in range(2):
 		var dog: CharacterBody3D = dog_scene.instantiate()
 		get_tree().current_scene.add_child(dog)
+
+		# Drop limité pour les chiens du boss (anti-farm)
+		dog.coin_drop_min = 1
+		dog.coin_drop_max = 2
 
 		# Placer les chiens de part et d'autre du boss
 		var angle  := (PI * float(i)) + randf_range(-0.5, 0.5)
