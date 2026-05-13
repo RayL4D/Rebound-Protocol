@@ -14,9 +14,10 @@
 extends Node
 
 # ---------------------------------------------------------------
-# Sauvegarde dans le dossier du projet (visible dans l'explorateur).
-# À changer en "user://saves/" avant export final.
-const SAVE_DIR  := "res://saves/"
+# user:// → stockage interne de l'app (Android, iOS, PC, etc.)
+# PC     : %APPDATA%/Rebound Protocol/saves/  (Windows)
+# Android: /data/data/com.votreapp/files/saves/
+const SAVE_DIR  := "user://saves/"
 const SAVE_FILE := "save_data.sav"   # Extension .sav — fichier chiffré
 const MAX_SLOTS := 5
 
@@ -155,10 +156,9 @@ var new_game_mode: bool = false
 # =============================================================
 
 func _ready() -> void:
-	# Construire le chemin absolu et créer le dossier si nécessaire
-	var abs_dir := ProjectSettings.globalize_path(SAVE_DIR)
-	DirAccess.make_dir_recursive_absolute(abs_dir)
-	_save_path = abs_dir + SAVE_FILE
+	# user:// est géré nativement par Godot sur toutes les plateformes
+	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
+	_save_path = SAVE_DIR + SAVE_FILE
 	_load_from_disk()
 
 
@@ -459,8 +459,8 @@ func _migrate_plain_json(old_path: String) -> void:
 
 	# Réécrire dans le nouveau format chiffré
 	save_current()
-	# Supprimer l'ancien fichier
-	DirAccess.remove_absolute(old_path)
+	# Supprimer l'ancien fichier (globalize_path pour obtenir le chemin absolu réel)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(old_path))
 
 
 func _empty_slot() -> Dictionary:
