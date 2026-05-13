@@ -133,7 +133,7 @@ func _process(delta: float) -> void:
 
 	# --- Pièces ---
 	if _coin_label_hud != null:
-		_coin_label_hud.text = "🪙  %d" % SaveData.get_coins()
+		_coin_label_hud.text = "%d" % SaveData.get_coins()
 
 	# --- Barre HP boss (interpolée) ---
 	if _boss_bar_container != null and _boss_bar_container.visible:
@@ -354,11 +354,18 @@ func _build_coin_panel() -> void:
 	accent.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	container.add_child(accent)
 
-	# Label icône + montant
+	# Icône pièce dessinée (compatible toutes plateformes, sans emoji)
+	var coin_icon := _CoinIcon.new()
+	coin_icon.position     = Vector2(10.0, 8.0)
+	coin_icon.size         = Vector2(20.0, 20.0)
+	coin_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_child(coin_icon)
+
+	# Label montant uniquement (plus d'emoji)
 	_coin_label_hud = Label.new()
-	_coin_label_hud.text     = "🪙  0"
-	_coin_label_hud.position = Vector2(10.0, 0.0)
-	_coin_label_hud.size     = Vector2(COIN_W - 10.0, COIN_H)
+	_coin_label_hud.text     = "0"
+	_coin_label_hud.position = Vector2(34.0, 0.0)
+	_coin_label_hud.size     = Vector2(COIN_W - 34.0, COIN_H)
 	_coin_label_hud.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_coin_label_hud.add_theme_font_size_override("font_size", 14)
 	_coin_label_hud.add_theme_color_override("font_color", COLOR_GOLD)
@@ -622,3 +629,25 @@ func update_boss_hp(current_hp: int, max_hp: int) -> void:
 func hide_boss_bar() -> void:
 	if _boss_bar_container != null:
 		_boss_bar_container.hide()
+
+
+# =============================================================
+# ICÔNE PIÈCE — dessinée en code (aucun emoji, compatible partout)
+# =============================================================
+
+class _CoinIcon extends Control:
+	func _draw() -> void:
+		var c := size * 0.5
+		var r: float = minf(size.x, size.y) * 0.5 - 1.0
+
+		# Ombre portée
+		draw_circle(c + Vector2(1.0, 1.5), r, Color(0.0, 0.0, 0.0, 0.35))
+
+		# Disque or principal
+		draw_circle(c, r, Color(1.0, 0.80, 0.0))
+
+		# Anneau sombre intérieur (relief)
+		draw_arc(c, r * 0.68, 0.0, TAU, 24, Color(0.55, 0.38, 0.0, 0.55), 1.5)
+
+		# Reflet clair en haut à gauche
+		draw_circle(c + Vector2(-r * 0.22, -r * 0.22), r * 0.42, Color(1.0, 0.96, 0.55, 0.50))
