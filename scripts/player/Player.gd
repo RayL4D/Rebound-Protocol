@@ -184,6 +184,11 @@ func _ready() -> void:
 	_model_base_scale = robot_model.scale      # Mémoriser la scale réelle du modèle
 	_model_base_y     = robot_model.position.y # Mémoriser le Y offset configuré dans l'éditeur
 
+	# Curseur personnalisé (PC uniquement)
+	if not OS.has_feature("mobile") and not OS.has_feature("web"):
+		var cursor: Node = load("res://scripts/ui/cursor.gd").new()
+		add_child(cursor)
+
 	# Lire les valeurs initiales depuis le SpringArm configuré dans l'éditeur
 	_cam_pitch        = spring_arm.rotation_degrees.x
 	_target_pitch     = _cam_pitch   # Sync la cible pour éviter un lerp parasite au démarrage

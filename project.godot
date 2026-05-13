@@ -13,15 +13,15 @@ config_version=5
 config/name="Rebound Protocol"
 run/main_scene="uid://csuqak0vnysy3"
 config/features=PackedStringArray("4.6", "Forward Plus")
-config/icon="res://icon.svg"
+config/icon="uid://b3c1onv2sximu"
 
 [autoload]
 
-SceneManager="*uid://g3qi87qjs1bv"
+SceneManager="*res://scripts/helper/SceneManager.gd"
 SaveData="*res://scripts/save/save_data.gd"
 CollisionManager="*res://scripts/levels/collision_manager.gd"
 MusicManager="*res://scripts/autoloads/music_manager.gd"
-AmbientManager="*uid://vbjaivvqvisp"
+AmbientManager="*res://scripts/autoloads/ambient_manager.gd"
 
 [display]
 
