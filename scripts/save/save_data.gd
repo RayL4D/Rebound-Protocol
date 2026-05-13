@@ -14,9 +14,10 @@
 extends Node
 
 # ---------------------------------------------------------------
-# Sauvegarde dans le dossier du projet (visible dans l'explorateur).
-# À changer en "user://saves/" avant export final.
-const SAVE_DIR  := "res://saves/"
+# user:// → stockage interne de l'app (Android, iOS, PC, etc.)
+# PC     : %APPDATA%/Rebound Protocol/saves/  (Windows)
+# Android: /data/data/com.votreapp/files/saves/
+const SAVE_DIR  := "user://saves/"
 const SAVE_FILE := "save_data.sav"   # Extension .sav — fichier chiffré
 const MAX_SLOTS := 5
 
@@ -36,65 +37,101 @@ const CATALOG: Dictionary = {
 	# ── JOUEUR ──────────────────────────────────────────────────
 	"hp_max": {
 		"cat": "joueur", "name_key": "SHOP_HP_MAX", "desc_key": "SHOP_HP_MAX_DESC",
-		"max_tier": 10,
-		"prices": [50, 75, 105, 145, 195, 255, 325, 410, 510, 635],
-		"effect": 1.0,
+		"max_tier": 6,
+		"prices": [60, 95, 140, 200, 280, 390],
+		"effect": 5.0,   # +5 HP par palier
 	},
 	"move_speed": {
 		"cat": "joueur", "name_key": "SHOP_MOVE_SPEED", "desc_key": "SHOP_MOVE_SPEED_DESC",
 		"max_tier": 5,
-		"prices": [60, 100, 155, 230, 345],
-		"effect": 0.05,
+		"prices": [60, 100, 155, 230, 340],
+		"effect": 0.05,  # +5 % par palier
 	},
 	"damage_reduction": {
 		"cat": "joueur", "name_key": "SHOP_DMG_REDUCTION", "desc_key": "SHOP_DMG_REDUCTION_DESC",
 		"max_tier": 5,
-		"prices": [80, 130, 200, 305, 460],
-		"effect": 0.05,
+		"prices": [80, 130, 200, 305, 455],
+		"effect": 0.05,  # -5 % dégâts reçus par palier
 	},
 	"pickup_radius": {
 		"cat": "joueur", "name_key": "SHOP_PICKUP_RADIUS", "desc_key": "SHOP_PICKUP_RADIUS_DESC",
+		"max_tier": 3,
+		"prices": [45, 80, 130],
+		"effect": 0.15,  # +15 % portée par palier
+	},
+	"dash_cooldown": {
+		"cat": "joueur", "name_key": "SHOP_DASH_COOLDOWN", "desc_key": "SHOP_DASH_COOLDOWN_DESC",
 		"max_tier": 5,
-		"prices": [40, 70, 110, 170, 260],
-		"effect": 0.20,
+		"prices": [70, 115, 175, 255, 370],
+		"effect": 0.10,  # -10 % cooldown dash par palier
+	},
+	"stomp_damage": {
+		"cat": "joueur", "name_key": "SHOP_STOMP_DAMAGE", "desc_key": "SHOP_STOMP_DAMAGE_DESC",
+		"max_tier": 4,
+		"prices": [55, 90, 140, 205],
+		"effect": 0.15,  # +15 % dégâts stomp par palier
 	},
 	# ── BOUCLIER ─────────────────────────────────────────────────
 	"shield_size": {
 		"cat": "bouclier", "name_key": "SHOP_SHIELD_SIZE", "desc_key": "SHOP_SHIELD_SIZE_DESC",
-		"max_tier": 5,
-		"prices": [70, 110, 165, 250, 375],
-		"effect": 0.08,
+		"max_tier": 4,
+		"prices": [75, 125, 200, 310],
+		"effect": 0.08,  # +8 % rayon par palier
 	},
 	"shield_duration": {
 		"cat": "bouclier", "name_key": "SHOP_SHIELD_DURATION", "desc_key": "SHOP_SHIELD_DURATION_DESC",
-		"max_tier": 5,
-		"prices": [60, 100, 150, 225, 340],
-		"effect": 0.10,
+		"max_tier": 4,
+		"prices": [65, 110, 175, 270],
+		"effect": 0.10,  # +10 % durée parade par palier
 	},
 	"parry_damage": {
 		"cat": "bouclier", "name_key": "SHOP_PARRY_DAMAGE", "desc_key": "SHOP_PARRY_DAMAGE_DESC",
-		"max_tier": 8,
-		"prices": [50, 80, 120, 175, 250, 355, 500, 700],
-		"effect": 0.10,
+		"max_tier": 6,
+		"prices": [55, 90, 140, 210, 315, 475],
+		"effect": 0.10,  # +10 % dégâts renvoi par palier
 	},
 	"parry_window": {
 		"cat": "bouclier", "name_key": "SHOP_PARRY_WINDOW", "desc_key": "SHOP_PARRY_WINDOW_DESC",
 		"max_tier": 3,
-		"prices": [120, 200, 350],
-		"effect": 1.0,
+		"prices": [120, 210, 360],
+		"effect": 1.0,   # +1 frame fenêtre critique par palier
+	},
+	"parry_heal": {
+		"cat": "bouclier", "name_key": "SHOP_PARRY_HEAL", "desc_key": "SHOP_PARRY_HEAL_DESC",
+		"max_tier": 3,
+		"prices": [175, 310, 500],
+		"effect": 1.0,   # +1 HP soigné par parade critique par palier
+	},
+	"reflect_speed": {
+		"cat": "bouclier", "name_key": "SHOP_REFLECT_SPEED", "desc_key": "SHOP_REFLECT_SPEED_DESC",
+		"max_tier": 4,
+		"prices": [65, 110, 170, 260],
+		"effect": 0.20,  # +20 % vitesse balle renvoyée par palier
 	},
 	# ── PASSIFS ──────────────────────────────────────────────────
 	"hp_regen": {
 		"cat": "passifs", "name_key": "SHOP_HP_REGEN", "desc_key": "SHOP_HP_REGEN_DESC",
 		"max_tier": 3,
-		"prices": [150, 250, 400],
-		"effect": 1.0,
+		"prices": [150, 260, 420],
+		"effect": 1.0,   # palier 1→30s, 2→20s, 3→12s
 	},
 	"xp_bonus": {
 		"cat": "passifs", "name_key": "SHOP_XP_BONUS", "desc_key": "SHOP_XP_BONUS_DESC",
 		"max_tier": 5,
-		"prices": [90, 140, 200, 285, 405],
-		"effect": 0.10,
+		"prices": [80, 130, 195, 280, 400],
+		"effect": 0.10,  # +10 % XP par palier
+	},
+	"coin_bonus": {
+		"cat": "passifs", "name_key": "SHOP_COIN_BONUS", "desc_key": "SHOP_COIN_BONUS_DESC",
+		"max_tier": 4,
+		"prices": [50, 90, 145, 215],
+		"effect": 1.0,   # +1 pièce par ennemi vaincu par palier
+	},
+	"dash_armor": {
+		"cat": "passifs", "name_key": "SHOP_DASH_ARMOR", "desc_key": "SHOP_DASH_ARMOR_DESC",
+		"max_tier": 3,
+		"prices": [200, 380, 620],
+		"effect": 1.0,   # palier 1 = invincible pendant dash, 2 = +0.2s après, 3 = +0.4s après
 	},
 }
 
@@ -119,10 +156,9 @@ var new_game_mode: bool = false
 # =============================================================
 
 func _ready() -> void:
-	# Construire le chemin absolu et créer le dossier si nécessaire
-	var abs_dir := ProjectSettings.globalize_path(SAVE_DIR)
-	DirAccess.make_dir_recursive_absolute(abs_dir)
-	_save_path = abs_dir + SAVE_FILE
+	# user:// est géré nativement par Godot sur toutes les plateformes
+	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
+	_save_path = SAVE_DIR + SAVE_FILE
 	_load_from_disk()
 
 
@@ -423,8 +459,8 @@ func _migrate_plain_json(old_path: String) -> void:
 
 	# Réécrire dans le nouveau format chiffré
 	save_current()
-	# Supprimer l'ancien fichier
-	DirAccess.remove_absolute(old_path)
+	# Supprimer l'ancien fichier (globalize_path pour obtenir le chemin absolu réel)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(old_path))
 
 
 func _empty_slot() -> Dictionary:

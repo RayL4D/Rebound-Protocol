@@ -46,6 +46,10 @@ func init(spawn_position: Vector3, target_direction: Vector3,
 	damage           = bullet_damage
 	_is_critical     = is_critical
 
+	# Vitesse de renvoi : +20 % par palier (upgrade "reflect_speed")
+	var speed_mult := 1.0 + (SaveData.get_upgrade_value("reflect_speed") if SaveData.active_slot >= 0 else 0.0)
+	speed = 16.0 * speed_mult
+
 	_setup_visuals(C_CRITICAL if is_critical else C_NORMAL, is_critical)
 
 

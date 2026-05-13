@@ -323,6 +323,9 @@ func _drop_coins() -> void:
 		
 	# On récupère la valeur totale voulue (ex: 500)
 	var total_value := randi_range(coin_drop_min, coin_drop_max)
+	# Bonus pièces (upgrade "coin_bonus") : +1 pièce par palier
+	if SaveData.active_slot >= 0:
+		total_value += int(SaveData.get_upgrade_value("coin_bonus"))
 
 	# Son de spawn des pièces
 	if _SFX_COIN_SPAWN != null:

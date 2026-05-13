@@ -39,6 +39,12 @@ var camera: Camera3D
 var _shield_direction: Vector3 = Vector3.FORWARD
 var _pending_bullet: Bullet = null
 
+# Valeurs de base avant upgrades (pour recalcul idempotent)
+var _base_orbit_radius:      float   = 0.0
+var _base_mesh_scale:        Vector3 = Vector3.ONE
+var _base_parry_window:      float   = 0.0
+var _base_max_parry_window:  float   = 0.0
+
 # --- Matériau (lu depuis ShieldMesh dans l'éditeur) --------------
 var _shield_mat: ShaderMaterial
 var _base_color: Color
@@ -75,7 +81,11 @@ func _ready() -> void:
 	# Lire la couleur de base depuis le matériau (définie dans l'inspector)
 	_base_color = _shield_mat.get_shader_parameter("shield_color")
 
-	# ── Upgrades permanentes ────────────────────────────────────
+	# ── Stocker les valeurs de base AVANT d'appliquer les upgrades ──
+	_base_orbit_radius     = orbit_radius
+	_base_mesh_scale       = _mesh_instance.scale
+	_base_parry_window     = parry_timer.perfect_window
+	_base_max_parry_window = parry_timer.max_parry_window
 	_apply_save_upgrades()
 
 
@@ -83,10 +93,23 @@ func _apply_save_upgrades() -> void:
 	if SaveData.active_slot < 0:
 		return
 
-	# Taille du bouclier : +8 % de rayon par palier → agrandit orbit_radius et le mesh
+	# Taille du bouclier : +8 % de rayon par palier — toujours depuis la base
 	var size_mult := 1.0 + SaveData.get_upgrade_value("shield_size")
-	orbit_radius  = orbit_radius * size_mult
-	_mesh_instance.scale = _mesh_instance.scale * size_mult
+	orbit_radius         = _base_orbit_radius * size_mult
+	_mesh_instance.scale = _base_mesh_scale   * size_mult
+
+	# Durée parade active : +10 % de max_parry_window par palier
+	var dur_mult := 1.0 + SaveData.get_upgrade_value("shield_duration")
+	parry_timer.max_parry_window = _base_max_parry_window * dur_mult
+
+	# Fenêtre critique : +1 frame (1/60 s) par palier
+	var extra_frames := SaveData.get_upgrade_value("parry_window")
+	parry_timer.perfect_window = _base_parry_window + extra_frames / 60.0
+
+
+## Rappelée depuis Player.refresh_upgrades() après un achat en boutique.
+func refresh_upgrades() -> void:
+	_apply_save_upgrades()   # Idempotent grâce aux valeurs de base
 
 
 func _process(delta: float) -> void:
@@ -206,6 +229,10 @@ func _on_parry_resolved(state: ParryTimer.ParryState) -> void:
 			_reflect_combo        = min(_reflect_combo + 1, _COMBO_MAX)
 			_reflect_combo_timer  = _COMBO_WINDOW
 			_play_shield_sfx(_SFX_REFLECT, 0.0, randf_range(0.88, 0.94))
+			# Soin de parade critique (upgrade "parry_heal")
+			var heal_amount: int = int(SaveData.get_upgrade_value("parry_heal")) if SaveData.active_slot >= 0 else 0
+			if heal_amount > 0 and player is Player:
+				(player as Player).heal(heal_amount)
 
 	_pending_bullet = null
 
