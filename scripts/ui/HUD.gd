@@ -33,6 +33,7 @@ const BAR_Y      := 34.0          # offset Y dans le panel
 const SEGMENTS   := 8             # séparateurs dans la barre
 const CORNER_LEN := 9.0
 const CORNER_THK := 2.0
+const XP_PANEL_H := 60.0   # Hauteur du panel XP (juste sous HP)
 
 # --- Dimensions barre boss ------------------------------------
 const BOSS_BAR_WIDTH  := 320.0
@@ -101,6 +102,13 @@ var _boss_max_hp:        int       = 1
 var _boss_target_fill:   float     = 1.0
 var _boss_current_fill:  float     = 1.0
 
+# --- Barre XP -------------------------------------------------
+var _xp_bar_fill:    ColorRect = null
+var _xp_bar_label:   Label     = null
+var _xp_level_label: Label     = null
+var _xp_current_fill: float    = 0.0
+var _xp_target_fill:  float    = 0.0
+
 
 # =============================================================
 # LIFECYCLE
@@ -126,6 +134,12 @@ func _ready() -> void:
 	_player.hp_changed.connect(_on_hp_changed)
 	_player.player_died.connect(_on_player_died)
 
+	# --- Connexion XpManager (optionnel — absent dans les menus) ---
+	var xp_mgr := get_node_or_null("/root/XpManager")
+	if xp_mgr != null:
+		xp_mgr.xp_changed.connect(_on_xp_changed)
+		_on_xp_changed(int(xp_mgr.get("current_xp")), int(xp_mgr.get("xp_to_next")))
+
 
 func _process(delta: float) -> void:
 	if _player == null:
@@ -145,6 +159,11 @@ func _process(delta: float) -> void:
 		else:
 			bc = Color(0.5, 0.0, 0.8).lerp(Color(1.0, 0.2, 0.2), _boss_current_fill * 2.0)
 		_boss_bar_fill.color = bc
+
+	# --- Barre XP (interpolée) ---
+	if _xp_bar_fill != null:
+		_xp_current_fill      = lerp(_xp_current_fill, _xp_target_fill, 8.0 * delta)
+		_xp_bar_fill.size.x   = BAR_W * _xp_current_fill
 
 	# --- Barre HP joueur (interpolée, fixe en haut à gauche) ---
 	_current_fill = lerp(_current_fill, _target_fill, 12.0 * delta)
@@ -181,6 +200,7 @@ func _process(delta: float) -> void:
 
 func _build_ui() -> void:
 	_build_coin_panel()
+	_build_xp_bar()
 
 	# --- Vignette dégât (plein écran, derrière tout) ---
 	var shader         := Shader.new()
@@ -330,7 +350,7 @@ func _build_coin_panel() -> void:
 	const COIN_W := 180.0
 	const COIN_H := 36.0
 	const COIN_X := PANEL_X
-	const COIN_Y := PANEL_Y + PANEL_H + 6.0
+	const COIN_Y := PANEL_Y + PANEL_H + 6.0 + XP_PANEL_H + 6.0
 
 	var container := Control.new()
 	container.name         = "CoinPanel"
@@ -447,6 +467,157 @@ func _close_shop_from_hud() -> void:
 		p.play()
 		p.finished.connect(p.queue_free)
 	_shop_instance.queue_free()
+
+
+# =============================================================
+# BARRE XP
+# =============================================================
+
+func _build_xp_bar() -> void:
+	# Panel XP — juste sous le panel HP, même largeur, style symétrique
+	const XP_ACCENT := Color(0.58, 0.20, 1.00, 0.85)   # violet
+	const XP_FILL   := Color(0.52, 0.14, 1.00, 1.00)
+	const XP_HDR    := Color(0.72, 0.52, 1.00, 0.70)
+	const XP_NUM    := Color(0.82, 0.65, 1.00, 0.90)
+	const XP_SEP_C  := Color(0.52, 0.20, 1.00, 0.22)
+	const XP_BH     := 10.0   # hauteur de la barre
+	const XP_BY     := 28.0   # <-- Remonté (était à 32.0) pour laisser de la place au texte
+	const XP_BX     := BAR_X
+	const XP_BW     := BAR_W
+	const XP_SEGS   := 5
+
+	var px := PANEL_X
+	var py := PANEL_Y + PANEL_H + 6.0
+
+	var container := Control.new()
+	container.name         = "XPPanel"
+	container.position     = Vector2(px, py)
+	container.size         = Vector2(PANEL_W, XP_PANEL_H)
+	container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(container)
+
+	# Fond sombre
+	var bg := ColorRect.new()
+	bg.color        = COLOR_BG
+	bg.size         = Vector2(PANEL_W, XP_PANEL_H)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_child(bg)
+
+	# Accent vertical gauche (violet)
+	var accent := ColorRect.new()
+	accent.color       = XP_ACCENT
+	accent.position    = Vector2(0.0, 0.0)
+	accent.size        = Vector2(3.0, XP_PANEL_H)
+	accent.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_child(accent)
+
+	# Header "SYS · EXPERIENCE"
+	var header := Label.new()
+	header.text     = "SYS · EXPERIENCE"
+	header.position = Vector2(XP_BX, 7.0)
+	header.size     = Vector2(160.0, 14.0)
+	header.add_theme_font_size_override("font_size", 9)
+	header.add_theme_color_override("font_color", XP_HDR)
+	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_child(header)
+
+	# Icône niveau à droite du header
+	_xp_level_label          = Label.new()
+	_xp_level_label.text     = "LVL 0"
+	_xp_level_label.position = Vector2(PANEL_W - 58.0, 7.0)
+	_xp_level_label.size     = Vector2(50.0, 14.0)
+	_xp_level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_xp_level_label.add_theme_font_size_override("font_size", 9)
+	_xp_level_label.add_theme_color_override("font_color", Color(0.72, 0.52, 1.0, 0.90)) # Couleur plus vive
+	_xp_level_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.8))
+	_xp_level_label.add_theme_constant_override("outline_size", 2)
+	_xp_level_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_child(_xp_level_label)
+
+	# Séparateur fin
+	var sep := ColorRect.new()
+	sep.color        = XP_SEP_C
+	sep.position    = Vector2(XP_BX, 24.0)
+	sep.size        = Vector2(PANEL_W - XP_BX * 2.0, 1.0)
+	sep.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_child(sep)
+
+	# Fond de la barre
+	var bar_bg := ColorRect.new()
+	bar_bg.color        = Color(0.02, 0.0, 0.06, 1.0)
+	bar_bg.position     = Vector2(XP_BX, XP_BY)
+	bar_bg.size         = Vector2(XP_BW, XP_BH)
+	bar_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_child(bar_bg)
+
+	# Glow sous la barre
+	var glow2 := ColorRect.new()
+	glow2.color        = Color(0.52, 0.14, 1.0, 0.10)
+	glow2.position     = Vector2(XP_BX, XP_BY + XP_BH + 2.0)
+	glow2.size         = Vector2(XP_BW, 4.0)
+	glow2.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_child(glow2)
+
+	var glow1 := ColorRect.new()
+	glow1.color        = Color(0.52, 0.14, 1.0, 0.22)
+	glow1.position     = Vector2(XP_BX, XP_BY + XP_BH)
+	glow1.size         = Vector2(XP_BW, 3.0)
+	glow1.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_child(glow1)
+
+	# Remplissage XP
+	_xp_bar_fill          = ColorRect.new()
+	_xp_bar_fill.color    = XP_FILL
+	_xp_bar_fill.position = Vector2(XP_BX, XP_BY)
+	_xp_bar_fill.size     = Vector2(0.0, XP_BH)
+	_xp_bar_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_child(_xp_bar_fill)
+
+	# Highlight haut de barre
+	var hl := ColorRect.new()
+	hl.color        = Color(1.0, 1.0, 1.0, 0.22)
+	hl.position     = Vector2(XP_BX, XP_BY)
+	hl.size         = Vector2(XP_BW, 2.0)
+	hl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_child(hl)
+
+	# Séparateurs de segments
+	for i in XP_SEGS:
+		var dx  := XP_BX + XP_BW * float(i + 1) / float(XP_SEGS + 1)
+		var seg := ColorRect.new()
+		seg.color       = Color(0.0, 0.0, 0.0, 0.40)
+		seg.position    = Vector2(dx, XP_BY)
+		seg.size        = Vector2(1.5, XP_BH)
+		seg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		container.add_child(seg)
+
+	# Label XP numérique (droite, sous la barre)
+	_xp_bar_label          = Label.new()
+	_xp_bar_label.text     = "0 / 50 XP"
+	_xp_bar_label.position = Vector2(XP_BX, XP_BY + XP_BH + 5.0) # <-- Espacement réduit (était + 8.0)
+	_xp_bar_label.size     = Vector2(XP_BW, 12.0)
+	_xp_bar_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_xp_bar_label.add_theme_font_size_override("font_size", 9)
+	_xp_bar_label.add_theme_color_override("font_color", XP_NUM)
+	_xp_bar_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.8))
+	_xp_bar_label.add_theme_constant_override("outline_size", 2)
+	_xp_bar_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	container.add_child(_xp_bar_label)
+
+	# Coins décoratifs violet
+	for c in _make_corners(Vector2.ZERO, Vector2(PANEL_W, XP_PANEL_H), Color(0.55, 0.22, 1.0, 0.65)):
+		c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		container.add_child(c)
+
+
+func _on_xp_changed(current_xp: int, xp_to_next: int) -> void:
+	_xp_target_fill = minf(float(current_xp) / float(max(xp_to_next, 1)), 1.0)
+	
+	if _xp_bar_label != null:
+		_xp_bar_label.text = "%d / %d XP" % [current_xp, xp_to_next]
+	var _xm := get_node_or_null("/root/XpManager")
+	if _xp_level_label != null and _xm != null:
+		_xp_level_label.text = "LVL %d" % int(_xm.get("level"))
 
 
 func _unhandled_input(event: InputEvent) -> void:

@@ -68,6 +68,7 @@ var _slide_dir:   Vector3 = Vector3.ZERO
 # =============================================================
 
 func _on_ready() -> void:
+	xp_reward = 12   # Pingouin — glisseur
 	if weapon == null:
 		push_error("PetPenguin: nœud WeaponBullet introuvable à $WeaponBullet")
 		return

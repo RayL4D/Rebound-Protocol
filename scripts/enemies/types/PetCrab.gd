@@ -43,6 +43,7 @@ var _shield_mesh:   MeshInstance3D = null
 # =============================================================
 
 func _on_ready() -> void:
+	xp_reward = 22   # Crabe — tank blindé
 	_shield_timer = shield_cooldown   # premier bouclier après X secondes
 	_create_shield_mesh()
 

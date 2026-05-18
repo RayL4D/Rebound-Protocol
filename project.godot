@@ -22,6 +22,7 @@ SaveData="*res://scripts/save/save_data.gd"
 CollisionManager="*res://scripts/levels/collision_manager.gd"
 MusicManager="*res://scripts/autoloads/music_manager.gd"
 AmbientManager="*res://scripts/autoloads/ambient_manager.gd"
+XpManager="*res://scripts/autoloads/xp_manager.gd"
 
 [display]
 

@@ -12,7 +12,7 @@
 # =============================================================
 
 extends Node
-
+signal slot_loaded
 # ---------------------------------------------------------------
 # user:// → stockage interne de l'app (Android, iOS, PC, etc.)
 # PC     : %APPDATA%/Rebound Protocol/saves/  (Windows)
@@ -177,7 +177,7 @@ func new_game(slot: int) -> void:
 	saves[slot] = _empty_slot()
 	active_slot = slot
 	save_current()
-
+	slot_loaded.emit()
 
 func load_slot(slot: int) -> bool:
 	assert(slot >= 0 and slot < MAX_SLOTS, "Slot invalide")
@@ -187,6 +187,7 @@ func load_slot(slot: int) -> bool:
 	if not saves[slot].get("used", false):
 		return false
 	active_slot = slot
+	slot_loaded.emit()
 	return true
 
 
@@ -283,6 +284,38 @@ func get_player_position() -> Vector3:
 	if x == 0.0 and y == 0.0 and z == 0.0:
 		return Vector3.ZERO
 	return Vector3(x, y, z)
+
+func get_xp() -> int:
+	if active_slot < 0 or active_slot >= MAX_SLOTS:
+		return 0
+	return int(saves[active_slot].get("xp", 0))
+
+func get_xp_level() -> int:
+	if active_slot < 0 or active_slot >= MAX_SLOTS:
+		return 0
+	return int(saves[active_slot].get("xp_level", 0))
+
+## Met à jour l'XP en mémoire (sans écrire sur disque).
+## La persistance sur disque se fait au save_point via save_current().
+func set_xp(xp: int, lvl: int) -> void:
+	if active_slot < 0 or active_slot >= MAX_SLOTS:
+		return
+	saves[active_slot]["xp"]       = xp
+	saves[active_slot]["xp_level"] = lvl
+
+
+func get_acquired_skills() -> Array:
+	if active_slot < 0 or active_slot >= MAX_SLOTS:
+		return []
+	return saves[active_slot].get("acquired_skills", []).duplicate()
+
+
+## Met à jour les skills acquis en mémoire (sans écrire sur disque).
+## La persistance sur disque se fait au save_point via save_current().
+func set_acquired_skills(skills: Array) -> void:
+	if active_slot < 0 or active_slot >= MAX_SLOTS:
+		return
+	saves[active_slot]["acquired_skills"] = skills.duplicate()
 
 
 func get_competences() -> Dictionary:
@@ -476,6 +509,9 @@ func _empty_slot() -> Dictionary:
 		"pos_x":         0.0,
 		"pos_y":         0.0,
 		"pos_z":         0.0,
+		"xp":            0,
+		"xp_level":      0,
+		"acquired_skills": [],
 	}
 
 

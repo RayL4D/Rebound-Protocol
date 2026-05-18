@@ -31,6 +31,7 @@ extends Enemy
 # =============================================================
 
 func _on_ready() -> void:
+	xp_reward = 12   # Castor — mines
 	if weapon == null:
 		push_error("PetBeaver: nœud WeaponTrap introuvable — vérifie $WeaponTrap")
 		return

@@ -45,6 +45,12 @@ var _base_mesh_scale:        Vector3 = Vector3.ONE
 var _base_parry_window:      float   = 0.0
 var _base_max_parry_window:  float   = 0.0
 
+# --- Compétences runtime ----------------------------------------
+var _parry_regen_cd:  float = 0.0    # cooldown parry_hp_regen (5 s)
+var _mirror_timer:    float = 0.0    # durée restante du bouclier miroir (3 s)
+const _MIRROR_RANGE    := 5.0
+const _MIRROR_DURATION := 3.0
+
 # --- Matériau (lu depuis ShieldMesh dans l'éditeur) --------------
 var _shield_mat: ShaderMaterial
 var _base_color: Color
@@ -90,26 +96,33 @@ func _ready() -> void:
 
 
 func _apply_save_upgrades() -> void:
-	if SaveData.active_slot < 0:
-		return
+	refresh_skill_upgrades()   # Délègue au recalcul unifié save + skill
 
-	# Taille du bouclier : +8 % de rayon par palier — toujours depuis la base
-	var size_mult := 1.0 + SaveData.get_upgrade_value("shield_size")
-	orbit_radius         = _base_orbit_radius * size_mult
-	_mesh_instance.scale = _base_mesh_scale   * size_mult
 
-	# Durée parade active : +10 % de max_parry_window par palier
-	var dur_mult := 1.0 + SaveData.get_upgrade_value("shield_duration")
-	parry_timer.max_parry_window = _base_max_parry_window * dur_mult
+## Recalcule orbit_radius, max_parry_window et perfect_window en combinant
+## les upgrades de boutique (SaveData) ET les multiplicateurs de compétence (XpManager).
+## Idempotent — peut être appelée plusieurs fois sans effet de bord.
+func refresh_skill_upgrades() -> void:
+	# — Taille du bouclier —
+	var save_size  := (1.0 + SaveData.get_upgrade_value("shield_size")) if SaveData.active_slot >= 0 else 1.0
+	var skill_size := XpManager.shield_radius_mult if get_tree().root.has_node("XpManager") else 1.0
+	orbit_radius         = _base_orbit_radius * save_size * skill_size
+	_mesh_instance.scale = _base_mesh_scale   * save_size * skill_size
 
-	# Fenêtre critique : +1 frame (1/60 s) par palier
-	var extra_frames := SaveData.get_upgrade_value("parry_window")
-	parry_timer.perfect_window = _base_parry_window + extra_frames / 60.0
+	# — Durée parade —
+	var save_dur  := (1.0 + SaveData.get_upgrade_value("shield_duration")) if SaveData.active_slot >= 0 else 1.0
+	var skill_dur := XpManager.shield_duration_mult if get_tree().root.has_node("XpManager") else 1.0
+	parry_timer.max_parry_window = _base_max_parry_window * save_dur * skill_dur
+
+	# — Fenêtre critique —
+	var extra_frames := SaveData.get_upgrade_value("parry_window") if SaveData.active_slot >= 0 else 0.0
+	var skill_win    := XpManager.parry_window_mult if get_tree().root.has_node("XpManager") else 1.0
+	parry_timer.perfect_window = _base_parry_window * skill_win + extra_frames / 60.0
 
 
 ## Rappelée depuis Player.refresh_upgrades() après un achat en boutique.
 func refresh_upgrades() -> void:
-	_apply_save_upgrades()   # Idempotent grâce aux valeurs de base
+	refresh_skill_upgrades()   # Idempotent grâce aux valeurs de base
 
 
 func _process(delta: float) -> void:
@@ -123,6 +136,11 @@ func _process(delta: float) -> void:
 		_reflect_combo_timer -= delta
 		if _reflect_combo_timer <= 0.0:
 			_reflect_combo = 0
+	# Timers des compétences
+	if _parry_regen_cd > 0.0:
+		_parry_regen_cd -= delta
+	if _mirror_timer > 0.0:
+		_mirror_timer -= delta
 
 
 # =============================================================
@@ -178,6 +196,14 @@ func _orbit_toward_mouse() -> void:
 func _on_bullet_entered(area: Area3D) -> void:
 	if not area is Bullet:
 		return
+
+	# Bouclier miroir actif : renvoyer automatiquement sans parry
+	if _mirror_timer > 0.0 and get_tree().root.has_node("XpManager") and XpManager.has_skill("mirror_shield"):
+		_spawn_reflected_bullet(10, false)
+		_flash_shield(Color(0.6, 0.3, 1.0, 1.0), 0.18)
+		area.queue_free()
+		return
+
 	# Si le cooldown est actif (parade vient de se résoudre), absorber
 	# la balle directement — sans ça elle passe à travers car on_bullet_impact()
 	# ignore les appels pendant le cooldown.
@@ -209,6 +235,8 @@ func _on_parry_resolved(state: ParryTimer.ParryState) -> void:
 	if _pending_bullet == null:
 		return
 
+	var has_xp := get_tree().root.has_node("XpManager")
+
 	match state:
 		ParryTimer.ParryState.ABSORB:
 			_pending_bullet.queue_free()
@@ -220,19 +248,43 @@ func _on_parry_resolved(state: ParryTimer.ParryState) -> void:
 			_pending_bullet.queue_free()
 			_flash_shield(Color(1.0, 1.0, 1.0, 1.0), 0.3)
 			_play_reflect_sfx()
+			# Régénération HP (parry_hp_regen — commune)
+			_apply_parry_regen(has_xp)
+			# Invulnérabilité flash (invuln_flash — légendaire)
+			if has_xp and XpManager.has_skill("invuln_flash") and player is Player:
+				(player as Player).grant_invincibility(0.5)
 
 		ParryTimer.ParryState.CRITICAL:
 			_spawn_reflected_bullet(25, true)
 			_pending_bullet.queue_free()
 			_flash_shield(Color(1.0, 0.75, 0.0, 1.0), 0.45)
-			# Critique : pitch plus bas et volume max pour marquer l'impact
 			_reflect_combo        = min(_reflect_combo + 1, _COMBO_MAX)
 			_reflect_combo_timer  = _COMBO_WINDOW
 			_play_shield_sfx(_SFX_REFLECT, 0.0, randf_range(0.88, 0.94))
-			# Soin de parade critique (upgrade "parry_heal")
+
+			# Soin parade critique boutique (upgrade "parry_heal")
 			var heal_amount: int = int(SaveData.get_upgrade_value("parry_heal")) if SaveData.active_slot >= 0 else 0
 			if heal_amount > 0 and player is Player:
 				(player as Player).heal(heal_amount)
+
+			# Soin parade critique (compétence "critical_parry_heal" — rare)
+			if has_xp and XpManager.has_skill("critical_parry_heal") and player is Player:
+				(player as Player).heal(3)
+
+			# Régénération HP commune
+			_apply_parry_regen(has_xp)
+
+			# Shield nova (légendaire)
+			if has_xp and XpManager.has_skill("shield_nova"):
+				_do_shield_nova()
+
+			# Bouclier miroir : armer pour 3 secondes (épique)
+			if has_xp and XpManager.has_skill("mirror_shield"):
+				_mirror_timer = _MIRROR_DURATION
+
+			# Invulnérabilité flash (légendaire)
+			if has_xp and XpManager.has_skill("invuln_flash") and player is Player:
+				(player as Player).grant_invincibility(0.5)
 
 	_pending_bullet = null
 
@@ -264,13 +316,30 @@ func _flash_shield(flash_color: Color, duration: float) -> void:
 # =============================================================
 
 func _spawn_reflected_bullet(bullet_damage: int, is_critical: bool = false) -> void:
-	# Dégâts de renvoi : +10 % par palier "parry_damage"
-	var dmg_mult  := 1.0 + (SaveData.get_upgrade_value("parry_damage") if SaveData.active_slot >= 0 else 0.0)
-	var final_dmg := int(round(float(bullet_damage) * dmg_mult))
+	# Dégâts : upgrade boutique × multiplicateur skill return_damage_boost
+	var dmg_save  := 1.0 + (SaveData.get_upgrade_value("parry_damage") if SaveData.active_slot >= 0 else 0.0)
+	var dmg_skill := XpManager.return_damage_mult if get_tree().root.has_node("XpManager") else 1.0
+	var final_dmg := int(round(float(bullet_damage) * dmg_save * dmg_skill))
 
+	var has_xp := get_tree().root.has_node("XpManager")
+
+	# Balle principale
 	var bullet: BulletReflected = _bullet_reflected_scene.instantiate()
 	get_tree().current_scene.add_child(bullet)
 	bullet.init(global_position, _shield_direction, final_dmg, is_critical)
+
+	# Double renvoi (rare) : deuxième balle à ±15°
+	if has_xp and XpManager.has_skill("double_bullet"):
+		var dir2 := _shield_direction.rotated(Vector3.UP, PI / 12.0)
+		var bullet2: BulletReflected = _bullet_reflected_scene.instantiate()
+		get_tree().current_scene.add_child(bullet2)
+		bullet2.init(global_position, dir2, final_dmg, is_critical)
+
+	# Balle omnidirectionnelle (légendaire) : balle opposée
+	if has_xp and XpManager.has_skill("omni_bullet"):
+		var bullet3: BulletReflected = _bullet_reflected_scene.instantiate()
+		get_tree().current_scene.add_child(bullet3)
+		bullet3.init(global_position, -_shield_direction, final_dmg, false, true)
 
 
 # =============================================================
@@ -294,6 +363,56 @@ func _play_block_sfx() -> void:
 	# Volume : légèrement plus présent au fil du combo
 	var vol: float   = -9.0 + (_block_combo - 1) * 0.8
 	_play_shield_sfx(_SFX_BLOCK, vol, pitch)
+
+
+## Soin de parade si compétence parry_hp_regen acquise et cooldown écoulé.
+func _apply_parry_regen(has_xp: bool) -> void:
+	if not has_xp or not XpManager.has_skill("parry_hp_regen"):
+		return
+	if _parry_regen_cd > 0.0:
+		return
+	if player is Player:
+		(player as Player).heal(1)
+	_parry_regen_cd = 5.0
+
+
+## Onde circulaire qui blesse tous les ennemis visibles (shield_nova).
+func _do_shield_nova() -> void:
+	const NOVA_RANGE  := 9.0
+	const NOVA_DAMAGE := 15
+	var enemies := get_tree().get_nodes_in_group("enemies")
+	
+	for node: Node in enemies:
+		if not is_instance_valid(node) or not node.is_inside_tree() or not node.has_method("take_damage"):			
+			continue
+			
+		var dist := (node as Node3D).global_position.distance_to(global_position)
+		if dist <= NOVA_RANGE:
+			(node as Enemy).take_damage(NOVA_DAMAGE, true)
+
+	# Visuel : anneau d'onde
+	var ring := MeshInstance3D.new()
+	var mesh := TorusMesh.new()
+	mesh.inner_radius  = 0.1
+	mesh.outer_radius  = 0.3
+	mesh.rings         = 16
+	mesh.ring_segments = 24
+	ring.mesh          = mesh
+	ring.rotation.x    = PI * 0.5
+	ring.global_position = global_position
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color              = Color(1.0, 0.80, 0.0, 0.9)
+	mat.emission_enabled          = true
+	mat.emission                  = Color(1.0, 0.70, 0.0)
+	mat.emission_energy_multiplier = 5.0
+	mat.transparency              = BaseMaterial3D.TRANSPARENCY_ALPHA
+	ring.set_surface_override_material(0, mat)
+	get_tree().current_scene.add_child(ring)
+	var tw := ring.create_tween().set_parallel(true)
+	tw.tween_property(ring, "scale", Vector3(NOVA_RANGE * 2.0, 1, NOVA_RANGE * 2.0), 0.40)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(mat, "albedo_color:a", 0.0, 0.40)
+	tw.tween_callback(ring.queue_free)
 
 
 ## Son de reflect : pitch monte plus franchement — chaîne de renvois très satisfaisante.

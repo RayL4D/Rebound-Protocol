@@ -40,6 +40,7 @@ const _SFX_SWIPE: AudioStream = preload("res://audio/sfx/enemies/melee_swipe.wav
 
 
 func _on_ready() -> void:
+	xp_reward = 10   # Panda — corps-à-corps
 	_create_melee_area()
 	if _anim_player != null:
 		_anim_player.animation_finished.connect(_on_animation_finished)

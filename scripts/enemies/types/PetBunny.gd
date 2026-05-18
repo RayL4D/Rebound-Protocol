@@ -38,6 +38,7 @@ var _strafe_offset: float = 0.0
 # =============================================================
 
 func _on_ready() -> void:
+	xp_reward = 8   # Lapin — agité
 	# Phase initiale aléatoire → patterns différents entre lapins
 	_strafe_offset = randf() * TAU
 
