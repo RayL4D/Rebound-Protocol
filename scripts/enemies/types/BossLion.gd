@@ -93,6 +93,13 @@ var _phase2_triggered: bool = false
 var dog_scene: PackedScene = preload("res://scenes/enemies/pet_dog.tscn")
 
 
+# --- Audio ----------------------------------------------------
+const _SFX_BOSS_DIE:    AudioStream = preload("res://audio/sfx/enemies/boss_die.wav")
+const _SFX_BOSS_SUMMON: AudioStream = preload("res://audio/sfx/enemies/boss_summon.wav")
+const _SFX_BOSS_CHARGE: AudioStream = preload("res://audio/sfx/enemies/boss_charge.wav")
+const _SFX_BOSS_MELEE:  AudioStream = preload("res://audio/sfx/enemies/boss_melee.wav")
+
+
 # =============================================================
 # SETUP MODÈLE — surcharge pour appliquer la texture sur les
 # deux mounts (Enemy ne cherche que "WeaponMount" par défaut)
@@ -113,7 +120,7 @@ func _setup_model() -> void:
 # =============================================================
 
 func _on_ready() -> void:
-	# Mini-boss : immunisé au stomp du joueur
+	xp_reward    = 60   # Mini-boss — récompense généreuse
 	stomp_immune = true
 
 	if player == null:
@@ -229,6 +236,12 @@ func _begin_windup() -> void:
 	to_player.y   = 0.0
 	_charge_dir   = to_player.normalized()
 
+	if _sfx_player and _SFX_BOSS_CHARGE:
+		_sfx_player.stream      = _SFX_BOSS_CHARGE
+		_sfx_player.volume_db   = -4.0
+		_sfx_player.pitch_scale = 1.0
+		_sfx_player.play()
+
 
 func _begin_charge() -> void:
 	_charge_state = ChargeState.CHARGING
@@ -245,6 +258,12 @@ func _begin_attack() -> void:
 	if player.has_method("take_damage"):
 		player.take_damage(MELEE_DAMAGE)
 
+	if _sfx_player and _SFX_BOSS_MELEE:
+		_sfx_player.stream      = _SFX_BOSS_MELEE
+		_sfx_player.volume_db   = -4.0
+		_sfx_player.pitch_scale = randf_range(0.95, 1.05)
+		_sfx_player.play()
+
 
 func _begin_recover() -> void:
 	_charge_state   = ChargeState.RECOVERING
@@ -256,8 +275,8 @@ func _begin_recover() -> void:
 # SANTÉ — détection de la transition de phase
 # =============================================================
 
-func take_damage(amount: int) -> void:
-	super.take_damage(amount)
+func take_damage(amount: int, silent_hurt: bool = false) -> void:
+	super.take_damage(amount, silent_hurt)
 	boss_hp_changed.emit(current_hp, max_hp)
 	if current_hp > 0:
 		_check_phase_transition()
@@ -312,7 +331,24 @@ func _die() -> void:
 	if summon_timer:
 		summon_timer.stop()
 	boss_died.emit()
-	queue_free()
+
+	# ── Drop de la clé de boss ────────────────────────────────
+	var key_script: GDScript = load("res://scripts/pickups/boss_key.gd")
+	var key: Node3D = key_script.new()
+	get_tree().current_scene.add_child(key)
+	key.global_position = global_position
+
+	# Player flottant — survit au queue_free du boss
+	if _SFX_BOSS_DIE != null:
+		var p := AudioStreamPlayer.new()
+		p.stream    = _SFX_BOSS_DIE
+		p.bus       = "SFX"
+		p.volume_db = -4.0
+		get_tree().root.add_child(p)
+		p.play()
+		p.finished.connect(p.queue_free)
+
+	super()
 
 
 # =============================================================
@@ -323,13 +359,23 @@ func _summon_dogs() -> void:
 	if not is_inside_tree() or dog_scene == null:
 		return
 
+	if _sfx_player and _SFX_BOSS_SUMMON:
+		_sfx_player.stream      = _SFX_BOSS_SUMMON
+		_sfx_player.volume_db   = -5.0
+		_sfx_player.pitch_scale = 1.0
+		_sfx_player.play()
+
 	for i in range(2):
 		var dog: CharacterBody3D = dog_scene.instantiate()
 		get_tree().current_scene.add_child(dog)
+
+		# Drop limité pour les chiens du boss (anti-farm)
+		dog.coin_drop_min = 1
+		dog.coin_drop_max = 2
+		dog.xp_reward     = 5   # XP réduit — anti-farm de level-ups
 
 		# Placer les chiens de part et d'autre du boss
 		var angle  := (PI * float(i)) + randf_range(-0.5, 0.5)
 		var radius := randf_range(2.0, 4.0)
 		var offset := Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
 		dog.global_position = global_position + offset
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          

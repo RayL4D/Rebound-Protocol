@@ -36,7 +36,20 @@ var _player_texture: Texture2D = preload("res://assets/textures/player/texture-g
 var current_hp: int
 var is_dead: bool          = false
 var _parry_requested: bool = false
-var _was_on_floor: bool    = true   # Pour détecter l'atterrissage
+var _was_on_floor: bool       = true   # Pour détecter l'atterrissage
+var _land_sfx_anticipated: bool = false  # Vrai si le son de land a déjà été joué en anticipation
+
+# --- Combo parry SFX -----------------------------------------------
+const _PARRY_COMBO_WINDOW: float = 0.6   # Secondes avant que le combo reset
+const _PARRY_COMBO_MAX:    int   = 5     # Nombre de hits max pour la montée de pitch
+var _parry_combo:       int   = 0
+var _parry_combo_timer: float = 0.0
+
+# --- Pas de course -------------------------------------------------
+# Intervalle entre deux pas — à ajuster selon la cadence de l'animation sprint
+const _STEP_INTERVAL: float = 0.38
+var _step_timer: float = 0.0   # Temps restant avant le prochain pas
+var _step_foot:  bool  = false # false = step_a, true = step_b (alternance)
 var _model_base_scale: Vector3     # Scale originale du RobotModel (lue dans _ready)
 var _model_base_y: float = 0.0     # Offset Y du modèle dans l'éditeur (pour éviter le flottement)
 var _invincible: bool    = false    # True pendant les iframes
@@ -81,17 +94,18 @@ func request_parry() -> void:
 		s.parry_timer.notify_mobile_press()
 
 # --- Stomp -------------------------------------------------------
-const STOMP_DAMAGE:         int   = 25
+const STOMP_DAMAGE_BASE:    int   = 25
 const STOMP_FALL_THRESHOLD: float = -4.0   # vitesse Y min pour déclencher
 const STOMP_BOUNCE:         float = 7.0    # rebond vertical après stomp
 var   _stomp_hit_this_jump: bool  = false  # 1 stomp max par mise en l'air — reset à l'atterrissage sol
+var   _stomp_damage_eff:    int   = STOMP_DAMAGE_BASE  # Dégâts effectifs (modifiés par upgrade)
 
 # --- Dash-bouclier -----------------------------------------------
-const DASH_SPEED:     float = 20.0
-const DASH_DURATION:  float = 0.20   # secondes
-const DASH_COOLDOWN:  float = 1.20   # secondes
-const DASH_DAMAGE:    int   = 12
-const DASH_KNOCKBACK: float = 9.0
+const DASH_SPEED:      float = 20.0
+const DASH_DURATION:   float = 0.20   # secondes
+const DASH_COOLDOWN:   float = 1.20   # secondes
+const DASH_DAMAGE:     int   = 12
+const DASH_KNOCKBACK:  float = 9.0
 
 var _is_dashing:           bool  = false
 var _dash_timer:           float = 0.0
@@ -101,8 +115,46 @@ var _dash_hit_enemies:     Array  = []   # ennemis déjà touchés dans ce dash
 var _dash_ghost_timer:     float = 0.0   # timer pour l'espacement des afterimages
 const DASH_GHOST_INTERVAL: float = 0.04  # une afterimage toutes les 40 ms
 
+# Dash upgrades — calculés depuis _apply_save_upgrades()
+var _dash_cooldown_eff:  float = DASH_COOLDOWN  # Cooldown effectif (réduit par upgrade)
+var _dash_invincible:    bool  = false           # True pendant le dash (upgrade tier ≥ 1)
+var _dash_armor_timer:   float = 0.0             # Invincibilité prolongée après le dash (tier ≥ 2)
+
+# --- Compétences runtime -----------------------------------------
+# Timer d'invulnérabilité accordé par la compétence invuln_flash après chaque parade.
+var _skill_invuln_timer: float = 0.0
+
 # Gravité récupérée depuis les paramètres projet Godot
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
+
+# Valeurs de base avant application des upgrades (pour recalcul idempotent)
+var _base_max_hp:     int   = 0
+var _base_move_speed: float = 0.0
+
+# Régénération HP passive (upgrade "hp_regen")
+const _REGEN_INTERVALS: Array = [0.0, 30.0, 20.0, 12.0]  # index = palier
+var _regen_timer:    float = 0.0
+var _regen_interval: float = 0.0
+
+# --- Sons joueur (null = pas encore chargé, pas de crash) --------
+const _SFX_JUMP      : AudioStream = preload("res://audio/sfx/player/jump.wav")
+const _SFX_LAND      : AudioStream = preload("res://audio/sfx/player/land.wav")
+const _SFX_DASH      : AudioStream = preload("res://audio/sfx/player/dash.wav")
+const _SFX_PARRY     : AudioStream = preload("res://audio/sfx/player/parry.wav")
+const _SFX_HURT      : AudioStream = preload("res://audio/sfx/player/hurt.wav")
+const _SFX_DIE       : AudioStream = preload("res://audio/sfx/player/die.wav")
+const _SFX_STEP_A    : AudioStream = preload("res://audio/sfx/player/step_a.ogg")
+const _SFX_STEP_B    : AudioStream = preload("res://audio/sfx/player/step_b.ogg")
+const _SFX_STOMP_HIT : AudioStream = preload("res://audio/sfx/player/stomp_hit.wav")
+const _SFX_DASH_HIT  : AudioStream = preload("res://audio/sfx/player/dash_hit.wav")
+
+var _sfx:        AudioStreamPlayer = null   # Jump et effets généraux
+var _sfx_land:   AudioStreamPlayer = null   # Land — séparé pour ne pas couper le jump
+var _sfx_dash:   AudioStreamPlayer = null   # Dash — séparé pour ne pas couper le jump
+var _sfx_parry:  AudioStreamPlayer = null   # Parry — séparé pour ne pas couper les autres
+var _sfx_hurt:   AudioStreamPlayer = null   # Hurt — séparé pour ne pas couper les autres
+var _sfx_step:   AudioStreamPlayer = null   # Pas de course (step_a / step_b)
+var _sfx_impact: AudioStreamPlayer = null   # Stomp sur ennemi + dash hit
 
 # --- Signaux -----------------------------------------------------
 signal player_died
@@ -116,6 +168,12 @@ signal parried         # Émis à chaque appui parade (clavier ET mobile)
 # =============================================================
 
 func _ready() -> void:
+	# ── Stocker les valeurs de base AVANT d'appliquer les upgrades ──
+	_base_max_hp     = max_hp
+	_base_move_speed = move_speed
+
+	_apply_save_upgrades()
+
 	current_hp = max_hp
 	floor_snap_length = 0.3
 	spring_arm.set_as_top_level(true)
@@ -130,6 +188,11 @@ func _ready() -> void:
 	_model_base_scale = robot_model.scale      # Mémoriser la scale réelle du modèle
 	_model_base_y     = robot_model.position.y # Mémoriser le Y offset configuré dans l'éditeur
 
+	# Curseur personnalisé (PC uniquement)
+	if not OS.has_feature("mobile") and not OS.has_feature("web"):
+		var cursor: Node = load("res://scripts/ui/cursor.gd").new()
+		add_child(cursor)
+
 	# Lire les valeurs initiales depuis le SpringArm configuré dans l'éditeur
 	_cam_pitch        = spring_arm.rotation_degrees.x
 	_target_pitch     = _cam_pitch   # Sync la cible pour éviter un lerp parasite au démarrage
@@ -137,15 +200,19 @@ func _ready() -> void:
 	_target_snap_yaw  = _cam_yaw   # Synchroniser la cible sur l'angle initial
 	_target_zoom      = spring_arm.spring_length
 
-	# Positionner le spring arm immédiatement — évite que la caméra soit
-	# dans le corps du joueur pendant le premier frame rendu (notamment après Retry).
-	# Sans ça, le spring arm reste à la position locale (0,0,0) du joueur
-	# jusqu'au premier _physics_process, et SpringArm3D place la caméra
-	# à spring_length le long de son axe Z local → à l'intérieur du modèle.
-	spring_arm.global_position    = global_position + Vector3(0, 0.9, 0)
-	spring_arm.rotation_degrees.x = _cam_pitch
-	spring_arm.rotation_degrees.y = _cam_yaw
-	spring_arm.spring_length      = _target_zoom
+	# Restaurer la position du checkpoint IMMÉDIATEMENT, avant le premier frame
+	# de physique. Sans ça, le joueur spawne à la position par défaut de la scène
+	# pendant au moins un frame avant d'être téléporté.
+	if SaveData.active_slot >= 0:
+		var saved_pos := SaveData.get_player_position()
+		if saved_pos != Vector3.ZERO:
+			global_position = saved_pos
+
+	# Positionner le spring arm sur la position finale du joueur (checkpoint ou défaut).
+	# Évite que la caméra soit dans le corps du joueur pendant le premier frame rendu.
+	spring_arm.global_position  = global_position + Vector3(0, 0.9, 0)
+	spring_arm.rotation_degrees = Vector3(_cam_pitch, _cam_yaw, 0.0)
+	spring_arm.spring_length    = _target_zoom
 
 	# Stoppe l'AnimationPlayer brut du GLB — c'est l'AnimationTree qui prend
 	# le relais pour piloter les états (idle/sprint/parry/die).
@@ -153,9 +220,136 @@ func _ready() -> void:
 	if anim_player:
 		anim_player.stop()
 
-	# Pas besoin de connecter parry_resolved pour les animations :
-	# on détecte l'appui SPACE directement dans _physics_process.
+	# AudioStreamPlayer pour les SFX joueur (bus SFX, polyphonie simple)
+	_sfx = AudioStreamPlayer.new()
+	_sfx.bus = "SFX"
+	add_child(_sfx)
 
+	# Player dédié au land — indépendant pour ne pas couper le son de jump
+	_sfx_land = AudioStreamPlayer.new()
+	_sfx_land.bus = "SFX"
+	add_child(_sfx_land)
+
+	# Player dédié au dash — indépendant pour ne pas couper le son de jump
+	_sfx_dash = AudioStreamPlayer.new()
+	_sfx_dash.bus = "SFX"
+	add_child(_sfx_dash)
+
+	# Player dédié au parry — AudioStreamPolyphonic pour le spam sans coupure
+	_sfx_parry = AudioStreamPlayer.new()
+	_sfx_parry.bus = "SFX"
+	var _parry_poly := AudioStreamPolyphonic.new()
+	_parry_poly.polyphony = 6
+	_sfx_parry.stream = _parry_poly
+	add_child(_sfx_parry)
+	_sfx_parry.play()   # Lance le moteur polyphonique (silencieux en lui-même)
+
+	# Player dédié au hurt
+	_sfx_hurt = AudioStreamPlayer.new()
+	_sfx_hurt.bus = "SFX"
+	add_child(_sfx_hurt)
+
+	# Player dédié aux pas de course
+	_sfx_step = AudioStreamPlayer.new()
+	_sfx_step.bus = "SFX"
+	add_child(_sfx_step)
+
+	# Player dédié aux impacts (stomp sur ennemi + dash hit)
+	_sfx_impact = AudioStreamPlayer.new()
+	_sfx_impact.bus = "SFX"
+	add_child(_sfx_impact)
+
+	# Restaurer les HP en deferred : le HUD (qui écoute hp_changed) n'est pas
+	# encore connecté pendant _ready(), on attend la fin du frame.
+	call_deferred("_restore_hp_from_save")
+
+
+# =============================================================
+# UPGRADES PERMANENTES (SaveData)
+# =============================================================
+
+## Lit les upgrades achetées dans SaveData et modifie les stats du joueur.
+## Appelée une seule fois dans _ready(), avant l'initialisation des HP.
+func _apply_save_upgrades() -> void:
+	if SaveData.active_slot < 0:
+		return   # Pas de slot actif (ex. lancement direct depuis l'éditeur)
+
+	# HP maximum : +5 HP par palier (à partir de la base)
+	max_hp = _base_max_hp + int(SaveData.get_upgrade_value("hp_max"))
+
+	# Vitesse : +5 % par palier — toujours depuis _base_move_speed pour éviter
+	# les multiplications en cascade si la fonction est rappelée
+	move_speed = _base_move_speed * (1.0 + SaveData.get_upgrade_value("move_speed"))
+
+	# Stomp : +15 % de dégâts par palier
+	_stomp_damage_eff = int(round(float(STOMP_DAMAGE_BASE) * (1.0 + SaveData.get_upgrade_value("stomp_damage"))))
+
+	# Dash cooldown : −10 % par palier, plancher à 0.30 s
+	_dash_cooldown_eff = max(DASH_COOLDOWN * (1.0 - SaveData.get_upgrade_value("dash_cooldown")), 0.30)
+
+	# Régénération HP passive — initialiser le timer au démarrage
+	_update_regen_timer()
+
+
+## Rappelée depuis la boutique après chaque achat pour appliquer l'effet immédiatement.
+func refresh_upgrades() -> void:
+	if SaveData.active_slot < 0:
+		return
+
+	var old_max_hp := max_hp
+
+	# Recalcul idempotent depuis les valeurs de base
+	max_hp     = _base_max_hp + int(SaveData.get_upgrade_value("hp_max"))
+	move_speed = _base_move_speed * (1.0 + SaveData.get_upgrade_value("move_speed"))
+
+	# Stomp + Dash cooldown
+	_stomp_damage_eff  = int(round(float(STOMP_DAMAGE_BASE) * (1.0 + SaveData.get_upgrade_value("stomp_damage"))))
+	_dash_cooldown_eff = max(DASH_COOLDOWN * (1.0 - SaveData.get_upgrade_value("dash_cooldown")), 0.30)
+
+	# Si max_hp a augmenté, les HP supplémentaires sont donnés au joueur directement
+	if max_hp > old_max_hp:
+		current_hp = min(current_hp + (max_hp - old_max_hp), max_hp)
+		hp_changed.emit(current_hp)
+
+	# Propager au bouclier (shield_size, shield_duration, parry_window)
+	var s := shield as Shield
+	if s:
+		s.refresh_upgrades()
+
+	# Mettre à jour le timer de régénération HP
+	_update_regen_timer()
+
+
+func _update_regen_timer() -> void:
+	var tier: int = SaveData.get_upgrade_tier("hp_regen")
+	if tier <= 0 or tier >= _REGEN_INTERVALS.size():
+		_regen_interval = 0.0
+	else:
+		_regen_interval = _REGEN_INTERVALS[tier]
+		if _regen_timer <= 0.0 or _regen_timer > _regen_interval:
+			_regen_timer = _regen_interval   # Réinitialiser le timer
+
+
+## Restaure les HP depuis la dernière sauvegarde.
+## Appelée en deferred depuis _ready() — attend que le HUD soit connecté.
+## La position est déjà restaurée directement dans _ready().
+func _restore_hp_from_save() -> void:
+	if SaveData.active_slot < 0:
+		return
+
+	var saved_hp := SaveData.get_player_hp()
+	if saved_hp > 0:
+		current_hp = min(saved_hp, max_hp)
+
+	# Toujours émettre pour que le HUD affiche le bon HP dès le départ.
+	hp_changed.emit(current_hp)
+
+	# Si aucun checkpoint n'a encore été activé (HP sauvegardé = 0),
+	# écrire le HP de départ sur disque pour que le slot affiche une valeur correcte.
+	# Pièces et upgrades ne sont PAS sauvegardées ici — uniquement aux checkpoints.
+	if SaveData.get_player_hp() == 0:
+		SaveData.set_player_hp(current_hp)
+		SaveData.save_current()
 
 # Applique la texture sur tous les MeshInstance3D du modèle (tête, torse,
 # bras, jambes) en un seul appel.
@@ -181,7 +375,22 @@ func _physics_process(delta: float) -> void:
 		spring_arm.spring_length    = _target_zoom
 		return
 
+	# Régénération HP passive
+	if _regen_interval > 0.0:
+		_regen_timer -= delta
+		if _regen_timer <= 0.0:
+			_regen_timer = _regen_interval
+			if current_hp < max_hp:
+				heal(1)
+
+	# Invulnérabilité flash (compétence invuln_flash)
+	if _skill_invuln_timer > 0.0:
+		_skill_invuln_timer -= delta
+		if _skill_invuln_timer <= 0.0 and not _invincible:
+			pass   # déjà géré — _invincible est remis à false dans grant_invincibility()
+
 	_apply_gravity(delta)
+	_check_land_anticipation()
 	_handle_jump()
 	_handle_camera_orbit(delta)
 	_handle_movement()
@@ -221,6 +430,7 @@ func _physics_process(delta: float) -> void:
 	if keyboard_parry or mobile_parry:
 		_parry_requested = true
 		parried.emit()
+		_trigger_parry_sfx_combo()
 		var pb := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
 		pb.travel("parry")
 
@@ -229,6 +439,13 @@ func _physics_process(delta: float) -> void:
 	# robot_model.position.y est géré par _update_lean + l'offset éditeur
 	_update_lean(delta)
 	_update_animation()
+	_tick_footstep(delta)
+
+	# Décrémenter le timer du combo parry
+	if _parry_combo_timer > 0.0:
+		_parry_combo_timer -= delta
+		if _parry_combo_timer <= 0.0:
+			_parry_combo = 0
 
 
 # =============================================================
@@ -236,6 +453,9 @@ func _physics_process(delta: float) -> void:
 # =============================================================
 
 func _input(event: InputEvent) -> void:
+	if is_dead:
+		return   # Bloquer tout input caméra/zoom pendant l'animation de mort
+
 	if event is InputEventMouseButton:
 		match event.button_index:
 			MOUSE_BUTTON_WHEEL_UP:
@@ -295,9 +515,11 @@ func _handle_jump() -> void:
 	_mobile_jump_requested = false   # consommé immédiatement, même si le saut échoue
 
 	if (Input.is_action_just_pressed("jump") or mobile_jump) and on_floor:
-		velocity.y        = jump_force
-		floor_snap_length = 0.0
+		velocity.y             = jump_force
+		floor_snap_length      = 0.0
+		_land_sfx_anticipated  = false   # Réinitialiser pour le prochain atterrissage
 		jumped.emit()
+		_play_sfx(_SFX_JUMP, -9.0, randf_range(0.96, 1.04))
 		_squash_stretch_jump()
 	elif on_floor and not _was_on_floor:
 		floor_snap_length = 0.3
@@ -305,6 +527,9 @@ func _handle_jump() -> void:
 		# pas sur la tête d'un ennemi.
 		if not _standing_on_enemy():
 			_stomp_hit_this_jump = false
+			if not _land_sfx_anticipated:   # Ne pas rejouer si déjà déclenché en anticipation
+				_play_land_sfx()
+			_land_sfx_anticipated = false   # Réinitialiser pour le prochain saut
 			_squash_stretch_land()
 	elif on_floor:
 		floor_snap_length = 0.3
@@ -491,11 +716,30 @@ func _check_stomp() -> void:
 	# Rebond — toujours actif, permet de rebondir sur le même ennemi
 	velocity.y = STOMP_BOUNCE
 
+	# Son + animation joués à chaque rebond sur un ennemi
+	enemy.stomp_squish()
+	if _SFX_STOMP_HIT and _sfx_impact:
+		_sfx_impact.stream      = _SFX_STOMP_HIT
+		_sfx_impact.volume_db   = 6.0
+		_sfx_impact.pitch_scale = randf_range(0.95, 1.05)
+		_sfx_impact.play()
+
 	# Dégâts uniquement au premier contact depuis le dernier atterrissage sol
 	if not _stomp_hit_this_jump:
 		_stomp_hit_this_jump = true
-		enemy.stomp_squish()
-		enemy.take_damage(STOMP_DAMAGE)
+
+		# Multiplicateur skill (stomp_damage_boost : ×2)
+		var skill_mult := XpManager.stomp_mult if get_tree().root.has_node("XpManager") else 1.0
+		var final_stomp := int(round(float(_stomp_damage_eff) * skill_mult))
+		enemy.take_damage(final_stomp, true)   # silent_hurt — le stomp a son propre son
+
+		# stomp_shockwave : repousse les ennemis proches
+		if get_tree().root.has_node("XpManager") and XpManager.has_skill("stomp_shockwave"):
+			_do_stomp_shockwave()
+
+		# fire_stomp : zone de feu au sol
+		if get_tree().root.has_node("XpManager") and XpManager.has_skill("fire_stomp"):
+			_spawn_fire_zone()
 
 
 # =============================================================
@@ -509,6 +753,12 @@ func _handle_dash(delta: float) -> void:
 	if _dash_cooldown_timer > 0.0:
 		_dash_cooldown_timer -= delta
 
+	# Tick de l'armure post-dash (tier ≥ 2)
+	if _dash_armor_timer > 0.0:
+		_dash_armor_timer -= delta
+		if _dash_armor_timer <= 0.0:
+			_dash_invincible = false
+
 	# Dash en cours : décompte la durée et écrase velocity horizontale.
 	# NOTE : appelé APRÈS _handle_movement(), donc cet override est définitif.
 	if _is_dashing:
@@ -516,6 +766,13 @@ func _handle_dash(delta: float) -> void:
 		if _dash_timer <= 0.0:
 			_is_dashing = false
 			_dash_hit_enemies.clear()
+			# Fin du dash — gérer l'armure résiduelle (tier 2-3) ou couper l'invincibilité
+			var armor_tier: int = SaveData.get_upgrade_tier("dash_armor") if SaveData.active_slot >= 0 else 0
+			if armor_tier >= 2:
+				# Prolonger l'invincibilité 0.2 s (tier 2) ou 0.4 s (tier 3)
+				_dash_armor_timer = 0.2 + (0.2 * float(armor_tier - 2))
+			else:
+				_dash_invincible = false
 		else:
 			velocity.x = _dash_dir.x * DASH_SPEED
 			velocity.z = _dash_dir.z * DASH_SPEED
@@ -526,8 +783,11 @@ func _handle_dash(delta: float) -> void:
 				_spawn_dash_ghost()
 		return  # Pendant le dash on n'accepte pas de nouveau déclenchement
 
-	# Déclenchement : touche dash pressée + cooldown écoulé
-	if Input.is_action_just_pressed("dash") and _dash_cooldown_timer <= 0.0:
+	# Déclenchement : touche dash pressée + cooldown écoulé + compétence débloquée
+	# (dash_unlock requis en jeu ; toujours actif hors slot pour les tests éditeur)
+	var has_xp := get_tree().root.has_node("XpManager")
+	var dash_unlocked := (not has_xp) or SaveData.active_slot < 0 or XpManager.has_skill("dash_unlock")
+	if Input.is_action_just_pressed("dash") and _dash_cooldown_timer <= 0.0 and dash_unlocked:
 		_start_dash()
 
 
@@ -552,10 +812,20 @@ func _start_dash() -> void:
 
 	_is_dashing          = true
 	_dash_timer          = DASH_DURATION
-	_dash_cooldown_timer = DASH_COOLDOWN
+	_dash_cooldown_timer = _dash_cooldown_eff
 	_dash_ghost_timer    = 0.0
 	_dash_hit_enemies.clear()
 
+	# Armure pendant le dash (upgrade tier ≥ 1)
+	var dash_armor_tier: int = SaveData.get_upgrade_tier("dash_armor") if SaveData.active_slot >= 0 else 0
+	if dash_armor_tier >= 1:
+		_dash_invincible = true
+
+	if _SFX_DASH and _sfx_dash:
+		_sfx_dash.stream      = _SFX_DASH
+		_sfx_dash.volume_db   = -6.0
+		_sfx_dash.pitch_scale = randf_range(0.97, 1.03)
+		_sfx_dash.play()
 	_dash_fx_start()
 
 
@@ -628,9 +898,14 @@ func _check_dash_hits() -> void:
 		if body is Enemy and not _dash_hit_enemies.has(body):
 			var enemy := body as Enemy
 			_dash_hit_enemies.append(enemy)
-			enemy.take_damage(DASH_DAMAGE)
+			enemy.take_damage(DASH_DAMAGE, true)   # silent_hurt — le dash a son propre son d'impact
 			# Knockback dans la direction du dash
 			enemy.apply_knockback(_dash_dir, DASH_KNOCKBACK)
+			if _SFX_DASH_HIT and _sfx_impact:
+				_sfx_impact.stream      = _SFX_DASH_HIT
+				_sfx_impact.volume_db   = 0.0
+				_sfx_impact.pitch_scale = randf_range(0.95, 1.05)
+				_sfx_impact.play()
 
 
 # =============================================================
@@ -638,15 +913,25 @@ func _check_dash_hits() -> void:
 # =============================================================
 
 func take_damage(amount: int) -> void:
-	if is_dead or _invincible:
+	if is_dead or _invincible or _dash_invincible:
 		return
 
-	current_hp = max(0, current_hp - amount)
+	# Réduction de dégâts permanente (upgrade "damage_reduction")
+	var reduction := SaveData.get_upgrade_value("damage_reduction") if SaveData.active_slot >= 0 else 0.0
+	var final_dmg := int(round(float(amount) * (1.0 - reduction)))
+	final_dmg      = max(1, final_dmg)   # minimum 1 dégât toujours
+
+	current_hp = max(0, current_hp - final_dmg)
 	hp_changed.emit(current_hp)
 
 	if current_hp == 0:
 		_die()
 	else:
+		if _SFX_HURT and _sfx_hurt:
+			_sfx_hurt.stream      = _SFX_HURT
+			_sfx_hurt.volume_db   = -8.0
+			_sfx_hurt.pitch_scale = randf_range(0.94, 1.06)
+			_sfx_hurt.play()
 		_start_iframes()
 
 
@@ -697,7 +982,253 @@ func _die() -> void:
 
 	# Déclenché ici directement car _physics_process retourne immédiatement
 	# quand is_dead est true — _update_animation() ne serait jamais appelée.
+	_play_sfx(_SFX_DIE, -4.0)
 	var playback := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
 	playback.travel("die")
 	player_died.emit()
-                                                                                                                                                                                                                                          
+
+
+# =============================================================
+# SFX HELPER
+# =============================================================
+
+## Gère le timer des pas de course : joue step_a / step_b en alternance quand
+## le joueur est au sol, en mouvement, et hors dash.
+func _tick_footstep(delta: float) -> void:
+	var horiz_speed := Vector2(velocity.x, velocity.z).length()
+	if not is_on_floor() or horiz_speed < 0.5 or _is_dashing:
+		# Réinitialiser le timer pour éviter un double-claquement au retour au sol
+		_step_timer = _STEP_INTERVAL * 0.5
+		return
+
+	# Intervalle dynamique : plus on va vite, plus les pas sont rapides
+	var dynamic_interval: float = clamp(remap(horiz_speed, 0.0, move_speed, 0.45, 0.26), 0.26, 0.45)
+
+	_step_timer -= delta
+	if _step_timer > 0.0:
+		return
+
+	_step_timer = dynamic_interval
+
+	# Alterner pied gauche / pied droit avec légère variation de pitch
+	var stream: AudioStream = _SFX_STEP_B if _step_foot else _SFX_STEP_A
+	_step_foot = not _step_foot
+
+	if _sfx_step == null:
+		return
+	_sfx_step.stream      = stream
+	_sfx_step.volume_db   = -16.0 + randf_range(-1.0, 1.0)
+	_sfx_step.pitch_scale = 1.0   + randf_range(-0.04, 0.04)
+	_sfx_step.play()
+
+
+## Combo parry : pitch et volume montent à chaque parry consécutif dans la fenêtre de temps.
+func _trigger_parry_sfx_combo() -> void:
+	_parry_combo       = min(_parry_combo + 1, _PARRY_COMBO_MAX)
+	_parry_combo_timer = _PARRY_COMBO_WINDOW
+	# Chaque hit dans le combo monte de ~5 % de pitch et +0.8 dB
+	var pitch: float = 1.0 + (_parry_combo - 1) * 0.05 + randf_range(-0.02, 0.02)
+	var vol:   float = -5.0 + (_parry_combo - 1) * 0.8
+	_play_parry_sfx(_SFX_PARRY, vol, pitch)
+
+
+## Joue un son sur le moteur polyphonique du parry — plusieurs instances simultanées possibles.
+func _play_parry_sfx(stream: AudioStream, vol_db: float = 0.0, pitch: float = 1.0) -> void:
+	if stream == null or _sfx_parry == null:
+		return
+	var pb := _sfx_parry.get_stream_playback() as AudioStreamPlaybackPolyphonic
+	if pb:
+		pb.play_stream(stream, 0.0, vol_db, pitch)
+
+
+func _play_sfx(stream: AudioStream, vol_db: float = 0.0, pitch: float = 1.0) -> void:
+	if stream == null or _sfx == null:
+		return
+	_sfx.stream      = stream
+	_sfx.volume_db   = vol_db
+	_sfx.pitch_scale = pitch
+	_sfx.play()
+
+
+## Son de land : volume adapté à la vitesse de chute, silencieux pour les micro-atterrissages.
+func _play_land_sfx() -> void:
+	if _SFX_LAND == null or _sfx_land == null:
+		return
+	var fall_speed: float = absf(_pre_slide_velocity_y)
+	# En dessous de ce seuil (ex. descente d'une légère marche) : pas de son
+	if fall_speed < 1.2:
+		return
+	# Volume qui monte avec la vitesse : chute douce → -14 dB, chute dure → -3 dB
+	var vol:   float = clamp(remap(fall_speed, 1.2, 8.0, -14.0, -3.0), -14.0, -3.0)
+	# Pitch légèrement plus grave pour les atterrissages lourds
+	var pitch: float = clamp(remap(fall_speed, 1.2, 8.0, 1.05, 0.92), 0.92, 1.05)
+	_sfx_land.stream      = _SFX_LAND
+	_sfx_land.volume_db   = vol
+	_sfx_land.pitch_scale = pitch
+	_sfx_land.play()
+
+
+## Joue le son de land légèrement avant l'impact réel pour compenser la latence audio.
+## Utilise un raycast vers le bas : si le sol est à moins de ANTICIPATION_DIST mètres
+## pendant une chute, le son est déclenché immédiatement.
+func _check_land_anticipation() -> void:
+	# Ne pas anticiper si déjà joué, déjà au sol, ou vitesse insuffisante
+	if _land_sfx_anticipated or is_on_floor() or velocity.y > -1.2:
+		return
+
+	# Distance d'anticipation proportionnelle à la vitesse de chute
+	# (plus on tombe vite, plus on anticipe tôt pour garder le même décalage temporel)
+	var anticipation_dist: float = clamp(absf(velocity.y) * 0.30, 0.05, 0.18)
+
+	var space := get_world_3d().direct_space_state
+	var query := PhysicsRayQueryParameters3D.create(
+		global_position,
+		global_position + Vector3.DOWN * anticipation_dist,
+		collision_mask
+	)
+	query.exclude = [get_rid()]
+	var result: Dictionary = space.intersect_ray(query)
+
+	if not result.is_empty():
+		_land_sfx_anticipated = true
+		_play_land_sfx()
+
+
+# =============================================================
+# COMPÉTENCES (Skills) — appelées par XpManager
+# =============================================================
+
+## Appelée par XpManager.apply_skill() après chaque choix de compétence.
+## Rafraîchit les stats du bouclier quand un skill les affecte.
+func on_skill_acquired(id: String) -> void:
+	match id:
+		"shield_size_boost", "shield_duration_boost", "parry_window_boost":
+			# Le bouclier lit ses mults depuis XpManager — on force le recalcul
+			var s := shield as Shield
+			if s != null and s.has_method("refresh_skill_upgrades"):
+				s.refresh_skill_upgrades()
+
+
+## Accorde un bref flash d'invulnérabilité (compétence invuln_flash).
+## Appelée depuis Shield.gd après une parade réussie.
+func grant_invincibility(duration: float) -> void:
+	if is_dead:
+		return
+	_invincible = true
+	# Utiliser un timer distinct pour ne pas interférer avec les iframes de dégât
+	var t := get_tree().create_timer(duration)
+	t.timeout.connect(func():
+		if not is_dead:
+			_invincible = false
+	)
+
+
+## Onde de choc au sol — repousse tous les ennemis dans un rayon de 4 m.
+func _do_stomp_shockwave() -> void:
+	var enemies := get_tree().get_nodes_in_group("enemies")
+	for node: Node in enemies:
+		if not (node is CharacterBody3D) or not is_instance_valid(node):
+			continue
+		var enemy_body := node as CharacterBody3D
+		var diff := enemy_body.global_position - global_position
+		diff.y = 0.0
+		var dist := diff.length()
+		if dist > 0.05 and dist < 4.0:
+			enemy_body.velocity += diff.normalized() * 9.0 * (1.0 - dist / 4.0)
+
+	# Effet visuel : anneau d'onde au sol
+	_spawn_shockwave_ring()
+
+
+func _spawn_shockwave_ring() -> void:
+	if not is_inside_tree():
+		return
+	# Anneau expansif simple (torus aplati)
+	var ring := MeshInstance3D.new()
+	var mesh := TorusMesh.new()
+	mesh.inner_radius = 0.05
+	mesh.outer_radius = 0.2
+	mesh.rings        = 12
+	mesh.ring_segments = 16
+	ring.mesh         = mesh
+	ring.rotation.x   = PI * 0.5
+	ring.global_position = global_position + Vector3.DOWN * 0.05
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color              = Color(0.0, 0.7, 1.0, 0.9)
+	mat.emission_enabled          = true
+	mat.emission                  = Color(0.0, 0.7, 1.0)
+	mat.emission_energy_multiplier = 3.0
+	mat.transparency              = BaseMaterial3D.TRANSPARENCY_ALPHA
+	ring.set_surface_override_material(0, mat)
+	get_tree().current_scene.add_child(ring)
+
+	var tw := ring.create_tween().set_parallel(true)
+	tw.tween_property(ring, "scale", Vector3(12, 1, 12), 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(mat, "albedo_color:a", 0.0, 0.45)
+	tw.tween_callback(ring.queue_free)
+
+
+## Zone de feu au sol pendant 4 secondes (compétence fire_stomp).
+func _spawn_fire_zone() -> void:
+	if not is_inside_tree():
+		return
+
+	var spawn_pos := global_position   # capturer avant d'ajouter le nœud à l'arbre
+
+	# Marqueur visuel (disque orange brillant)
+	var zone_node := Node3D.new()
+	get_tree().current_scene.add_child(zone_node)   # dans l'arbre d'abord…
+	zone_node.global_position = spawn_pos           # …avant de toucher à global_position
+
+	var disc := MeshInstance3D.new()
+	var mesh := CylinderMesh.new()
+	mesh.top_radius    = 1.4
+	mesh.bottom_radius = 1.4
+	mesh.height        = 0.08
+	disc.mesh          = mesh
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color              = Color(1.0, 0.35, 0.0, 0.75)
+	mat.emission_enabled          = true
+	mat.emission                  = Color(1.0, 0.2, 0.0)
+	mat.emission_energy_multiplier = 3.5
+	mat.transparency              = BaseMaterial3D.TRANSPARENCY_ALPHA
+	disc.set_surface_override_material(0, mat)
+	zone_node.add_child(disc)
+	# (zone_node est déjà dans l'arbre — ajouté plus haut avant global_position)
+
+	# Zone de dégâts : Area3D avec timer périodique
+	var area := Area3D.new()
+	area.collision_layer = 0
+	area.collision_mask  = 16   # ennemis uniquement
+	var shape := CollisionShape3D.new()
+	var cyl   := CylinderShape3D.new()
+	cyl.radius = 1.4
+	cyl.height = 0.5
+	shape.shape = cyl
+	area.add_child(shape)
+	zone_node.add_child(area)
+
+	# 4 ticks de dégâts sur 4 secondes
+	const FIRE_DAMAGE    := 6
+	const FIRE_DURATION  := 4.0
+	const FIRE_TICK_RATE := 1.0
+
+	# Tweens attachés à zone_node : quand zone_node est libéré, ses tweens
+	# sont tués automatiquement → le lambda ne se déclenche jamais après
+	# la libération de area, sans avoir besoin de weakref.
+	for i in int(FIRE_DURATION / FIRE_TICK_RATE):
+		var tw := zone_node.create_tween()
+		tw.tween_interval(FIRE_TICK_RATE * float(i + 1))
+		tw.tween_callback(func():
+			if not is_instance_valid(area):
+				return
+			for body in area.get_overlapping_bodies():
+				if body is Enemy and is_instance_valid(body):
+					(body as Enemy).take_damage(FIRE_DAMAGE, true)
+		)
+
+	# Disparition après FIRE_DURATION secondes
+	var fade_tw := zone_node.create_tween()
+	fade_tw.tween_interval(FIRE_DURATION - 0.5)
+	fade_tw.tween_property(mat, "albedo_color:a", 0.0, 0.5)
+	fade_tw.tween_callback(zone_node.queue_free)

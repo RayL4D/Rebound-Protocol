@@ -30,6 +30,7 @@ extends Enemy
 # =============================================================
 
 func _on_ready() -> void:
+	#xp_reward = 8   # Chien — ennemi de base
 	if weapon == null:
 		push_error("PetDog: nœud WeaponBullet introuvable — vérifie $WeaponMount/WeaponBullet")
 		return

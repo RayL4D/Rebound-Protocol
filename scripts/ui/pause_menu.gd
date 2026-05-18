@@ -23,14 +23,22 @@ const COLOR_PANEL := Color(0.08, 0.11,  0.14, 0.95)
 # --- Refs UI -------------------------------------------------
 var _panel_main:     Control
 var _panel_settings: Control
+var _panel_skills:   Control
+var _skills_list:    VBoxContainer   # contenu dynamique, rebâti à chaque ouverture
 
 var _volume_slider:    HSlider
 var _music_slider:     HSlider
 var _sfx_slider:       HSlider
 var _fullscreen_check: CheckButton
 var _lang_buttons:     Dictionary = {}
-
 var _font: FontFile = null
+
+# --- Audio ------------------------------------------------------
+const _SFX_HOVER:       AudioStream = preload("res://audio/sfx/ui/btn_hover.wav")
+const _SFX_CLICK:       AudioStream = preload("res://audio/sfx/ui/btn_click.wav")
+const _SFX_PAUSE_OPEN:  AudioStream = preload("res://audio/sfx/ui/pause_open.wav")
+const _SFX_PAUSE_CLOSE: AudioStream = preload("res://audio/sfx/ui/pause_close.wav")
+var _sfx_player: AudioStreamPlayer = null
 
 
 # =============================================================
@@ -43,12 +51,21 @@ func _ready() -> void:
 	if ResourceLoader.exists(FONT_PATH):
 		_font = load(FONT_PATH)
 
+	_sfx_player              = AudioStreamPlayer.new()
+	_sfx_player.bus          = "SFX"
+	_sfx_player.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_sfx_player)
+
 	_build_ui()
 	hide()
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and not event.is_echo():
+		# Ne pas interferer avec l'écran GameOver si le joueur est mort
+		var player := get_tree().get_first_node_in_group("player") as Player
+		if player != null and player.is_dead:
+			return
 		if visible:
 			_resume()
 		else:
@@ -62,11 +79,21 @@ func _unhandled_input(event: InputEvent) -> void:
 func _open() -> void:
 	_show_main_panel()
 	get_tree().paused = true
+	if _sfx_player and _SFX_PAUSE_OPEN:
+		_sfx_player.stream      = _SFX_PAUSE_OPEN
+		_sfx_player.volume_db   = -6.0
+		_sfx_player.pitch_scale = 1.0
+		_sfx_player.play()
 	show()
 
 
 func _resume() -> void:
 	get_tree().paused = false
+	if _sfx_player and _SFX_PAUSE_CLOSE:
+		_sfx_player.stream      = _SFX_PAUSE_CLOSE
+		_sfx_player.volume_db   = -6.0
+		_sfx_player.pitch_scale = 1.0
+		_sfx_player.play()
 	hide()
 
 
@@ -84,9 +111,11 @@ func _build_ui() -> void:
 
 	_panel_main     = _build_main_panel()
 	_panel_settings = _build_settings_panel()
+	_panel_skills   = _build_skills_panel()
 
 	add_child(_panel_main)
 	add_child(_panel_settings)
+	add_child(_panel_skills)
 
 
 # ------------------------------------------------------------------
@@ -106,9 +135,10 @@ func _build_main_panel() -> Control:
 
 	_add_title(inner, "PAUSE_TITLE")
 	inner.add_child(HSeparator.new())
-	inner.add_child(_make_button("PAUSE_RESUME",   _resume))
-	inner.add_child(_make_button("PAUSE_SETTINGS", _show_settings_panel))
-	inner.add_child(_make_button("PAUSE_QUIT_MENU",  _quit_to_menu))
+	inner.add_child(_make_button("PAUSE_RESUME",    _resume))
+	inner.add_child(_make_button("PAUSE_SETTINGS",  _show_settings_panel))
+	inner.add_child(_make_button("COMPÉTENCES",     _show_skills_panel))
+	inner.add_child(_make_button("PAUSE_QUIT_MENU", _quit_to_menu))
 
 	return center
 
@@ -174,11 +204,42 @@ func _build_settings_panel() -> Control:
 func _show_main_panel() -> void:
 	_panel_main.show()
 	_panel_settings.hide()
+	_panel_skills.hide()
 
 
 func _show_settings_panel() -> void:
 	_panel_main.hide()
 	_panel_settings.show()
+	_panel_skills.hide()
+
+
+func _show_skills_panel() -> void:
+	_panel_main.hide()
+	_panel_settings.hide()
+
+	# Vider et rebâtir la liste (les skills évoluent en cours de run)
+	for child in _skills_list.get_children():
+		child.queue_free()
+
+	var acquired: Array = []
+	if get_tree().root.has_node("XpManager"):
+		acquired = XpManager.acquired_skills
+
+	if acquired.is_empty():
+		var lbl := Label.new()
+		lbl.text = "Aucune compétence acquise pour l'instant."
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.add_theme_color_override("font_color", Color(0.50, 0.55, 0.60))
+		if _font:
+			lbl.add_theme_font_override("font", _font)
+		lbl.add_theme_font_size_override("font_size", 15)
+		_skills_list.add_child(lbl)
+	else:
+		for skill_id in acquired:
+			if SkillCatalogue.SKILLS.has(skill_id):
+				_skills_list.add_child(_make_skill_row(skill_id))
+
+	_panel_skills.show()
 
 
 func _quit_to_menu() -> void:
@@ -268,6 +329,108 @@ func _load_settings_into_panel() -> void:
 		cfg.get_value("display", "fullscreen", false)
 	)
 	_refresh_lang_buttons()
+
+
+# ------------------------------------------------------------------
+# Panel compétences : liste scrollable des skills acquis
+# ------------------------------------------------------------------
+
+func _build_skills_panel() -> Control:
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	var outer := VBoxContainer.new()
+	outer.add_theme_constant_override("separation", 12)
+	center.add_child(outer)
+
+	var panel := _make_panel_box()
+	panel.custom_minimum_size = Vector2(580, 0)
+	outer.add_child(panel)
+
+	var inner := VBoxContainer.new()
+	inner.add_theme_constant_override("separation", 12)
+	panel.add_child(inner)
+
+	_add_title(inner, "⚡  COMPÉTENCES  ⚡")
+	inner.add_child(HSeparator.new())
+
+	# ScrollContainer : hauteur bornée pour ne pas dépasser l'écran
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size          = Vector2(0, 340)
+	scroll.horizontal_scroll_mode       = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.size_flags_vertical          = Control.SIZE_EXPAND_FILL
+	inner.add_child(scroll)
+
+	_skills_list = VBoxContainer.new()
+	_skills_list.add_theme_constant_override("separation", 8)
+	_skills_list.size_flags_horizontal  = Control.SIZE_EXPAND_FILL
+	scroll.add_child(_skills_list)
+
+	# Bouton Retour (hors panneau, comme le panel settings)
+	outer.add_child(_make_button("RETOUR", _show_main_panel))
+
+	return center
+
+
+func _make_skill_row(skill_id: String) -> Control:
+	var data: Dictionary = SkillCatalogue.SKILLS[skill_id]
+	var rarity: int  = data["rarity"]
+	var rc: Color    = SkillCatalogue.RARITY_COLORS[rarity]
+	var rn: String   = SkillCatalogue.RARITY_NAMES[rarity]
+
+	var row := PanelContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var style := StyleBoxFlat.new()
+	style.bg_color              = Color(rc.r, rc.g, rc.b, 0.07)
+	style.border_width_left     = 4
+	style.border_width_right    = 0
+	style.border_width_top      = 0
+	style.border_width_bottom   = 0
+	style.border_color          = rc
+	style.content_margin_left   = 14.0
+	style.content_margin_right  = 14.0
+	style.content_margin_top    = 8.0
+	style.content_margin_bottom = 8.0
+	row.add_theme_stylebox_override("panel", style)
+
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 3)
+	row.add_child(col)
+
+	# Ligne du haut : nom + badge rareté
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 8)
+	col.add_child(header)
+
+	var name_lbl := Label.new()
+	name_lbl.text                    = data["name"]
+	name_lbl.size_flags_horizontal   = Control.SIZE_EXPAND_FILL
+	name_lbl.add_theme_color_override("font_color", Color.WHITE)
+	if _font:
+		name_lbl.add_theme_font_override("font", _font)
+	name_lbl.add_theme_font_size_override("font_size", 16)
+	header.add_child(name_lbl)
+
+	var rar_lbl := Label.new()
+	rar_lbl.text = rn
+	rar_lbl.add_theme_color_override("font_color", rc)
+	if _font:
+		rar_lbl.add_theme_font_override("font", _font)
+	rar_lbl.add_theme_font_size_override("font_size", 12)
+	header.add_child(rar_lbl)
+
+	# Description
+	var desc := Label.new()
+	desc.text         = data["description"]
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD
+	desc.add_theme_color_override("font_color", Color(0.72, 0.80, 0.88))
+	if _font:
+		desc.add_theme_font_override("font", _font)
+	desc.add_theme_font_size_override("font_size", 13)
+	col.add_child(desc)
+
+	return row
 
 
 # =============================================================
@@ -418,5 +581,20 @@ func _make_button(label_text: String, callback: Callable) -> Button:
 	style.border_width_bottom = 2
 	style.border_color       = COLOR_CYAN
 	btn.add_theme_stylebox_override("normal", style)
+	btn.mouse_entered.connect(func():
+		if _sfx_player and _SFX_HOVER and is_inside_tree():
+			_sfx_player.stream      = _SFX_HOVER
+			_sfx_player.volume_db   = 2.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
+	# Son connecté EN PREMIER pour jouer avant que le callback quitte la scène
+	btn.pressed.connect(func():
+		if _sfx_player and _SFX_CLICK and is_inside_tree():
+			_sfx_player.stream      = _SFX_CLICK
+			_sfx_player.volume_db   = 5.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
 	btn.pressed.connect(callback)
 	return btn

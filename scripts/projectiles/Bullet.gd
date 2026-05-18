@@ -26,6 +26,10 @@ func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	_setup_visuals()
 
+	# Compétence enemy_slowdown : ralentit les balles ennemies de 15 % par stack
+	if get_tree().root.has_node("XpManager"):
+		speed *= XpManager.enemy_bullet_speed_mult
+
 
 func _physics_process(delta: float) -> void:
 	global_position += direction * speed * delta

@@ -43,9 +43,6 @@ border_width_right = 2
 border_width_bottom = 2
 border_color = Color(0, 0.8509804, 1, 1)
 
-[sub_resource type="LabelSettings" id="LabelSettings_btxxm"]
-font = ExtResource("1_fe2o3")
-
 [node name="MainMenu" type="Control" unique_id=385074101]
 layout_mode = 3
 anchors_preset = 15
@@ -62,7 +59,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.16862746, 0.21176471, 0.25882354, 1)
+color = Color(0.025, 0.045, 0.075, 1)
 
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=1978063754]
 layout_mode = 1
@@ -165,19 +162,3 @@ icon = ExtResource("3_m1kxf")
 [node name="BtnFlagES" type="Button" parent="CenterContainer/MainVBox/LanguageVBox/FlagsContainer" unique_id=1244643085]
 layout_mode = 2
 icon = ExtResource("4_x2yvf")
-
-[node name="VersionLabel" type="Label" parent="." unique_id=483318798]
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -71.0
-offset_top = -37.0
-offset_right = -23.0
-offset_bottom = -14.0
-grow_horizontal = 0
-grow_vertical = 0
-text = "v. 1.0"
-label_settings = SubResource("LabelSettings_btxxm")

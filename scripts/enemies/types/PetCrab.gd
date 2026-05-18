@@ -43,6 +43,7 @@ var _shield_mesh:   MeshInstance3D = null
 # =============================================================
 
 func _on_ready() -> void:
+	xp_reward = 22   # Crabe — tank blindé
 	_shield_timer = shield_cooldown   # premier bouclier après X secondes
 	_create_shield_mesh()
 
@@ -106,10 +107,10 @@ func _update_shield(delta: float) -> void:
 # SANTÉ — immunité totale pendant le bouclier
 # =============================================================
 
-func take_damage(amount: int) -> void:
+func take_damage(amount: int, silent_hurt: bool = false) -> void:
 	if _shield_active:
 		return   # bouclier actif → aucun dégât
-	super.take_damage(amount)
+	super.take_damage(amount, silent_hurt)
 
 
 # =============================================================

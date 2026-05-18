@@ -74,13 +74,27 @@ func _process(delta: float) -> void:
 # IMPACT
 # =============================================================
 
+const _SFX_EXPLODE: AudioStream = preload("res://audio/sfx/enemies/mortar_explode.wav")
+
 func _impact() -> void:
 	if _player != null:
 		var self_xz   := Vector2(global_position.x, global_position.z)
 		var player_xz := Vector2(_player.global_position.x, _player.global_position.z)
 		if self_xz.distance_to(player_xz) <= _radius:
 			_player.take_damage(_damage)
-	queue_free()
+
+	# Player flottant ajouté à /root (plus stable que current_scene lors d'un queue_free)
+	if _SFX_EXPLODE != null:
+		var p := AudioStreamPlayer.new()
+		p.stream      = _SFX_EXPLODE
+		p.bus         = "SFX"
+		p.volume_db   = -3.0
+		p.pitch_scale = randf_range(0.93, 1.07)
+		get_tree().root.add_child(p)
+		p.play()
+		p.finished.connect(p.queue_free)
+
+	call_deferred("queue_free")
 
 
 # =============================================================

@@ -37,6 +37,7 @@ extends Enemy
 # =============================================================
 
 func _on_ready() -> void:
+	xp_reward = 15   # Koala — sniper
 	if weapon == null:
 		push_error("PetKoala: nœud WeaponSniper introuvable — vérifie $WeaponMount/WeaponSniper")
 		return

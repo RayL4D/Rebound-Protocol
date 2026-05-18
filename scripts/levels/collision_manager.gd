@@ -1,9 +1,13 @@
 extends Node
 
 ## Génère automatiquement les collisions manquantes.
-static func add_missing_collisions(node: Node) -> void:
+func add_missing_collisions(node: Node) -> void:
 	# Ignorer les entités mobiles, les zones de trigger et les corps rigides.
 	if node is CharacterBody3D or node is Area3D or node is RigidBody3D:
+		return
+
+	# Ignorer les nœuds marqués "no_collision" et tous leurs descendants.
+	if node.is_in_group("no_collision"):
 		return
 
 	if node is MeshInstance3D:
@@ -32,4 +36,4 @@ static func add_missing_collisions(node: Node) -> void:
 
 	# Parcours récursif de tous les enfants
 	for child in node.get_children():
-		add_missing_collisions(child)
+		CollisionManager.add_missing_collisions(child)

@@ -130,7 +130,7 @@ func _on_shoot_timer_timeout() -> void:
 # SANTÉ
 # =============================================================
 
-func take_damage(amount: int) -> void:
+func take_damage(amount: int, _silent_hurt: bool = false) -> void:
 	current_hp = max(0, current_hp - amount)
 	if current_hp == 0:
 		_die()

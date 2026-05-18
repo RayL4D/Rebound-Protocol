@@ -42,6 +42,7 @@ var _zigzag_time: float = 0.0
 # =============================================================
 
 func _on_ready() -> void:
+	xp_reward = 10   # Renard — flanqueur
 	_orbit_sign  = 1.0 if randf() > 0.5 else -1.0
 	_zigzag_time = randf() * TAU  # phase aléatoire → renards pas synchronisés
 
