@@ -35,6 +35,7 @@ var _orbit_sign: float = 1.0
 # =============================================================
 
 func _on_ready() -> void:
+	xp_reward = 12   # Singe — mortier
 	_orbit_sign = 1.0 if randf() > 0.5 else -1.0
 
 	if weapon == null:

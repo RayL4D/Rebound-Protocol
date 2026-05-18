@@ -120,6 +120,10 @@ var _dash_cooldown_eff:  float = DASH_COOLDOWN  # Cooldown effectif (réduit par
 var _dash_invincible:    bool  = false           # True pendant le dash (upgrade tier ≥ 1)
 var _dash_armor_timer:   float = 0.0             # Invincibilité prolongée après le dash (tier ≥ 2)
 
+# --- Compétences runtime -----------------------------------------
+# Timer d'invulnérabilité accordé par la compétence invuln_flash après chaque parade.
+var _skill_invuln_timer: float = 0.0
+
 # Gravité récupérée depuis les paramètres projet Godot
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
@@ -378,6 +382,12 @@ func _physics_process(delta: float) -> void:
 			_regen_timer = _regen_interval
 			if current_hp < max_hp:
 				heal(1)
+
+	# Invulnérabilité flash (compétence invuln_flash)
+	if _skill_invuln_timer > 0.0:
+		_skill_invuln_timer -= delta
+		if _skill_invuln_timer <= 0.0 and not _invincible:
+			pass   # déjà géré — _invincible est remis à false dans grant_invincibility()
 
 	_apply_gravity(delta)
 	_check_land_anticipation()
@@ -717,7 +727,19 @@ func _check_stomp() -> void:
 	# Dégâts uniquement au premier contact depuis le dernier atterrissage sol
 	if not _stomp_hit_this_jump:
 		_stomp_hit_this_jump = true
-		enemy.take_damage(_stomp_damage_eff, true)   # silent_hurt — le stomp a son propre son
+
+		# Multiplicateur skill (stomp_damage_boost : ×2)
+		var skill_mult := XpManager.stomp_mult if get_tree().root.has_node("XpManager") else 1.0
+		var final_stomp := int(round(float(_stomp_damage_eff) * skill_mult))
+		enemy.take_damage(final_stomp, true)   # silent_hurt — le stomp a son propre son
+
+		# stomp_shockwave : repousse les ennemis proches
+		if get_tree().root.has_node("XpManager") and XpManager.has_skill("stomp_shockwave"):
+			_do_stomp_shockwave()
+
+		# fire_stomp : zone de feu au sol
+		if get_tree().root.has_node("XpManager") and XpManager.has_skill("fire_stomp"):
+			_spawn_fire_zone()
 
 
 # =============================================================
@@ -761,8 +783,11 @@ func _handle_dash(delta: float) -> void:
 				_spawn_dash_ghost()
 		return  # Pendant le dash on n'accepte pas de nouveau déclenchement
 
-	# Déclenchement : touche dash pressée + cooldown écoulé
-	if Input.is_action_just_pressed("dash") and _dash_cooldown_timer <= 0.0:
+	# Déclenchement : touche dash pressée + cooldown écoulé + compétence débloquée
+	# (dash_unlock requis en jeu ; toujours actif hors slot pour les tests éditeur)
+	var has_xp := get_tree().root.has_node("XpManager")
+	var dash_unlocked := (not has_xp) or SaveData.active_slot < 0 or XpManager.has_skill("dash_unlock")
+	if Input.is_action_just_pressed("dash") and _dash_cooldown_timer <= 0.0 and dash_unlocked:
 		_start_dash()
 
 
@@ -1067,3 +1092,143 @@ func _check_land_anticipation() -> void:
 	if not result.is_empty():
 		_land_sfx_anticipated = true
 		_play_land_sfx()
+
+
+# =============================================================
+# COMPÉTENCES (Skills) — appelées par XpManager
+# =============================================================
+
+## Appelée par XpManager.apply_skill() après chaque choix de compétence.
+## Rafraîchit les stats du bouclier quand un skill les affecte.
+func on_skill_acquired(id: String) -> void:
+	match id:
+		"shield_size_boost", "shield_duration_boost", "parry_window_boost":
+			# Le bouclier lit ses mults depuis XpManager — on force le recalcul
+			var s := shield as Shield
+			if s != null and s.has_method("refresh_skill_upgrades"):
+				s.refresh_skill_upgrades()
+
+
+## Accorde un bref flash d'invulnérabilité (compétence invuln_flash).
+## Appelée depuis Shield.gd après une parade réussie.
+func grant_invincibility(duration: float) -> void:
+	if is_dead:
+		return
+	_invincible = true
+	# Utiliser un timer distinct pour ne pas interférer avec les iframes de dégât
+	var t := get_tree().create_timer(duration)
+	t.timeout.connect(func():
+		if not is_dead:
+			_invincible = false
+	)
+
+
+## Onde de choc au sol — repousse tous les ennemis dans un rayon de 4 m.
+func _do_stomp_shockwave() -> void:
+	var enemies := get_tree().get_nodes_in_group("enemies")
+	for node: Node in enemies:
+		if not (node is CharacterBody3D) or not is_instance_valid(node):
+			continue
+		var enemy_body := node as CharacterBody3D
+		var diff := enemy_body.global_position - global_position
+		diff.y = 0.0
+		var dist := diff.length()
+		if dist > 0.05 and dist < 4.0:
+			enemy_body.velocity += diff.normalized() * 9.0 * (1.0 - dist / 4.0)
+
+	# Effet visuel : anneau d'onde au sol
+	_spawn_shockwave_ring()
+
+
+func _spawn_shockwave_ring() -> void:
+	if not is_inside_tree():
+		return
+	# Anneau expansif simple (torus aplati)
+	var ring := MeshInstance3D.new()
+	var mesh := TorusMesh.new()
+	mesh.inner_radius = 0.05
+	mesh.outer_radius = 0.2
+	mesh.rings        = 12
+	mesh.ring_segments = 16
+	ring.mesh         = mesh
+	ring.rotation.x   = PI * 0.5
+	ring.global_position = global_position + Vector3.DOWN * 0.05
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color              = Color(0.0, 0.7, 1.0, 0.9)
+	mat.emission_enabled          = true
+	mat.emission                  = Color(0.0, 0.7, 1.0)
+	mat.emission_energy_multiplier = 3.0
+	mat.transparency              = BaseMaterial3D.TRANSPARENCY_ALPHA
+	ring.set_surface_override_material(0, mat)
+	get_tree().current_scene.add_child(ring)
+
+	var tw := ring.create_tween().set_parallel(true)
+	tw.tween_property(ring, "scale", Vector3(12, 1, 12), 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(mat, "albedo_color:a", 0.0, 0.45)
+	tw.tween_callback(ring.queue_free)
+
+
+## Zone de feu au sol pendant 4 secondes (compétence fire_stomp).
+func _spawn_fire_zone() -> void:
+	if not is_inside_tree():
+		return
+
+	var spawn_pos := global_position   # capturer avant d'ajouter le nœud à l'arbre
+
+	# Marqueur visuel (disque orange brillant)
+	var zone_node := Node3D.new()
+	get_tree().current_scene.add_child(zone_node)   # dans l'arbre d'abord…
+	zone_node.global_position = spawn_pos           # …avant de toucher à global_position
+
+	var disc := MeshInstance3D.new()
+	var mesh := CylinderMesh.new()
+	mesh.top_radius    = 1.4
+	mesh.bottom_radius = 1.4
+	mesh.height        = 0.08
+	disc.mesh          = mesh
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color              = Color(1.0, 0.35, 0.0, 0.75)
+	mat.emission_enabled          = true
+	mat.emission                  = Color(1.0, 0.2, 0.0)
+	mat.emission_energy_multiplier = 3.5
+	mat.transparency              = BaseMaterial3D.TRANSPARENCY_ALPHA
+	disc.set_surface_override_material(0, mat)
+	zone_node.add_child(disc)
+	# (zone_node est déjà dans l'arbre — ajouté plus haut avant global_position)
+
+	# Zone de dégâts : Area3D avec timer périodique
+	var area := Area3D.new()
+	area.collision_layer = 0
+	area.collision_mask  = 16   # ennemis uniquement
+	var shape := CollisionShape3D.new()
+	var cyl   := CylinderShape3D.new()
+	cyl.radius = 1.4
+	cyl.height = 0.5
+	shape.shape = cyl
+	area.add_child(shape)
+	zone_node.add_child(area)
+
+	# 4 ticks de dégâts sur 4 secondes
+	const FIRE_DAMAGE    := 6
+	const FIRE_DURATION  := 4.0
+	const FIRE_TICK_RATE := 1.0
+
+	# Tweens attachés à zone_node : quand zone_node est libéré, ses tweens
+	# sont tués automatiquement → le lambda ne se déclenche jamais après
+	# la libération de area, sans avoir besoin de weakref.
+	for i in int(FIRE_DURATION / FIRE_TICK_RATE):
+		var tw := zone_node.create_tween()
+		tw.tween_interval(FIRE_TICK_RATE * float(i + 1))
+		tw.tween_callback(func():
+			if not is_instance_valid(area):
+				return
+			for body in area.get_overlapping_bodies():
+				if body is Enemy and is_instance_valid(body):
+					(body as Enemy).take_damage(FIRE_DAMAGE, true)
+		)
+
+	# Disparition après FIRE_DURATION secondes
+	var fade_tw := zone_node.create_tween()
+	fade_tw.tween_interval(FIRE_DURATION - 0.5)
+	fade_tw.tween_property(mat, "albedo_color:a", 0.0, 0.5)
+	fade_tw.tween_callback(zone_node.queue_free)

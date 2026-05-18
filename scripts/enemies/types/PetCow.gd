@@ -34,6 +34,7 @@ extends Enemy
 # =============================================================
 
 func _on_ready() -> void:
+	xp_reward = 12   # Vache — shotgun
 	if weapon == null:
 		push_error("PetCow: nœud WeaponShotgun introuvable — vérifie $WeaponMount/WeaponShotgun")
 		return

@@ -120,7 +120,7 @@ func _setup_model() -> void:
 # =============================================================
 
 func _on_ready() -> void:
-	# Mini-boss : immunisé au stomp du joueur
+	xp_reward    = 60   # Mini-boss — récompense généreuse
 	stomp_immune = true
 
 	if player == null:
@@ -372,6 +372,7 @@ func _summon_dogs() -> void:
 		# Drop limité pour les chiens du boss (anti-farm)
 		dog.coin_drop_min = 1
 		dog.coin_drop_max = 2
+		dog.xp_reward     = 5   # XP réduit — anti-farm de level-ups
 
 		# Placer les chiens de part et d'autre du boss
 		var angle  := (PI * float(i)) + randf_range(-0.5, 0.5)

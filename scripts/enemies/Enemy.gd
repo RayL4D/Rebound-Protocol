@@ -297,10 +297,18 @@ func _spawn_damage_number(amount: int) -> void:
 @export var coin_drop_min: int = 1
 @export var coin_drop_max: int = 2
 
+## XP accordée au joueur à la mort de cet ennemi.
+## Valeur par défaut = ennemi commun.
+## Surcharge dans les sous-classes ou directement dans l'Inspector.
+@export var xp_reward: int = 10
+
 
 func _die() -> void:
 	enemy_died.emit()
 	_drop_coins()
+	# Drop XP — seulement si XpManager est présent (pas toujours en menu)
+	if get_tree() != null and get_tree().root.has_node("XpManager"):
+		XpManager.add_xp(xp_reward)
 
 	# Player flottant pour que le son survive au queue_free de l'ennemi
 	if _SFX_DIE != null:
