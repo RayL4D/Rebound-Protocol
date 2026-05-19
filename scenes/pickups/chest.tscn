@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://dugi48yxe82ny"]
+
+[ext_resource type="Script" uid="uid://uegnmmx8xlw5" path="res://scripts/pickups/chest.gd" id="1_6om70"]
+
+[node name="Chest" type="Node3D" unique_id=1892450482]
+script = ExtResource("1_6om70")

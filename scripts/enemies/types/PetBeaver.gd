@@ -56,20 +56,23 @@ func _update_movement(_delta: float) -> void:
 	var move_dir    := Vector3.ZERO
 
 	if dist < preferred_distance - 1.0:
-		# Trop proche → fuite rapide en sens opposé
-		# Ajoute une légère déviation latérale pour ne pas reculer en ligne droite
+		# Trop proche → fuite rapide en sens opposé via navmesh
+		# On inverse la direction navmesh pour fuir en contournant les obstacles
+		var nav_dir := _get_move_direction()
 		var lateral := Vector3(-to_player_n.z, 0.0, to_player_n.x)
-		move_dir     = -to_player_n + lateral * 0.4
+		move_dir     = -nav_dir + lateral * 0.4
 		if move_dir.length_squared() > 0.01:
 			move_dir = move_dir.normalized()
 
 		velocity.x = move_dir.x * move_speed * flee_speed_mult
 		velocity.z = move_dir.z * move_speed * flee_speed_mult
 	elif dist > preferred_distance + 3.0:
-		# Trop loin → se repositionne pour rester dans le jeu
-		move_dir   = to_player_n * 0.4
-		velocity.x = move_dir.x * move_speed
-		velocity.z = move_dir.z * move_speed
+		# Trop loin → se repositionne via navmesh
+		var nav_dir := _get_move_direction()
+		if nav_dir == Vector3.ZERO:
+			return
+		velocity.x = nav_dir.x * move_speed * 0.4
+		velocity.z = nav_dir.z * move_speed * 0.4
 	else:
 		# Zone confortable → dérive latérale lente (continue de poser des mines)
 		var lateral := Vector3(-to_player_n.z, 0.0, to_player_n.x)

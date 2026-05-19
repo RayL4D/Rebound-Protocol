@@ -13,6 +13,9 @@ var _zone2_triggered: bool = false
 
 
 func _ready() -> void:
+	
+	MusicManager.play("gameplay")
+	AmbientManager.play("arena")
 	TranslationServer.set_locale(SceneManager.current_lang)
 	CollisionManager.add_missing_collisions(self)
 	_setup_ui()

@@ -18,6 +18,9 @@ const WALL_1_PATH = "Zones/Blocking_wall_container/Blocking_wall_1"
 const WALL_2_PATH = "Zones/Blocking_wall_container/Blocking_wall_2"
 
 func _ready() -> void:
+	
+	MusicManager.play("gameplay")
+	AmbientManager.play("arena")
 	TranslationServer.set_locale(SceneManager.current_lang)
 		
 	CollisionManager.add_missing_collisions(self)
