@@ -1,0 +1,37 @@
+[gd_scene format=3 uid="uid://cwfy40lhpouf2"]
+
+[ext_resource type="Script" uid="uid://l1wtqcoo7nby" path="res://scripts/levels/multiplayer/arena_multiplayer.gd" id="1_6jctt"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_sq4lp"]
+size = Vector3(200, 0.5, 200)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_6jctt"]
+size = Vector3(200, 1, 200)
+
+[node name="ArenaMultiplayer" type="Node3D" unique_id=1935854673]
+script = ExtResource("1_6jctt")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=943444524]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D" unique_id=416898413]
+mesh = SubResource("BoxMesh_sq4lp")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=1049014440]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.011953354, -0.6080437, 0.08106232)
+shape = SubResource("BoxShape3D_6jctt")
+debug_color = Color(0.92941177, 0, 0.6627451, 1)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1775186198]
+transform = Transform3D(1, 0, 0, 0, 0.037829746, 0.9992842, 0, -0.9992842, 0.037829746, 0, 79.35499, 0)
+
+[node name="Players" type="Node3D" parent="." unique_id=1926651827]
+
+[node name="Enemies" type="Node3D" parent="." unique_id=1480521794]
+
+[node name="MultiplayerSpawner_1" type="MultiplayerSpawner" parent="." unique_id=920142341]
+_spawnable_scenes = PackedStringArray("uid://cp8oo218ghcj")
+spawn_path = NodePath("../Players")
+
+[node name="MultiplayerSpawner_2" type="MultiplayerSpawner" parent="." unique_id=1991426589]
+_spawnable_scenes = PackedStringArray("res://scenes/enemies/pet_cat.tscn", "uid://cnqylnjxoolj0", "uid://ubnnx67erpeq", "res://scenes/enemies/pet_crab.tscn")
+spawn_path = NodePath("../Enemies")
