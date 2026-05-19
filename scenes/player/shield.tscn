@@ -12,10 +12,10 @@ size = Vector3(1.2, 1.2, 0.5)
 render_priority = 0
 shader = ExtResource("4_cua4h")
 shader_parameter/shield_color = Color(0, 0.85430586, 1, 0.85)
+shader_parameter/border_color = Color(1, 0.8, 0.1, 1)
 shader_parameter/intensity = 1.5
 shader_parameter/hex_scale = 6.0
-shader_parameter/pulse_speed = 1.5
-shader_parameter/wave_speed = 3.0
+shader_parameter/curvature = 0.6
 
 [node name="Shield" type="Node3D" unique_id=626046708]
 script = ExtResource("1_e6x5r")

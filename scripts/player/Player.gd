@@ -213,7 +213,8 @@ func _ready() -> void:
 	spring_arm.global_position  = global_position + Vector3(0, 0.9, 0)
 	spring_arm.rotation_degrees = Vector3(_cam_pitch, _cam_yaw, 0.0)
 	spring_arm.spring_length    = _target_zoom
-
+	spring_arm.add_excluded_object(self.get_rid())
+	
 	# Stoppe l'AnimationPlayer brut du GLB — c'est l'AnimationTree qui prend
 	# le relais pour piloter les états (idle/sprint/parry/die).
 	var anim_player := robot_model.find_child("AnimationPlayer", true, false) as AnimationPlayer
