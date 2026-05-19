@@ -6,6 +6,7 @@ extends Control
 
 @onready var btn_new_game        = $CenterContainer/MainVBox/ButtonsVBox/BtnNewGame
 @onready var btn_continue        = $CenterContainer/MainVBox/ButtonsVBox/BtnContinue
+@onready var btn_multiplayer: Button = $CenterContainer/MainVBox/ButtonsVBox/BtnMultiplayer
 @onready var btn_options         = $CenterContainer/MainVBox/ButtonsVBox/BtnOptions
 @onready var btn_quit            = $CenterContainer/MainVBox/ButtonsVBox/BtnQuit
 @onready var btn_toggle_language = $CenterContainer/MainVBox/LanguageVBox/BtnToggleLanguage
@@ -614,6 +615,7 @@ func _ready() -> void:
 	Settings.apply_saved_settings()
 
 	btn_new_game.pressed.connect(_on_new_game_pressed)
+	btn_multiplayer.pressed.connect(_on_multiplayer_pressed)
 	btn_quit.pressed.connect(_on_quit_pressed)
 	btn_options.pressed.connect(_on_options_pressed)
 	btn_continue.pressed.connect(_on_continue_pressed)
@@ -787,6 +789,9 @@ func _start_title_pulse() -> void:
 # CALLBACKS
 # =============================================================
 
+func _on_multiplayer_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/ui/multiplayer_menu.tscn")
+	
 func _on_new_game_pressed() -> void:
 	SaveData.new_game_mode = true
 	get_tree().change_scene_to_file("res://scenes/ui/slot_select.tscn")
