@@ -468,10 +468,11 @@ func _input(event: InputEvent) -> void:
 				# Mémoriser l'état du clic droit pour le drag
 				_rmb_held = event.pressed
 
-	# Pitch de la caméra avec clic droit maintenu (vertical seulement)
+	# Pitch de la caméra avec clic droit maintenu
 	if event is InputEventMouseMotion and _rmb_held:
 		_target_pitch -= event.relative.y * cam_sensitivity
 		_target_pitch  = clamp(_target_pitch, cam_pitch_min, cam_pitch_max)
+		_target_snap_yaw -= event.relative.x * cam_sensitivity  # ← ajouter cette ligne
 
 	# Orbite par snap de 90° — détection ici pour éviter la répétition du held
 	if event is InputEventKey and event.pressed and not event.echo:

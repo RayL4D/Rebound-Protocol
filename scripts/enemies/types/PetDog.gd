@@ -44,15 +44,14 @@ func _on_ready() -> void:
 # =============================================================
 
 func _update_movement(_delta: float) -> void:
-	var dir  := player.global_position - global_position
-	dir.y     = 0.0
-	var dist  := dir.length()
-
+	var dist := global_position.distance_to(player.global_position)
 	if dist <= stop_distance:
 		velocity.x = 0.0
 		velocity.z = 0.0
 		return
 
-	dir = dir.normalized()
+	var dir := _get_move_direction()
+	if dir == Vector3.ZERO:
+		return
 	velocity.x = dir.x * move_speed
 	velocity.z = dir.z * move_speed

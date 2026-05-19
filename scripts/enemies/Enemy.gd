@@ -60,6 +60,12 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 signal enemy_died
 
 
+var _nav_agent: NavigationAgent3D = null
+const NAV_UPDATE_INTERVAL := 0.3  # recalcule le chemin toutes les 0.3s
+var _nav_timer: float = 0.0
+
+var _stuck_timer: float = 0.0
+var _last_position: Vector3 = Vector3.ZERO
 # =============================================================
 # LIFECYCLE
 # =============================================================
@@ -67,21 +73,29 @@ signal enemy_died
 func _ready() -> void:
 	current_hp = max_hp
 	add_to_group("enemies")
-
-	# Couche 5 (valeur 16) = même couche qu'EnemyPlaceholder
-	# → bullet_reflected a collision_mask = 16, donc elle détectera tous les ennemis
-	# Mask = couche 1 (player=1) + couche 3 (world=4) = 5
 	collision_layer = 16
 	collision_mask  = 5
-
 	player = get_tree().get_first_node_in_group("player")
 	_setup_model()
-
 	_sfx_player     = AudioStreamPlayer.new()
 	_sfx_player.bus = "SFX"
 	add_child(_sfx_player)
 
-	_on_ready()  # Hook pour les sous-classes
+	# NavigationAgent3D — ajouté avant _on_ready pour que les sous-classes
+	# puissent déjà appeler _get_move_direction() dans leur _on_ready
+	_nav_agent = NavigationAgent3D.new()
+	_nav_agent.path_desired_distance   = 0.5
+	_nav_agent.target_desired_distance = 0.5
+	_nav_agent.avoidance_enabled       = true
+	add_child(_nav_agent)
+
+	# ⚠️ Attendre un frame que la navmesh soit prête avant le 1er calcul
+	await get_tree().physics_frame
+
+	if player != null:
+		_nav_agent.target_position = player.global_position
+
+	_on_ready()
 
 
 # =============================================================
@@ -161,6 +175,13 @@ func _physics_process(delta: float) -> void:
 		return
 
 	_apply_gravity(delta)
+
+	# Mise à jour de la cible de navigation
+	_nav_timer -= delta
+	if _nav_timer <= 0.0:
+		_nav_timer = NAV_UPDATE_INTERVAL
+		_nav_agent.target_position = player.global_position
+
 	_update_movement(delta)
 	move_and_slide()
 	_face_player()
@@ -543,3 +564,23 @@ func _collect_meshes(node: Node, out: Array[MeshInstance3D]) -> void:
 		out.append(node as MeshInstance3D)
 	for child in node.get_children():
 		_collect_meshes(child, out)
+
+
+func _get_move_direction() -> Vector3:
+	if _nav_agent == null or _nav_agent.is_navigation_finished():
+		return Vector3.ZERO
+
+	# Détection de blocage
+	_stuck_timer += get_physics_process_delta_time()
+	if _stuck_timer >= 0.5:
+		_stuck_timer = 0.0
+		if global_position.distance_to(_last_position) < 0.05:
+			# Impulsion aléatoire pour se débloquer
+			var rng := Vector3(randf_range(-1, 1), 0, randf_range(-1, 1))
+			return rng.normalized()
+		_last_position = global_position
+
+	var next := _nav_agent.get_next_path_position()
+	var dir  := (next - global_position)
+	dir.y     = 0.0
+	return dir.normalized()
