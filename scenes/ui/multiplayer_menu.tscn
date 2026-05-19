@@ -1,0 +1,177 @@
+[gd_scene format=3 uid="uid://b84r6gx5n28vy"]
+
+[ext_resource type="FontFile" uid="uid://ci0o36dhvuhqf" path="res://ui_theme/fonts/Xolonium-Regular.ttf" id="1_font"]
+[ext_resource type="Script" uid="uid://i0pnqlqjve3v" path="res://scripts/ui/multiplayer_menu.gd" id="2_script"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_title"]
+font = ExtResource("1_font")
+font_size = 40
+outline_size = 3
+shadow_color = Color(0, 0, 0, 1)
+shadow_offset = Vector2(4, 4)
+
+[sub_resource type="LabelSettings" id="LabelSettings_subtitle"]
+font = ExtResource("1_font")
+font_size = 25
+outline_size = 3
+shadow_color = Color(0, 0, 0, 1)
+shadow_offset = Vector2(4, 4)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_normal"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0, 0.8509804, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_button_hover"]
+bg_color = Color(0.6, 0.6, 0.6, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+
+[node name="MultiplayerMenu" type="Control" unique_id=2131773591]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_script")
+
+[node name="Background" type="ColorRect" parent="." unique_id=1950343210]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.025, 0.045, 0.075, 1)
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1193946361]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MainVBox" type="VBoxContainer" parent="CenterContainer" unique_id=1833658852]
+layout_mode = 2
+theme_override_constants/separation = 30
+
+[node name="TitlesVBox" type="VBoxContainer" parent="CenterContainer/MainVBox" unique_id=1074330001]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/MainVBox/TitlesVBox" unique_id=1299814942]
+layout_mode = 2
+text = "MULTIJOUEUR"
+label_settings = SubResource("LabelSettings_title")
+horizontal_alignment = 1
+
+[node name="SubtitleLabel" type="Label" parent="CenterContainer/MainVBox/TitlesVBox" unique_id=765699058]
+layout_mode = 2
+text = "Configuration de la partie"
+label_settings = SubResource("LabelSettings_subtitle")
+horizontal_alignment = 1
+
+[node name="ConfigPanel" type="PanelContainer" parent="CenterContainer/MainVBox" unique_id=342484721]
+custom_minimum_size = Vector2(500, 0)
+layout_mode = 2
+
+[node name="ConfigVBox" type="VBoxContainer" parent="CenterContainer/MainVBox/ConfigPanel" unique_id=792087811]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="NameLabel" type="Label" parent="CenterContainer/MainVBox/ConfigPanel/ConfigVBox" unique_id=575445779]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+theme_override_fonts/font = ExtResource("1_font")
+text = "Nom du joueur:"
+
+[node name="NameEdit" type="LineEdit" parent="CenterContainer/MainVBox/ConfigPanel/ConfigVBox" unique_id=677029063]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("1_font")
+placeholder_text = "Entrez votre nom..."
+max_length = 20
+
+[node name="IPLabel" type="Label" parent="CenterContainer/MainVBox/ConfigPanel/ConfigVBox" unique_id=327630829]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+theme_override_fonts/font = ExtResource("1_font")
+text = "Adresse IP:"
+
+[node name="IPEdit" type="LineEdit" parent="CenterContainer/MainVBox/ConfigPanel/ConfigVBox" unique_id=45937275]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("1_font")
+text = "127.0.0.1"
+placeholder_text = "127.0.0.1"
+
+[node name="PortLabel" type="Label" parent="CenterContainer/MainVBox/ConfigPanel/ConfigVBox" unique_id=1558968866]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+theme_override_fonts/font = ExtResource("1_font")
+text = "Port:"
+
+[node name="PortEdit" type="LineEdit" parent="CenterContainer/MainVBox/ConfigPanel/ConfigVBox" unique_id=622316257]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("1_font")
+text = "7070"
+placeholder_text = "7070"
+
+[node name="ButtonsVBox" type="VBoxContainer" parent="CenterContainer/MainVBox" unique_id=415747481]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="BtnHost" type="Button" parent="CenterContainer/MainVBox/ButtonsVBox" unique_id=473115161]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("1_font")
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+text = "CRÉER UNE PARTIE"
+
+[node name="BtnJoin" type="Button" parent="CenterContainer/MainVBox/ButtonsVBox" unique_id=432229174]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("1_font")
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+text = "REJOINDRE UNE PARTIE"
+
+[node name="BtnBack" type="Button" parent="CenterContainer/MainVBox/ButtonsVBox" unique_id=1403108902]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("1_font")
+theme_override_styles/normal = SubResource("StyleBoxFlat_button_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_button_hover")
+text = "RETOUR"
+
+[node name="StatusLabel" type="Label" parent="CenterContainer/MainVBox" unique_id=1545141353]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_fonts/font = ExtResource("1_font")
+text = "Prêt"
+horizontal_alignment = 1
+
+[connection signal="pressed" from="CenterContainer/MainVBox/ButtonsVBox/BtnHost" to="." method="_on_btn_host_pressed"]
+[connection signal="pressed" from="CenterContainer/MainVBox/ButtonsVBox/BtnJoin" to="." method="_on_btn_join_pressed"]
+[connection signal="pressed" from="CenterContainer/MainVBox/ButtonsVBox/BtnBack" to="." method="_on_btn_back_pressed"]
