@@ -20,9 +20,7 @@
 [ext_resource type="Script" uid="uid://c8iuwrbemhmo6" path="res://scripts/levels/wave_manager.gd" id="16_wvmgr"]
 [ext_resource type="PackedScene" uid="uid://b2hehayj3ft7e" path="res://scenes/levels/zones/level_exit.tscn" id="17_djr2x"]
 [ext_resource type="PackedScene" uid="uid://cnm5imuwr82km" path="res://scenes/ui/mobile_controls.tscn" id="22_dyu6h"]
-[ext_resource type="PackedScene" path="res://scenes/enemies/pet_panda.tscn" id="24_3ojju"]
 [ext_resource type="PackedScene" uid="uid://dugi48yxe82ny" path="res://scenes/pickups/chest.tscn" id="25_3ojju"]
-[ext_resource type="PackedScene" uid="uid://vro4mka6qubf" path="res://scenes/enemies/pet_penguin.tscn" id="25_cugfp"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="28_pausemnu"]
 [ext_resource type="PackedScene" uid="uid://c1ba4apgy2p4p" path="res://scenes/levels/save_point.tscn" id="32_2i80p"]
 
@@ -1214,14 +1212,6 @@ glow_enabled = true
 glow_intensity = 0.8
 glow_bloom = 0.2
 
-[sub_resource type="Environment" id="Environment_lj50e"]
-background_mode = 1
-glow_enabled = true
-glow_normalized = true
-glow_intensity = 0.8
-glow_bloom = 0.2
-glow_blend_mode = 0
-
 [node name="ArenaBase" type="Node" unique_id=1261572821]
 script = ExtResource("1_7emnw")
 
@@ -1361,11 +1351,6 @@ transform = Transform3D(-1.9055202, 0, 9.8167715, 0, 10, 0, -9.8167715, 0, -1.90
 [node name="satelliteDish_02" parent="NavigationRegion3D/Structures_container" unique_id=1093937939 instance=ExtResource("3_7emnw")]
 transform = Transform3D(-2.9854112, 0, 9.543968, 0, 10, 0, -9.543968, 0, -2.9854112, 23.1627, -0.5, -3.817)
 
-[node name="Environment" type="Node3D" parent="NavigationRegion3D" unique_id=877202892]
-
-[node name="WorldEnvironment" type="WorldEnvironment" parent="NavigationRegion3D/Environment" unique_id=197659897]
-environment = SubResource("Environment_quicy")
-
 [node name="Exterior_decorations_container" type="Node3D" parent="NavigationRegion3D" unique_id=2083214895]
 
 [node name="crater_01" parent="NavigationRegion3D/Exterior_decorations_container" unique_id=146109322 instance=ExtResource("6_srw3s")]
@@ -1437,9 +1422,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015538096, 1.1920929e-07, -
 [node name="Chest" parent="." unique_id=1892450482 instance=ExtResource("25_3ojju")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.8892765)
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=537448808]
-environment = SubResource("Environment_lj50e")
+[node name="Environment" type="Node3D" parent="." unique_id=877202892]
 
-[node name="PetPanda" parent="." unique_id=1721995862 instance=ExtResource("24_3ojju")]
-
-[node name="PetPenguin" parent="." unique_id=621364231 instance=ExtResource("25_cugfp")]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Environment" unique_id=197659897]
+environment = SubResource("Environment_quicy")
