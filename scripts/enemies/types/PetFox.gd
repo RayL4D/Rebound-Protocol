@@ -25,8 +25,8 @@ extends Enemy
 
 # --- Exports propres à ce type ----------------------------------
 @export var preferred_distance: float = 7.0   # distance orbitale idéale
-@export var zigzag_freq:        float = 0.8   # fréquence d'oscillation (Hz) — combien de fois/s il change de direction
-@export var zigzag_amp:         float = 1.6   # amplitude du zigzag (1.0 = strafe pur, >1 = dépassement)
+@export var zigzag_freq:        float = 0.8   # fréquence d'oscillation (Hz)
+@export var zigzag_amp:         float = 1.6   # amplitude du zigzag
 
 # --- Référence au composant d'arme ------------------------------
 @onready var weapon: WeaponBullet = $WeaponMount/WeaponBullet
@@ -55,31 +55,34 @@ func _on_ready() -> void:
 
 
 # =============================================================
-# MOUVEMENT — zigzag orbital permanent, jamais immobile
+# MOUVEMENT — zigzag orbital permanent via navmesh
 # =============================================================
 
 func _update_movement(delta: float) -> void:
 	_zigzag_time += delta
 
-	var to_player := player.global_position - global_position
-	to_player.y   = 0.0
-	var dist      := to_player.length()
+	var dist := global_position.distance_to(player.global_position)
 
 	if dist < 0.1:
 		return
 
-	var to_player_n := to_player.normalized()
+	var to_player_n := (player.global_position - global_position)
+	to_player_n.y    = 0.0
+	to_player_n      = to_player_n.normalized()
 
-	# Composante radiale : maintien de la distance préférée
+	# Composante radiale : maintien de la distance préférée via navmesh
 	var radial := Vector3.ZERO
 	var margin := 2.0
 	if dist < preferred_distance - margin:
-		radial = -to_player_n          # trop proche → s'éloigner
+		# Trop proche → s'éloigner (direction opposée)
+		radial = -to_player_n
 	elif dist > preferred_distance + margin:
-		radial = to_player_n * 0.6    # trop loin → revenir doucement
+		# Trop loin → revenir via navmesh
+		var nav_dir := _get_move_direction()
+		if nav_dir != Vector3.ZERO:
+			radial = nav_dir * 0.6
 
 	# Composante orbitale avec zigzag sinusoïdal
-	# sin() oscille entre -1 et +1, ce qui inverse périodiquement le sens du strafe
 	var strafe_dir    := Vector3(-to_player_n.z, 0.0, to_player_n.x) * _orbit_sign
 	var zigzag_factor := sin(_zigzag_time * zigzag_freq * TAU) * zigzag_amp
 

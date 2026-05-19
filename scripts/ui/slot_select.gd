@@ -284,20 +284,89 @@ func _on_continue(slot: int) -> void:
 	SaveData.load_slot(slot)
 	var level := SaveData.get_current_level()
 	if level == "" or level == "arena_first_level_1":
-		SceneManager.load_level("res://scenes/levels/arena_first_level_1.tscn")
+		SceneManager.load_level("res://scenes/levels/first_level/arena_first_level_1.tscn")
 	elif level == "arena_first_level_2":
-		SceneManager.load_level("res://scenes/levels/arena_first_level_2.tscn")
+		SceneManager.load_level("res://scenes/levels/first_level/arena_first_level_2.tscn")
+	elif level == "arena_first_level_3":
+		SceneManager.load_level("res://scenes/levels/first_level/arena_first_level_3.tscn")
 	else:
 		SceneManager.load_level("res://scenes/levels/arena_base.tscn")
 
 
 func _on_new_game(slot: int) -> void:
 	SaveData.new_game(slot)
-	SaveData.set_current_level("arena_base")
-	# Sauvegarder le niveau de départ sur disque immédiatement
-	# (le HP initial sera sauvegardé par Player._restore_hp_from_save)
 	SaveData.save_current()
-	SceneManager.load_level("res://scenes/levels/arena_base.tscn")
+	_show_tutorial_skip_dialog(slot)
+
+
+func _show_tutorial_skip_dialog(slot: int) -> void:
+	if _confirm_overlay != null:
+		_confirm_overlay.queue_free()
+
+	var overlay := ColorRect.new()
+	overlay.color = Color(0.0, 0.0, 0.0, 0.65)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(center)
+
+	var panel := PanelContainer.new()
+	var style  := StyleBoxFlat.new()
+	style.bg_color     = COLOR_PANEL
+	style.border_color = COLOR_CYAN
+	style.set_border_width_all(2)
+	style.content_margin_left   = 40.0
+	style.content_margin_right  = 40.0
+	style.content_margin_top    = 32.0
+	style.content_margin_bottom = 32.0
+	panel.add_theme_stylebox_override("panel", style)
+	center.add_child(panel)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 10)
+	panel.add_child(vbox)
+
+	vbox.add_child(_make_label("◈  TUTORIEL", 16, COLOR_CYAN))
+
+	var spacer_top := Control.new()
+	spacer_top.custom_minimum_size = Vector2(0, 4)
+	vbox.add_child(spacer_top)
+
+	vbox.add_child(_make_label("Souhaitez-vous jouer le tutoriel ?", 18, Color(0.9, 0.9, 1.0)))
+	vbox.add_child(_make_label("Il vous apprendra les bases du Rebound Protocol.", 12, COLOR_DIM))
+
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(0, 12)
+	vbox.add_child(spacer)
+
+	var hbox := HBoxContainer.new()
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	hbox.add_theme_constant_override("separation", 20)
+	vbox.add_child(hbox)
+
+	var play_btn := _make_button("▶  TUTORIEL", func():
+		overlay.queue_free()
+		_confirm_overlay = null
+		SaveData.set_current_level("arena_base")
+		SaveData.save_current()
+		SceneManager.load_level("res://scenes/levels/arena_base.tscn")
+	, COLOR_CYAN, true)
+	play_btn.custom_minimum_size = Vector2(150, 44)
+	hbox.add_child(play_btn)
+
+	var skip_btn := _make_button("⏭  PASSER", func():
+		overlay.queue_free()
+		_confirm_overlay = null
+		SaveData.set_current_level("arena_first_level_1")
+		SaveData.save_current()
+		SceneManager.load_level("res://scenes/levels/first_level/arena_first_level_1.tscn")
+	, COLOR_GOLD, false)
+	skip_btn.custom_minimum_size = Vector2(150, 44)
+	hbox.add_child(skip_btn)
+
+	_confirm_overlay = overlay
+	add_child(_confirm_overlay)
 
 
 func _on_new_game_confirm(slot: int) -> void:

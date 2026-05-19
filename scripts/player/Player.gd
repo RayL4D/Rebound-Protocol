@@ -213,7 +213,8 @@ func _ready() -> void:
 	spring_arm.global_position  = global_position + Vector3(0, 0.9, 0)
 	spring_arm.rotation_degrees = Vector3(_cam_pitch, _cam_yaw, 0.0)
 	spring_arm.spring_length    = _target_zoom
-
+	spring_arm.add_excluded_object(self.get_rid())
+	
 	# Stoppe l'AnimationPlayer brut du GLB — c'est l'AnimationTree qui prend
 	# le relais pour piloter les états (idle/sprint/parry/die).
 	var anim_player := robot_model.find_child("AnimationPlayer", true, false) as AnimationPlayer
@@ -468,10 +469,11 @@ func _input(event: InputEvent) -> void:
 				# Mémoriser l'état du clic droit pour le drag
 				_rmb_held = event.pressed
 
-	# Pitch de la caméra avec clic droit maintenu (vertical seulement)
+	# Pitch de la caméra avec clic droit maintenu
 	if event is InputEventMouseMotion and _rmb_held:
 		_target_pitch -= event.relative.y * cam_sensitivity
 		_target_pitch  = clamp(_target_pitch, cam_pitch_min, cam_pitch_max)
+		_target_snap_yaw -= event.relative.x * cam_sensitivity  # ← ajouter cette ligne
 
 	# Orbite par snap de 90° — détection ici pour éviter la répétition du held
 	if event is InputEventKey and event.pressed and not event.echo:

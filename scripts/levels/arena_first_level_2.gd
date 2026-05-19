@@ -6,6 +6,9 @@ extends Node3D
 @onready var hud: Node = $HUD
 
 func _ready() -> void:
+	
+	MusicManager.play("gameplay")
+	AmbientManager.play("arena")
 	TranslationServer.set_locale(SceneManager.current_lang)
 		
 	CollisionManager.add_missing_collisions(self)

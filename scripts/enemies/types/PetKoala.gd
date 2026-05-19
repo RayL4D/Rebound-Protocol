@@ -47,7 +47,7 @@ func _on_ready() -> void:
 
 
 # =============================================================
-# MOUVEMENT — dérive lente, s'immobilise pendant la charge
+# MOUVEMENT — maintien de distance via navmesh, immobile en charge
 # =============================================================
 
 func _update_movement(_delta: float) -> void:
@@ -57,25 +57,28 @@ func _update_movement(_delta: float) -> void:
 		velocity.z = 0.0
 		return
 
-	var to_player := player.global_position - global_position
-	to_player.y   = 0.0
-	var dist      := to_player.length()
+	var dist := global_position.distance_to(player.global_position)
 
 	if dist < 0.1:
 		return
 
-	var to_player_n := to_player.normalized()
+	var to_player_n := (player.global_position - global_position)
+	to_player_n.y    = 0.0
+	to_player_n      = to_player_n.normalized()
 
 	if dist < preferred_distance - 2.0:
-		# Trop proche → recule
+		# Trop proche → recule (pas besoin de navmesh, il s'éloigne)
 		velocity.x = -to_player_n.x * move_speed
 		velocity.z = -to_player_n.z * move_speed
 	elif dist > preferred_distance + 3.0:
-		# Trop loin → s'approche doucement
-		velocity.x = to_player_n.x * move_speed
-		velocity.z = to_player_n.z * move_speed
+		# Trop loin → s'approche via navmesh
+		var nav_dir := _get_move_direction()
+		if nav_dir == Vector3.ZERO:
+			return
+		velocity.x = nav_dir.x * move_speed
+		velocity.z = nav_dir.z * move_speed
 	else:
-		# Zone confortable → légère dérive latérale pour ne pas rester figé
+		# Zone confortable → légère dérive latérale
 		var lateral := Vector3(-to_player_n.z, 0.0, to_player_n.x)
 		velocity.x   = lateral.x * move_speed * 0.25
 		velocity.z   = lateral.z * move_speed * 0.25
