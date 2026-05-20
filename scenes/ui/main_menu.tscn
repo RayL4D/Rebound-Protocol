@@ -131,6 +131,16 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_fe2o3")
 theme_override_styles/hover = SubResource("StyleBoxFlat_uhagc")
 text = "UI_LEAVE"
 
+[node name="BtnCredits" type="Button" parent="CenterContainer/MainVBox/ButtonsVBox" unique_id=778055347]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("1_fe2o3")
+theme_override_styles/normal = SubResource("StyleBoxFlat_fe2o3")
+theme_override_styles/hover = SubResource("StyleBoxFlat_uhagc")
+text = "UI_CREDITS"
+
 [node name="LanguageVBox" type="VBoxContainer" parent="CenterContainer/MainVBox" unique_id=27905456]
 layout_mode = 2
 theme_override_constants/separation = 10
