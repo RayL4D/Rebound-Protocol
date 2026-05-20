@@ -71,7 +71,7 @@ func _make_sfx() -> AudioStreamPlayer:
 func _build_ui() -> void:
 	_rarity_val = _skills[0].get("rarity", SkillCatalogue.Rarity.COMMON) if _skills.size() > 0 else 0
 	_rc         = SkillCatalogue.RARITY_COLORS[_rarity_val]
-	_rn         = SkillCatalogue.RARITY_NAMES[_rarity_val]
+	_rn         = tr(SkillCatalogue.RARITY_NAMES[_rarity_val])
 
 	var vp := get_viewport().get_visible_rect().size
 
@@ -139,7 +139,7 @@ func _build_ui() -> void:
 
 	# Titre
 	var a_header := Label.new()
-	a_header.text = "⚡  NIVEAU %d  ⚡" % _level
+	a_header.text = tr("UI_SKILL_LEVEL_TITLE") % _level
 	a_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	a_header.add_theme_font_size_override("font_size", 28)
 	a_header.add_theme_color_override("font_color", C_GOLD)
@@ -149,7 +149,7 @@ func _build_ui() -> void:
 
 	# Sous-titre
 	var a_sub := Label.new()
-	a_sub.text = "Tirage de compétence..."
+	a_sub.text = tr("UI_SKILL_DRAWING")
 	a_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	a_sub.add_theme_font_size_override("font_size", 11)
 	a_sub.add_theme_color_override("font_color", Color(C_CYAN, 0.60))
@@ -242,7 +242,7 @@ func _build_ui() -> void:
 		var r:       int    = sequence[i]
 		var c:       Color  = SkillCatalogue.RARITY_COLORS[r]
 		var sym_str: String = RARITY_SYMBOLS.get(r, "◆")
-		var nm_str:  String = SkillCatalogue.RARITY_NAMES[r]
+		var nm_str:  String = tr(SkillCatalogue.RARITY_NAMES[r])
 		tw.tween_callback(func() -> void:
 			cycle_sym.text = sym_str
 			cycle_sym.add_theme_color_override("font_color", Color(c, 0.92))
@@ -321,7 +321,7 @@ func _reveal_cards(bg: ColorRect) -> void:
 	var panel_root := Control.new()
 	panel_root.size         = Vector2(PW, PH)
 	panel_root.position     = Vector2((vp.x - PW) * 0.5, (vp.y - PH) * 0.5)
-	panel_root.modulate     = Color(1.0, 1.0, 1.0, 0.0)
+	panel_root.modulate      = Color(1.0, 1.0, 1.0, 0.0)
 	panel_root.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(panel_root)
 
@@ -363,7 +363,7 @@ func _reveal_cards(bg: ColorRect) -> void:
 
 	# Header
 	var header := Label.new()
-	header.text = "⚡  NIVEAU %d  ⚡" % _level
+	header.text = tr("UI_SKILL_LEVEL_TITLE") % _level
 	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	header.add_theme_font_size_override("font_size", 30)
 	header.add_theme_color_override("font_color", C_GOLD)
@@ -414,7 +414,7 @@ func _reveal_cards(bg: ColorRect) -> void:
 
 	# Hint clavier
 	var hint := Label.new()
-	hint.text = "Appuie sur  [1]  ou  [2]  pour choisir"
+	hint.text = tr("UI_SKILL_CHOOSE_HINT")
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_font_size_override("font_size", 10)
 	hint.add_theme_color_override("font_color", Color(C_TEXT_DIM, 0.40))
@@ -447,11 +447,11 @@ func _reveal_cards(bg: ColorRect) -> void:
 func _build_card(skill_data: Dictionary, index: int) -> Control:
 	var rarity:     int    = skill_data.get("rarity", SkillCatalogue.Rarity.COMMON)
 	var rc:         Color  = SkillCatalogue.RARITY_COLORS[rarity]
-	var rn:         String = SkillCatalogue.RARITY_NAMES[rarity]
+	var rn:         String = tr(SkillCatalogue.RARITY_NAMES[rarity])
 	var symbol:     String = RARITY_SYMBOLS.get(rarity, "◆")
 	var skill_id:   String = skill_data.get("id",          "")
-	var skill_name: String = skill_data.get("name",        "")
-	var skill_desc: String = skill_data.get("description", "")
+	var skill_name: String = tr(skill_data.get("name",        ""))
+	var skill_desc: String = tr(skill_data.get("description", ""))
 
 	const CW := 300.0
 	const CH := 250.0

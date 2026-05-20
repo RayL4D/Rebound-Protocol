@@ -394,7 +394,7 @@ func _build_coin_panel() -> void:
 
 	# Bouton BOUTIQUE (sous le counter)
 	var shop_btn             := Button.new()
-	shop_btn.text             = "BOUTIQUE  [B]"
+	shop_btn.text             = tr("UI_SHOP_TITLE")
 	shop_btn.position         = Vector2(COIN_X, COIN_Y + COIN_H + 4.0)
 	shop_btn.size             = Vector2(COIN_W, 28.0)
 	shop_btn.process_mode     = Node.PROCESS_MODE_ALWAYS
