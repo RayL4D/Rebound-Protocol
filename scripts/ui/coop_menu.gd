@@ -1,5 +1,5 @@
 extends Control
-## Menu multijoueur – Lobby host / join.
+## Menu coopératif – Lobby créer/rejoindre un salon.
 ## Style cyberpunk cohérent avec le main menu (BgFX complet, cyan #00D9FF, Xolonium).
 
 # ── Palette (identique au main menu) ─────────────────────────────────────────
