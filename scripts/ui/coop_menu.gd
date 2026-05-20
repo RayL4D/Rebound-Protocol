@@ -467,21 +467,28 @@ class _BgFX extends Control:
 
 
 # ── État ──────────────────────────────────────────────────────────────────────
-enum Screen { MAIN, LOBBY }
-var _screen: Screen = Screen.MAIN
+enum Screen   { MAIN, LOBBY }
+enum JoinMode { CODE, IP }
+var _screen:    Screen   = Screen.MAIN
+var _join_mode: JoinMode = JoinMode.CODE
 
-var _lbl_status:  Label
-var _lbl_code:    Label
-var _lbl_players: VBoxContainer
-var _btn_start:   Button
-var _lbl_wait:    Label
-var _entry_name:  LineEdit
-var _entry_code:  LineEdit
-var _panel_main:  Control
-var _panel_lobby: Control
-var _font:        FontFile = null
-var _content_root: Control
-var _btn_copy:    Button   # bouton "Copier le code"
+var _lbl_status:    Label
+var _lbl_code:      Label
+var _lbl_lan_ip:    Label
+var _lbl_players:   VBoxContainer
+var _btn_start:     Button
+var _lbl_wait:      Label
+var _entry_name:      LineEdit
+var _entry_code:      LineEdit   # rejoindre par code relay
+var _entry_relay_url: LineEdit   # URL du serveur relay (côté client)
+var _entry_ip:        LineEdit   # rejoindre par IP directe
+var _panel_main:    Control
+var _panel_lobby:   Control
+var _panel_code:    VBoxContainer
+var _panel_ip:      VBoxContainer
+var _font:          FontFile = null
+var _content_root:  Control
+var _btn_copy:      Button
 
 
 func _ready() -> void:
@@ -601,6 +608,7 @@ func _build_ui() -> void:
 func _build_main_panel() -> void:
 	var vb: VBoxContainer = _panel_main.get_child(0)
 
+	# ── Section RÉSEAU ───────────────────────────────────────────────────────
 	# ── Section CRÉER ────────────────────────────────────────────────────────
 	_add_section_header(vb, "▸ CRÉER UN SALON")
 	_add_spacer(vb, 10)
@@ -611,9 +619,15 @@ func _build_main_panel() -> void:
 	vb.add_child(_entry_name)
 	_add_spacer(vb, 12)
 
-	var btn_host := _make_action_button("CRÉER UN SALON  ◆", C_CYAN)
+	var btn_host := _make_action_button("CRÉER EN LIGNE  ◆", C_CYAN)
 	btn_host.pressed.connect(_on_host_pressed)
 	vb.add_child(btn_host)
+
+	_add_spacer(vb, 6)
+
+	var btn_host_lan := _make_action_button("CRÉER EN LAN (même réseau)  ◈", Color(0.18, 0.78, 0.58))
+	btn_host_lan.pressed.connect(_on_host_lan_pressed)
+	vb.add_child(btn_host_lan)
 
 	# ── Séparateur ───────────────────────────────────────────────────────────
 	_add_spacer(vb, 20)
@@ -638,18 +652,71 @@ func _build_main_panel() -> void:
 
 	# ── Section REJOINDRE ────────────────────────────────────────────────────
 	_add_section_header(vb, "▸ REJOINDRE UN SALON")
-	_add_spacer(vb, 10)
-
-	_add_field_label(vb, "CODE DU SALON  (6 CARACTÈRES)")
-	_add_spacer(vb, 5)
-	_entry_code = _make_line_edit("ABC123", 6)
-	_entry_code.text = ""
-	vb.add_child(_entry_code)
 	_add_spacer(vb, 12)
 
-	var btn_join := _make_action_button("REJOINDRE  →", Color(0.0, 0.55, 0.22))
-	btn_join.pressed.connect(_on_join_pressed)
-	vb.add_child(btn_join)
+	# Sélecteur CODE / IP
+	var join_row := HBoxContainer.new()
+	join_row.add_theme_constant_override("separation", 6)
+	vb.add_child(join_row)
+
+	var btn_by_code := _make_action_button("PAR CODE", C_CYAN)
+	var btn_by_ip   := _make_action_button("PAR IP DIRECTE", Color(0.18, 0.78, 0.58))
+	btn_by_code.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_by_ip.size_flags_horizontal   = Control.SIZE_EXPAND_FILL
+	btn_by_ip.modulate.a = 0.55
+	btn_by_code.pressed.connect(func(): _set_join_mode(JoinMode.CODE, btn_by_code, btn_by_ip))
+	btn_by_ip.pressed.connect(func():   _set_join_mode(JoinMode.IP,   btn_by_code, btn_by_ip))
+	join_row.add_child(btn_by_code)
+	join_row.add_child(btn_by_ip)
+	_add_spacer(vb, 12)
+
+	# Panneau PAR CODE
+	_panel_code = VBoxContainer.new()
+	_panel_code.add_theme_constant_override("separation", 0)
+	vb.add_child(_panel_code)
+
+	_add_field_label(_panel_code, "CODE DU SALON  (6 CARACTÈRES)")
+	_add_spacer(_panel_code, 5)
+	_entry_code = _make_line_edit("ABC123", 6)
+	_entry_code.text = ""
+	_panel_code.add_child(_entry_code)
+	_add_spacer(_panel_code, 10)
+
+	_add_field_label(_panel_code, "URL DU SERVEUR RELAY")
+	_add_spacer(_panel_code, 5)
+	_entry_relay_url = _make_line_edit("http://127.0.0.1:9090", 128)
+	_entry_relay_url.text = NetworkManager.relay_url
+	_panel_code.add_child(_entry_relay_url)
+	_add_spacer(_panel_code, 10)
+
+	var lbl_relay_hint := Label.new()
+	lbl_relay_hint.text = "Même réseau : http://192.168.x.x:9090  |  Internet : URL ngrok"
+	lbl_relay_hint.add_theme_font_size_override("font_size", 10)
+	lbl_relay_hint.add_theme_color_override("font_color", Color(C_CYAN, 0.28))
+	if _font: lbl_relay_hint.add_theme_font_override("font", _font)
+	lbl_relay_hint.autowrap_mode = TextServer.AUTOWRAP_WORD
+	_panel_code.add_child(lbl_relay_hint)
+	_add_spacer(_panel_code, 10)
+
+	var btn_join_code := _make_action_button("REJOINDRE  →", Color(0.0, 0.55, 0.22))
+	btn_join_code.pressed.connect(_on_join_pressed)
+	_panel_code.add_child(btn_join_code)
+
+	# Panneau PAR IP
+	_panel_ip = VBoxContainer.new()
+	_panel_ip.add_theme_constant_override("separation", 0)
+	_panel_ip.visible = false
+	vb.add_child(_panel_ip)
+
+	_add_field_label(_panel_ip, "IP DE L'HÔTE  (ex : 192.168.1.89)")
+	_add_spacer(_panel_ip, 5)
+	_entry_ip = _make_line_edit("192.168.1.x", 64)
+	_entry_ip.text = ""
+	_panel_ip.add_child(_entry_ip)
+	_add_spacer(_panel_ip, 10)
+	var btn_join_ip := _make_action_button("REJOINDRE  →", Color(0.0, 0.55, 0.22))
+	btn_join_ip.pressed.connect(_on_join_lan_pressed)
+	_panel_ip.add_child(btn_join_ip)
 
 
 func _build_lobby_panel() -> void:
@@ -682,12 +749,34 @@ func _build_lobby_panel() -> void:
 	code_inner.add_child(_lbl_code)
 
 	var lbl_hint := Label.new()
-	lbl_hint.text = "Partage ce code avec ton ami"
+	lbl_hint.text = "Partage ce code ou cette IP avec ton ami"
 	lbl_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl_hint.add_theme_color_override("font_color", Color(C_CYAN, 0.40))
 	lbl_hint.add_theme_font_size_override("font_size", 11)
 	if _font: lbl_hint.add_theme_font_override("font", _font)
 	code_inner.add_child(lbl_hint)
+
+	_add_spacer(code_inner, 8)
+
+	# IP LAN toujours visible en dessous (utile pour rejoindre par IP directe)
+	var lbl_lan_row := HBoxContainer.new()
+	lbl_lan_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	lbl_lan_row.add_theme_constant_override("separation", 6)
+	code_inner.add_child(lbl_lan_row)
+
+	var lbl_ip_prefix := Label.new()
+	lbl_ip_prefix.text = "IP LAN :"
+	lbl_ip_prefix.add_theme_font_size_override("font_size", 12)
+	lbl_ip_prefix.add_theme_color_override("font_color", Color(C_CYAN, 0.35))
+	if _font: lbl_ip_prefix.add_theme_font_override("font", _font)
+	lbl_lan_row.add_child(lbl_ip_prefix)
+
+	_lbl_lan_ip = Label.new()
+	_lbl_lan_ip.text = NetworkManager.get_lan_ip()
+	_lbl_lan_ip.add_theme_font_size_override("font_size", 12)
+	_lbl_lan_ip.add_theme_color_override("font_color", Color(C_CYAN, 0.75))
+	if _font: _lbl_lan_ip.add_theme_font_override("font", _font)
+	lbl_lan_row.add_child(_lbl_lan_ip)
 
 	# ── Bouton Copier le code ─────────────────────────────────────────────────
 	_add_spacer(vb, 8)
@@ -738,11 +827,49 @@ func _show_lobby() -> void:
 	_panel_main.visible = false
 	_panel_lobby.visible = true
 	_lbl_code.text = NetworkManager.room_code if NetworkManager.room_code != "" else "------"
+	if _lbl_lan_ip != null:
+		_lbl_lan_ip.text = NetworkManager.get_lan_ip()
 	_btn_start.visible = NetworkManager.is_host
 	_lbl_wait.visible  = not NetworkManager.is_host
+	# Adapte le label du bouton copier : IP directe ou code relay
+	if _btn_copy != null:
+		var is_ip: bool = "." in NetworkManager.room_code
+		_btn_copy.text = "⎘  COPIER L'IP" if is_ip else "⎘  COPIER LE CODE"
 
 
 # ── Handlers boutons ──────────────────────────────────────────────────────────
+
+func _set_join_mode(mode: JoinMode, btn_code: Button, btn_ip: Button) -> void:
+	_join_mode = mode
+	var is_code := mode == JoinMode.CODE
+	_panel_code.visible = is_code
+	_panel_ip.visible   = not is_code
+	btn_code.modulate.a = 1.0 if is_code else 0.55
+	btn_ip.modulate.a   = 1.0 if not is_code else 0.55
+
+
+func _on_host_lan_pressed() -> void:
+	var n := _entry_name.text.strip_edges()
+	if n.is_empty():
+		_set_status("Entre ton nom d'abord.", true)
+		return
+	_set_status("Démarrage du serveur…", false)
+	NetworkManager.host_lan(n)
+
+
+func _on_join_lan_pressed() -> void:
+	var n := _entry_name.text.strip_edges()
+	var ip := _entry_ip.text.strip_edges()
+	if n.is_empty():
+		_set_status("Entre ton nom d'abord.", true)
+		return
+	if ip.is_empty():
+		_set_status("Entre l'IP de l'hôte.", true)
+		return
+	_set_status("Connexion à %s…" % ip, false)
+	NetworkManager.join_lan(ip, n)
+
+
 func _on_host_pressed() -> void:
 	var n := _entry_name.text.strip_edges()
 	if n.is_empty():
@@ -761,6 +888,10 @@ func _on_join_pressed() -> void:
 	if c.length() != 6:
 		_set_status("Le code doit faire 6 caractères.", true)
 		return
+	# Applique l'URL relay saisie (permet de pointer vers LAN IP ou ngrok)
+	var url := _entry_relay_url.text.strip_edges()
+	if not url.is_empty():
+		NetworkManager.relay_url = url
 	_set_status("Connexion en cours…", false)
 	NetworkManager.join_game(c, n)
 
@@ -786,10 +917,11 @@ func _on_copy_pressed() -> void:
 	if code.is_empty():
 		return
 	DisplayServer.clipboard_set(code)
+	var original_label: String = _btn_copy.text
 	_btn_copy.text = "✓  COPIÉ !"
 	var tw := _btn_copy.create_tween()
 	tw.tween_interval(1.8)
-	tw.tween_callback(func(): _btn_copy.text = "⎘  COPIER LE CODE")
+	tw.tween_callback(func(): _btn_copy.text = original_label)
 
 
 # ── Callbacks NetworkManager ──────────────────────────────────────────────────
@@ -1006,3 +1138,4 @@ func _add_spacer(parent: Control, height: int) -> void:
 	var s := Control.new()
 	s.custom_minimum_size = Vector2(0, height)
 	parent.add_child(s)
+  
