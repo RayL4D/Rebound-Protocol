@@ -214,7 +214,13 @@ func _ready() -> void:
 	spring_arm.rotation_degrees = Vector3(_cam_pitch, _cam_yaw, 0.0)
 	spring_arm.spring_length    = _target_zoom
 	spring_arm.add_excluded_object(self.get_rid())
-	
+
+	# ── Multijoueur : désactiver caméra et input pour les joueurs distants ──
+	# is_multiplayer_authority() retourne true par défaut en solo → aucun impact.
+	if not is_multiplayer_authority():
+		camera.current = false
+		set_process_input(false)
+
 	# Stoppe l'AnimationPlayer brut du GLB — c'est l'AnimationTree qui prend
 	# le relais pour piloter les états (idle/sprint/parry/die).
 	var anim_player := robot_model.find_child("AnimationPlayer", true, false) as AnimationPlayer
@@ -364,6 +370,11 @@ func _apply_texture_recursive(node: Node) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# Multijoueur : seul le pair local contrôle sa propre physique.
+	# MultiplayerSynchronizer écrit la position du joueur distant directement.
+	if not is_multiplayer_authority():
+		return
+
 	if is_dead:
 		# Garder la caméra orientée et en place pendant l'animation de mort.
 		# On force spring_length = _target_zoom chaque frame : même si le spring arm
@@ -448,12 +459,19 @@ func _physics_process(delta: float) -> void:
 		if _parry_combo_timer <= 0.0:
 			_parry_combo = 0
 
+	# ── Multijoueur : envoyer position + orientation + HP aux autres pairs ──
+	# has_multiplayer_peer() est false en solo → aucun coût.
+	if multiplayer.has_multiplayer_peer():
+		_rpc_sync_transform.rpc(global_position, robot_model.global_rotation.y, current_hp)
+
 
 # =============================================================
 # CAMÉRA
 # =============================================================
 
 func _input(event: InputEvent) -> void:
+	if not is_multiplayer_authority():
+		return   # Multijoueur : ignorer les inputs pour les joueurs distants
 	if is_dead:
 		return   # Bloquer tout input caméra/zoom pendant l'animation de mort
 
@@ -988,6 +1006,22 @@ func _die() -> void:
 	var playback := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
 	playback.travel("die")
 	player_died.emit()
+
+
+# =============================================================
+# MULTIJOUEUR – SYNC TRANSFORM
+# =============================================================
+
+## Reçu par les pairs NON-authority pour mettre à jour la position du joueur distant.
+## Mode unreliable_ordered : les paquets perdus ne sont pas réémis, la dernière
+## position reçue est toujours la plus récente.
+@rpc("authority", "unreliable_ordered")
+func _rpc_sync_transform(pos: Vector3, model_yaw: float, hp: int) -> void:
+	global_position            = pos
+	robot_model.global_rotation.y = model_yaw
+	if current_hp != hp:
+		current_hp = hp
+		hp_changed.emit(current_hp)
 
 
 # =============================================================

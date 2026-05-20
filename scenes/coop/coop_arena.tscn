@@ -1,0 +1,107 @@
+[gd_scene format=3 uid="uid://coop_arena_rbp1"]
+
+[ext_resource type="Script" path="res://scripts/coop/coop_arena.gd" id="1_arena"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_ground"]
+size = Vector3(60.0, 0.5, 60.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape_ground"]
+size = Vector3(60.0, 0.5, 60.0)
+
+[sub_resource type="StandardMaterial3D" id="Mat_ground"]
+albedo_color = Color(0.06, 0.09, 0.14, 1)
+roughness = 0.92
+metallic = 0.05
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall"]
+size = Vector3(60.0, 4.0, 0.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape_wall"]
+size = Vector3(60.0, 4.0, 0.5)
+
+[sub_resource type="StandardMaterial3D" id="Mat_wall"]
+albedo_color = Color(0.04, 0.06, 0.10, 1)
+roughness = 0.95
+
+[sub_resource type="Environment" id="Env_arena"]
+background_mode = 1
+background_color = Color(0.015, 0.03, 0.05, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.0, 0.45, 0.75, 1)
+ambient_light_energy = 0.25
+fog_enabled = true
+fog_light_color = Color(0.0, 0.07, 0.15, 1)
+fog_density = 0.012
+
+[node name="CoopArena" type="Node3D"]
+script = ExtResource("1_arena")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Env_arena")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866, -0.354, 0.354, 0.0, 0.707, 0.707, -0.5, -0.612, 0.612, 0.0, 12.0, 0.0)
+light_color = Color(0.75, 0.85, 1.0, 1)
+light_energy = 1.0
+shadow_enabled = true
+
+[node name="FillLight" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+light_color = Color(0.0, 0.6, 1.0, 1)
+light_energy = 0.6
+omni_range = 40.0
+
+[node name="Ground" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
+collision_layer = 4
+
+[node name="GroundMesh" type="MeshInstance3D" parent="Ground"]
+mesh = SubResource("BoxMesh_ground")
+surface_material_override/0 = SubResource("Mat_ground")
+
+[node name="GroundCollision" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("BoxShape_ground")
+
+[node name="WallNorth" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.0, -30.0)
+collision_layer = 4
+
+[node name="Mesh" type="MeshInstance3D" parent="WallNorth"]
+mesh = SubResource("BoxMesh_wall")
+surface_material_override/0 = SubResource("Mat_wall")
+
+[node name="Col" type="CollisionShape3D" parent="WallNorth"]
+shape = SubResource("BoxShape_wall")
+
+[node name="WallSouth" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.0, 30.0)
+collision_layer = 4
+
+[node name="Mesh" type="MeshInstance3D" parent="WallSouth"]
+mesh = SubResource("BoxMesh_wall")
+surface_material_override/0 = SubResource("Mat_wall")
+
+[node name="Col" type="CollisionShape3D" parent="WallSouth"]
+shape = SubResource("BoxShape_wall")
+
+[node name="WallEast" type="StaticBody3D" parent="."]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 30.0, 2.0, 0)
+collision_layer = 4
+
+[node name="Mesh" type="MeshInstance3D" parent="WallEast"]
+mesh = SubResource("BoxMesh_wall")
+surface_material_override/0 = SubResource("Mat_wall")
+
+[node name="Col" type="CollisionShape3D" parent="WallEast"]
+shape = SubResource("BoxShape_wall")
+
+[node name="WallWest" type="StaticBody3D" parent="."]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -30.0, 2.0, 0)
+collision_layer = 4
+
+[node name="Mesh" type="MeshInstance3D" parent="WallWest"]
+mesh = SubResource("BoxMesh_wall")
+surface_material_override/0 = SubResource("Mat_wall")
+
+[node name="Col" type="CollisionShape3D" parent="WallWest"]
+shape = SubResource("BoxShape_wall")
