@@ -36,6 +36,7 @@ UI_OPTIONS,OPTIONS,OPTIONS,OPCIONES
 UI_CHANGE_LANGUAGE,CHANGE LANGUAGE,CHANGER DE LANGUE,CAMBIAR IDIOMA
 UI_LANGUAGE,LANGUAGE,LANGUE,IDIOMA
 UI_LEAVE,LEAVE,QUITTER,PARA IRSE
+UI_CREDITS,Credits,Crédits,Créditos
 BOSS,,,
 BOSS_LION_NAME,⚔ LION COMMANDER ⚔,⚔ COMMANDANT LION ⚔,⚔ COMANDANTE LEÓN ⚔
 BOSS_LION_ANNOUNCE,BOSS — LION COMMANDER,BOSS — COMMANDANT LION,JEFE — COMANDANTE LEÓN
@@ -73,3 +74,16 @@ ARENA_LVL3_WAVE_CATS,They're fast! Cats on the radar.,Ils sont rapides ! Des cha
 ARENA_LVL3_WAVE_MIX,Multiple hostiles from all sides!,Plusieurs hostiles arrivent de tous les côtés !,¡Múltiples hostiles por todos lados!
 ARENA_LVL3_WAVE_BOSS,⚠️ CRITICAL ALERT - BOSS LION DETECTED,⚠️ ALERTE CRITIQUE - BOSS LION DÉTECTÉ,⚠️ ALERTA CRÍTICA - JEFE LEÓN DETECTADO
 ARENA_LVL3_WIN,🎉 AREA SECURED - LEVEL 3 COMPLETED,🎉 ZONE SÉCURISÉE - NIVEAU 3 ACCOMPLI,🎉 ZONA SEGURA - NIVEL 3 COMPLETADO
+Crédits,,,
+CREDITS_DEV,DEVELOPMENT,DÉVELOPPEMENT,DESARROLLO
+CREDITS_DEV_ROLE,Developer & Game Designer,Développeur & Game Designer,Desarrollador y Diseñador
+CREDITS_DESIGN,GAME DESIGN,GAME DESIGN,DISEÑO DE JUEGOS
+CREDITS_DESIGN_ROLE,Game Designer,Game Designer,Diseñador de juegos
+CREDITS_MGMT,PROJECT MANAGEMENT,GESTION DE PROJET,GESTIÓN DE PROYECTOS
+CREDITS_MGMT_ROLE,Producer,Producteur,Productor
+CREDITS_FORMATION,FORMATION,FORMATION,FORMACIÓN
+CREDITS_FORMATION_DESC,Project developed during a L3 CDA internship at UBO Brest,Projet réalisé dans le cadre d'un stage de L3 CDA à l'UBO de Brest,Proyecto realizado durante una pasantía de L3 CDA en la UBO de Brest
+CREDITS_THANKS,SPECIAL THANKS,REMERCIEMENTS SPÉCIAUX,AGRADECIMIENTOS ESPECIALES
+CREDITS_THANKS_MSG,Thanks to everyone who contributed to this project,Merci à tous ceux qui ont contribué au développement de ce jeu,Gracias a todos los que contribuyeron al desarrollo de este juego
+CREDITS_ENGINE,CREATED WITH,CRÉÉ AVEC,CREADO CON
+CREDITS_COPYRIGHT,© 2025 - All rights reserved,© 2025 - Tous droits réservés,© 2025 - Todos los derechos reservados
