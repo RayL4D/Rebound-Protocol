@@ -36,7 +36,7 @@ UI_OPTIONS,OPTIONS,OPTIONS,OPCIONES
 UI_CHANGE_LANGUAGE,CHANGE LANGUAGE,CHANGER DE LANGUE,CAMBIAR IDIOMA
 UI_LANGUAGE,LANGUAGE,LANGUE,IDIOMA
 UI_LEAVE,LEAVE,QUITTER,PARA IRSE
-UI_CREDITS,Credits,Crédits,Créditos
+UI_CREDITS,CREDITS,CRÉDITS,CRÉDITOS
 BOSS,,,
 BOSS_LION_NAME,⚔ LION COMMANDER ⚔,⚔ COMMANDANT LION ⚔,⚔ COMANDANTE LEÓN ⚔
 BOSS_LION_ANNOUNCE,BOSS — LION COMMANDER,BOSS — COMMANDANT LION,JEFE — COMANDANTE LEÓN
@@ -209,3 +209,5 @@ SKILL_DESC_clone_bullet,Creates a random copy.,Ta balle crée une copie qui repa
 UI_SKILL_LEVEL_TITLE,⚡ LEVEL %d ⚡,⚡ NIVEAU %d ⚡,⚡ NIVEL %d ⚡
 UI_SKILL_DRAWING,Drawing skill...,Tirage de compétence...,Eligiendo habilidad...
 UI_SKILL_CHOOSE_HINT,Press [1] or [2] to choose,Appuie sur [1] ou [2] pour choisir,Presiona [1] o [2] para elegir
+UI_BTN_SKILL,SKILLS,COMPÉTENCES,COMPETENCIAS
+SKILL_VIEW,No skills acquired yet.,Aucune compétence acquise pour l'instant.,Aún no se han adquirido habilidades.
