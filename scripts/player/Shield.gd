@@ -62,7 +62,11 @@ var _base_color: Color
 
 func _ready() -> void:
 	player = get_parent()
-	camera = get_viewport().get_camera_3d()
+	# La caméra est récupérée en lazy dans _orbit_toward_mouse() plutôt qu'ici,
+	# car au moment du spawn la caméra active du viewport peut être nulle ou
+	# appartenir à un autre joueur (en co-op, la caméra du joueur local n'est
+	# activée qu'à la fin de Player._ready(), après Shield._ready()).
+	camera = null
 
 	# Player polyphonique pour les sons bouclier (block + reflect)
 	_sfx_shield = AudioStreamPlayer.new()
@@ -134,6 +138,10 @@ func refresh_upgrades() -> void:
 
 
 func _process(delta: float) -> void:
+	# Multijoueur : le bouclier distant ne doit pas réagir à la souris locale.
+	# player.is_multiplayer_authority() retourne true en solo → aucun impact.
+	if not player.is_multiplayer_authority():
+		return
 	_orbit_toward_mouse()
 	# Décrémenter les timers de combo — reset quand la fenêtre expire
 	if _block_combo_timer > 0.0:
@@ -156,8 +164,15 @@ func _process(delta: float) -> void:
 # =============================================================
 
 func _orbit_toward_mouse() -> void:
+	# Lazy-get : récupère la caméra du joueur local au premier appel valide.
+	# On passe par player.$SpringArm3D/Camera3D plutôt que get_camera_3d()
+	# pour s'assurer d'utiliser la caméra de CE joueur, pas celle du viewport.
 	if camera == null:
-		return
+		var p := player as Player
+		if p != null:
+			camera = p.get_node_or_null("SpringArm3D/Camera3D") as Camera3D
+		if camera == null:
+			return
 
 	var dir := Vector3.ZERO
 

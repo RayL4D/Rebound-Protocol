@@ -203,7 +203,10 @@ func _ready() -> void:
 	# Restaurer la position du checkpoint IMMÉDIATEMENT, avant le premier frame
 	# de physique. Sans ça, le joueur spawne à la position par défaut de la scène
 	# pendant au moins un frame avant d'être téléporté.
-	if SaveData.active_slot >= 0:
+	# En mode coopératif (multiplayer peer actif), on saute cette restauration :
+	# la position est déjà fixée par CoopArena._spawn_player_from_data() avant
+	# add_child(), et la position sauvegardée (donjon solo) n'a rien à faire ici.
+	if SaveData.active_slot >= 0 and not multiplayer.has_multiplayer_peer():
 		var saved_pos := SaveData.get_player_position()
 		if saved_pos != Vector3.ZERO:
 			global_position = saved_pos
@@ -215,11 +218,15 @@ func _ready() -> void:
 	spring_arm.spring_length    = _target_zoom
 	spring_arm.add_excluded_object(self.get_rid())
 
-	# ── Multijoueur : désactiver caméra et input pour les joueurs distants ──
+	# ── Multijoueur : activer/désactiver caméra et input selon l'autorité ──
 	# is_multiplayer_authority() retourne true par défaut en solo → aucun impact.
+	# On force camera.current = true pour le joueur local plutôt que de se fier
+	# à la valeur par défaut de la scène — évite l'écran gris sur le client.
 	if not is_multiplayer_authority():
 		camera.current = false
 		set_process_input(false)
+	else:
+		camera.current = true
 
 	# Stoppe l'AnimationPlayer brut du GLB — c'est l'AnimationTree qui prend
 	# le relais pour piloter les états (idle/sprint/parry/die).
@@ -268,7 +275,11 @@ func _ready() -> void:
 
 	# Restaurer les HP en deferred : le HUD (qui écoute hp_changed) n'est pas
 	# encore connecté pendant _ready(), on attend la fin du frame.
-	call_deferred("_restore_hp_from_save")
+	# En mode co-op, on émet directement hp_changed sans toucher au SaveData.
+	if multiplayer.has_multiplayer_peer():
+		call_deferred("emit_signal", "hp_changed", current_hp)
+	else:
+		call_deferred("_restore_hp_from_save")
 
 
 # =============================================================

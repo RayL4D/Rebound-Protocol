@@ -53,7 +53,7 @@ omni_range = 40.0
 
 [node name="Ground" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
-collision_layer = 4
+collision_layer = 1
 
 [node name="GroundMesh" type="MeshInstance3D" parent="Ground"]
 mesh = SubResource("BoxMesh_ground")
@@ -64,7 +64,7 @@ shape = SubResource("BoxShape_ground")
 
 [node name="WallNorth" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.0, -30.0)
-collision_layer = 4
+collision_layer = 1
 
 [node name="Mesh" type="MeshInstance3D" parent="WallNorth"]
 mesh = SubResource("BoxMesh_wall")
@@ -75,7 +75,7 @@ shape = SubResource("BoxShape_wall")
 
 [node name="WallSouth" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.0, 30.0)
-collision_layer = 4
+collision_layer = 1
 
 [node name="Mesh" type="MeshInstance3D" parent="WallSouth"]
 mesh = SubResource("BoxMesh_wall")
@@ -86,7 +86,7 @@ shape = SubResource("BoxShape_wall")
 
 [node name="WallEast" type="StaticBody3D" parent="."]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 30.0, 2.0, 0)
-collision_layer = 4
+collision_layer = 1
 
 [node name="Mesh" type="MeshInstance3D" parent="WallEast"]
 mesh = SubResource("BoxMesh_wall")
@@ -97,7 +97,7 @@ shape = SubResource("BoxShape_wall")
 
 [node name="WallWest" type="StaticBody3D" parent="."]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -30.0, 2.0, 0)
-collision_layer = 4
+collision_layer = 1
 
 [node name="Mesh" type="MeshInstance3D" parent="WallWest"]
 mesh = SubResource("BoxMesh_wall")
