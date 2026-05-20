@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://c1ba4apgy2p4p"]
 
-[ext_resource type="Script" uid="uid://bu3tigewwous2" path="res://scripts/levels/save_point.gd" id="1_script"]
+[ext_resource type="Script" path="res://scripts/levels/save_point.gd" id="1_script"]
 [ext_resource type="PackedScene" uid="uid://dbjv3of283l8i" path="res://assets/models/platformerkit/flag.glb" id="2_flag"]
-[ext_resource type="Shader" uid="uid://clq1clgeexomk" path="res://assets/shaders/save_point_ring.gdshader" id="3_shader"]
+[ext_resource type="Shader" path="res://assets/shaders/save_point_ring.gdshader" id="3_shader"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_beam"]
 transparency = 1
