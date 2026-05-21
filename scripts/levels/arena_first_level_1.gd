@@ -6,7 +6,7 @@ extends Node3D
 # --- RÉFÉRENCES AUX NŒUDS (Chemins mis à jour) ---
 @onready var wave_manager_zone1: WaveManager = $Wave_manager_container/WaveManager_Zone1
 @onready var wave_manager_zone2: WaveManager = $Wave_manager_container/WaveManager_Zone2
-@onready var level_exit: Node = $Zones/LevelExit
+@onready var level_exit: Node = $Zones/Instant_exit
 @onready var hud: Node = $HUD
 
 # Variables de contrôle
@@ -24,9 +24,12 @@ func _ready() -> void:
 	TranslationServer.set_locale(SceneManager.current_lang)
 		
 	CollisionManager.add_missing_collisions(self)
+	CollisionManager.add_missing_collisions(level_exit)
 	_setup_ui()
 	_setup_waves()
 	_connect_signals()
+	
+	ScoreManager.start_level()
 	
 	# === DÉSACTIVATION DES MURS AU LANCEMENT ===
 	if has_node(WALL_1_PATH):

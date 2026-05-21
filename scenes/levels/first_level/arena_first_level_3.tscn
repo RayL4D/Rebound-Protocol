@@ -12,7 +12,6 @@
 [ext_resource type="PackedScene" uid="uid://ubnnx67erpeq" path="res://scenes/enemies/pet_cow.tscn" id="7_d3ds4"]
 [ext_resource type="PackedScene" uid="uid://dvqrgi5mkvifa" path="res://assets/models/environments/tutorial_and_first_level/gate_complex.glb" id="7_stl1x"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/pet_cat.tscn" id="8_fn56f"]
-[ext_resource type="Shader" uid="uid://ctto1apvv4vc4" path="res://assets/shaders/portal_effect.gdshader" id="8_o48oq"]
 [ext_resource type="PackedScene" uid="uid://cnqylnjxoolj0" path="res://scenes/enemies/boss_lion.tscn" id="9_hlidb"]
 [ext_resource type="PackedScene" uid="uid://y8k57erdl7in" path="res://assets/models/environments/tutorial_and_first_level/structure.glb" id="10_vj1m7"]
 [ext_resource type="PackedScene" uid="uid://bc2g6cf1hocgb" path="res://assets/models/environments/tutorial_and_first_level/structure_diagonal.glb" id="11_wx7ts"]
@@ -29,11 +28,8 @@
 [ext_resource type="PackedScene" uid="uid://k3xwyj2an72" path="res://assets/models/environments/tutorial_and_first_level/hangar_largeB.glb" id="21_4sluf"]
 [ext_resource type="PackedScene" uid="uid://1jmmybq2se2u" path="res://assets/models/environments/tutorial_and_first_level/bones.glb" id="21_n4j7j"]
 [ext_resource type="PackedScene" uid="uid://djar8jmagj3pd" path="res://assets/models/environments/tutorial_and_first_level/rock.glb" id="22_ayrjc"]
-[ext_resource type="PackedScene" uid="uid://dbhdbhhp6hb6h" path="res://assets/models/environments/tutorial_and_first_level/platform_small.glb" id="23_0xssw"]
 [ext_resource type="PackedScene" uid="uid://d2r5655th8tr0" path="res://assets/models/environments/tutorial_and_first_level/satelliteDish_large.glb" id="23_kxf5t"]
 [ext_resource type="PackedScene" uid="uid://du4lnkverx2e8" path="res://assets/models/environments/tutorial_and_first_level/desk_computerCorner.glb" id="24_cvhmm"]
-[ext_resource type="PackedScene" uid="uid://bd823ofpus08f" path="res://assets/models/environments/tutorial_and_first_level/stairs_short.glb" id="24_kafm6"]
-[ext_resource type="PackedScene" uid="uid://d2yvf13ndfbeu" path="res://assets/models/environments/tutorial_and_first_level/pipe_supportLow.glb" id="25_33y5m"]
 [ext_resource type="PackedScene" uid="uid://cc63r0fsb3ix0" path="res://assets/models/environments/tutorial_and_first_level/platform_center.glb" id="26_hubb8"]
 [ext_resource type="PackedScene" uid="uid://c6lrvtxy730e8" path="res://assets/models/environments/tutorial_and_first_level/craft_cargoA.glb" id="27_fwxyl"]
 [ext_resource type="PackedScene" uid="uid://c4hvrxfshm1n3" path="res://assets/models/environments/tutorial_and_first_level/craft_miner.glb" id="28_uhuh1"]
@@ -182,24 +178,6 @@ _data = {
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_cj7kk"]
 size = Vector3(334.11328, 16.687023, 306.75366)
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_drt8d"]
-render_priority = 0
-shader = ExtResource("8_o48oq")
-shader_parameter/base_color = Color(0, 0.83, 1, 1)
-shader_parameter/speed = 1.0
-shader_parameter/distortion = 2.0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hrfqu"]
-albedo_color = Color(0.40545133, 1.4369954, 1.4369954, 0.42745098)
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_0xyr7"]
-material = SubResource("StandardMaterial3D_hrfqu")
-size = Vector2(3, 3.3)
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_s13nm"]
-material = SubResource("StandardMaterial3D_hrfqu")
-size = Vector2(3.5, 3.5)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_lwkvo"]
 render_priority = 0
@@ -878,30 +856,8 @@ transform = Transform3D(-31.440529, -0.16379292, -5.320778, -12.586131, 0.967799
 
 [node name="portal_container" type="Node3D" parent="WorldObjects_container" unique_id=1170260978]
 
-[node name="exit_portal" parent="WorldObjects_container/portal_container" unique_id=128511162 instance=ExtResource("23_0xssw")]
-transform = Transform3D(20, 0, 0, 0, 20, 0, 0, 0, 20, 290.55728, 45.48681, -403.06534)
-
-[node name="stairs_short_1" parent="WorldObjects_container/portal_container/exit_portal" unique_id=1913800888 instance=ExtResource("24_kafm6")]
-transform = Transform3D(0.0038046308, 0, 0.9999928, 0, 1, 0, -0.9999928, 0, 0.0038046308, -0.20117188, -0.26928115, 3.5153828)
-
-[node name="gate_complex_1" parent="WorldObjects_container/portal_container/exit_portal" unique_id=693681715 instance=ExtResource("7_stl1x")]
-transform = Transform3D(-0.002219064, 0, -0.7142823, 0, 0.7142857, 0, 0.7142823, 0, -0.002219064, 3.0709915, 0.04685068, 0.07218552)
-
-[node name="pipe_supportLow_1" parent="WorldObjects_container/portal_container/exit_portal" unique_id=1238186714 instance=ExtResource("25_33y5m")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.018829346, -0.44624782, -0.023277283)
-
-[node name="LevelExit" parent="WorldObjects_container/portal_container/exit_portal" unique_id=336532745 instance=ExtResource("35_1x23w")]
-transform = Transform3D(0.0024903484, 0, -0.13497703, 0, 0.135, 0, 0.13497703, 0, 0.0024903484, 2.016161, 0.45045543, 1.4914837)
-
-[node name="MeshInstance3D2" type="MeshInstance3D" parent="WorldObjects_container/portal_container/exit_portal/LevelExit" unique_id=386210051]
-transform = Transform3D(-0.015271548, 0.0015603844, -0.9998835, -0.99659026, 0.08106916, 0.015347825, 0.0810836, 0.9967084, 0.0003169868, 0.08444595, 0.04242325, 0.24749756)
-material_override = SubResource("ShaderMaterial_drt8d")
-mesh = SubResource("PlaneMesh_0xyr7")
-
-[node name="MeshInstance3D3" type="MeshInstance3D" parent="WorldObjects_container/portal_container/exit_portal/LevelExit" unique_id=677096834]
-transform = Transform3D(-0.013783017, 0.0014996734, -0.9999067, -0.99990493, 0.0003828965, 0.013783619, 0.00040378186, 1.0000012, 0.0014942158, 0.02773285, 0.0025730133, -0.025909424)
-material_override = SubResource("ShaderMaterial_drt8d")
-mesh = SubResource("PlaneMesh_s13nm")
+[node name="LevelExit" parent="WorldObjects_container/portal_container" unique_id=336532745 instance=ExtResource("35_1x23w")]
+transform = Transform3D(0.049806967, 0, -2.6995406, 0, 2.7, 0, 2.6995406, 0, 0.049806967, 330.8805, 54.49592, -373.23566)
 
 [node name="entry_portal" type="Node3D" parent="WorldObjects_container/portal_container" unique_id=691497894]
 transform = Transform3D(0.9574405, 0, -0.28863075, 0, 1, 0, 0.28863075, 0, 0.9574405, -14.269655, 38.671165, -6.246505)
@@ -1187,6 +1143,7 @@ transform = Transform3D(5.6061006, 0, -8.2808, 0, 10, 0, 8.2808, 0, 5.6061006, 1
 transform = Transform3D(-0.32669008, 0, -0.9451316, 0, 1, 0, 0.9451316, 0, -0.32669008, 4.5557275, 39.964878, -0.33545315)
 move_speed = 20.0
 jump_force = 7.0
+max_hp = 10000
 
 [node name="HUD" parent="." unique_id=1994348935 instance=ExtResource("36_5boxw")]
 

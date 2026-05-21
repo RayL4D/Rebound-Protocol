@@ -62,7 +62,7 @@ var _current_wave_data: WaveData = null
 # =============================================================
 
 func _ready() -> void:
-	pass
+	TranslationServer.set_locale(SceneManager.current_lang)
 
 func _find_player() -> void:
 	"""Trouve et stocke la référence au joueur"""
@@ -228,6 +228,7 @@ func _complete_wave() -> void:
 	
 	_wave_completed = true
 	wave_completed.emit(_current_wave + 1)
+	ScoreManager.add_wave()
 	
 	_show_message(tr("WAVE_CLEARED") % (_current_wave + 1))
 	await get_tree().create_timer(2.0).timeout

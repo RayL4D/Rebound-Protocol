@@ -211,3 +211,24 @@ UI_SKILL_DRAWING,Drawing skill...,Tirage de compétence...,Eligiendo habilidad..
 UI_SKILL_CHOOSE_HINT,Press [1] or [2] to choose,Appuie sur [1] ou [2] pour choisir,Presiona [1] o [2] para elegir
 UI_BTN_SKILL,SKILLS,COMPÉTENCES,COMPETENCIAS
 SKILL_VIEW,No skills acquired yet.,Aucune compétence acquise pour l'instant.,Aún no se han adquirido habilidades.
+Score,,,
+UI_SCORE_TITLE,RAPPORT DE MISSION,MISSION REPORT,INFORME DE MISIÓN
+UI_SCORE_STATUS,▸ MISSION TERMINÉE,▸ MISSION CLEARED,▸ MISIÓN COMPLETADA
+UI_SCORE_SECTION_COMBAT,▸ COMBAT,▸ COMBAT,▸ COMBATE
+UI_SCORE_SECTION_PROGRESS,▸ PROGRESSION,▸ PROGRESSION,▸ PROGRESO
+UI_SCORE_SECTION_PERF,▸ PERFORMANCE,▸ PERFORMANCE,▸ RENDIMIENTO
+UI_SCORE_TOTAL,SCORE TOTAL : %d,TOTAL SCORE: %d,PUNTUACIÓN TOTAL: %d
+UI_SCORE_RANK,RANG : %s,RANK: %s,RANGO: %s
+UI_SCORE_BTN_RETRY,◄ REJOUER,◄ REPLAY,◄ VOLVER A JUGAR
+UI_SCORE_BTN_MENU,MENU PRINCIPAL ►,MAIN MENU ►,MENÚ PRINCIPAL ►
+UI_SCORE_ANALYSIS_DONE,▸ ANALYSE TERMINÉE,▸ ANALYSIS COMPLETE,▸ ANÁLISIS COMPLETADO
+UI_SCORE_DATA_SIGNAL,DONNÉES %s,DATA %s,DATOS %s
+UI_STAT_ENEMIES_KILLED,Ennemis éliminés,Enemies Killed,Enemigos Eliminados
+UI_STAT_KILLS_PER_WAVE,Kills / Vague,Kills / Wave,Bajas / Oleada
+UI_STAT_KILLS_PER_MIN,Kills / Minute,Kills / Minute,Bajas / Minuto
+UI_STAT_WAVES_CLEARED,Vagues complétées,Waves Cleared,Oleadas Completadas
+UI_STAT_TIME_PER_WAVE,Temps par vague,Time per Wave,Tiempo por Oleada
+UI_STAT_SURVIVAL_TIME,Temps de survie,Survival Time,Tiempo de Supervivencia
+UI_STAT_EFFICIENCY,Efficacité,Efficiency,Eficiencia
+UI_STAT_WAVES_PER_MIN,Vagues / Minute,Waves / Minute,Oleadas / Minuto
+UI_STAT_AVG_DURATION,Durée moyenne,Durée moyenne,Duración Media
