@@ -98,8 +98,8 @@ class RelayHandler(BaseHTTPRequestHandler):
             with _lock:
                 if code in _rooms:
                     _rooms[code]["created"] = time.time()  # refresh TTL
-            self._send(200, {"ip": room["ip"], "port": room["port"],
-                             "player_name": room["player_name"]})
+            self._send(200, {"ip": room["ip"], "lan_ip": room.get("lan_ip", ""),
+                             "port": room["port"], "player_name": room["player_name"]})
         elif self.path in ("/ping", "/"):
             self._send(200, {"ok": True, "rooms": len(_rooms)})
         else:
@@ -108,17 +108,18 @@ class RelayHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path == "/host":
             data = self._body()
-            ip   = data.get("ip", "")
-            port = data.get("port", 0)
-            name = data.get("player_name", "Host")
+            ip     = data.get("ip", "")
+            lan_ip = data.get("lan_ip", "")
+            port   = data.get("port", 0)
+            name   = data.get("player_name", "Host")
             if not ip or not port:
                 self._send(400, {"error": "ip and port required"})
                 return
             with _lock:
                 code = _generate_code()
-                _rooms[code] = {"ip": ip, "port": int(port),
+                _rooms[code] = {"ip": ip, "lan_ip": lan_ip, "port": int(port),
                                 "player_name": name, "created": time.time()}
-            print(f"[relay] Created room {code} → {ip}:{port} ({name})")
+            print(f"[relay] Created room {code} → {ip} / LAN {lan_ip}:{port} ({name})")
             self._send(200, {"code": code})
         else:
             self._send(404, {"error": "Not found"})

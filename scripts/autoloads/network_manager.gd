@@ -14,7 +14,7 @@ extends Node
 ## URL du serveur relay public (Render.com ou autre cloud).
 ## ⚠️  Après déploiement, remplace CHANGE_ME par ton sous-domaine Render.
 ## Exemple : "https://rebound-relay.onrender.com"
-const RELAY_URL_DEFAULT := "https://CHANGE_ME.onrender.com"
+const RELAY_URL_DEFAULT := "https://rebound-protocol.onrender.com"
 
 var relay_url: String = RELAY_URL_DEFAULT
 const GAME_PORT  := 7777
@@ -153,27 +153,29 @@ func host_game(player_name: String) -> void:
 	players[1] = {"name": player_name}
 	players_updated.emit(players.duplicate(true))
 
-# 3 – Récupère l'IP LAN (Même réseau)
+# 3 – Récupère l'IP publique via ipify (fallback sur IP LAN)
 	var public_ip := "127.0.0.1"
-	var addrs: Array = Array(IP.get_local_addresses()).filter(
-		func(a: String) -> bool:
-			# On exclut localhost, l'IPv6 et surtout les fausses adresses APIPA (169.254)
-			return not a.begins_with("127.") and not a.begins_with("169.254.") and not a.begins_with("::1") and ":" not in a
-	)
-
-	# On cherche en priorité une vraie adresse de box internet (192.168.x.x ou 10.x.x.x)
-	for a in addrs:
-		if a.begins_with("192.168.") or a.begins_with("10."):
-			public_ip = a
-			break
-	
-	# Fallback si on n'a rien trouvé de classique
-	if public_ip == "127.0.0.1" and not addrs.is_empty():
-		public_ip = addrs.front()
+	var ipify: Array = await _http_request("https://api.ipify.org")
+	if ipify[0] == HTTPRequest.RESULT_SUCCESS and ipify[1] == 200:
+		public_ip = ipify[3].get_string_from_utf8().strip_edges()
+	else:
+		# ipify injoignable → on utilise l'IP LAN (même réseau uniquement)
+		var addrs: Array = Array(IP.get_local_addresses()).filter(
+			func(a: String) -> bool:
+				return not a.begins_with("127.") and not a.begins_with("169.254.") \
+					and not a.begins_with("::1") and ":" not in a
+		)
+		for a in addrs:
+			if a.begins_with("192.168.") or a.begins_with("10."):
+				public_ip = a
+				break
+		if public_ip == "127.0.0.1" and not addrs.is_empty():
+			public_ip = addrs.front()
 		
 		
-	# 4 – Enregistre le salon auprès du relay
-	var body := JSON.stringify({"ip": public_ip, "port": GAME_PORT, "player_name": player_name})
+	# 4 – Enregistre le salon auprès du relay (IP publique + IP LAN)
+	var lan_ip := get_lan_ip()
+	var body := JSON.stringify({"ip": public_ip, "lan_ip": lan_ip, "port": GAME_PORT, "player_name": player_name})
 	var hdrs: PackedStringArray = ["Content-Type: application/json"]
 	var relay: Array = await _http_request(relay_url + "/host", HTTPClient.METHOD_POST, hdrs, body)
 	_busy = false
@@ -223,9 +225,21 @@ func join_game(code: String, player_name: String) -> void:
 		connection_failed.emit("Réponse invalide du relay.")
 		return
 
-	# 2 – Connexion ENet
+	# 2 – Connexion ENet : LAN IP si même sous-réseau, sinon IP publique
+	var host_public_ip: String = info["ip"]
+	var host_lan_ip:    String = info.get("lan_ip", "")
+	var my_lan_ip := get_lan_ip()
+	var connect_ip := host_public_ip
+	if not host_lan_ip.is_empty():
+		var my_parts  := my_lan_ip.split(".")
+		var host_parts := host_lan_ip.split(".")
+		if my_parts.size() >= 3 and host_parts.size() >= 3 \
+				and my_parts[0] == host_parts[0] \
+				and my_parts[1] == host_parts[1] \
+				and my_parts[2] == host_parts[2]:
+			connect_ip = host_lan_ip
 	var peer := ENetMultiplayerPeer.new()
-	var err := peer.create_client(info["ip"], int(info["port"]))
+	var err := peer.create_client(connect_ip, int(info["port"]))
 	if err != OK:
 		connection_failed.emit("Connexion impossible à %s:%d (err %d)" % [info["ip"], int(info["port"]), err])
 		return
@@ -335,4 +349,4 @@ func _rpc_players_list(all_players: Dictionary) -> void:
 
 @rpc("authority", "call_local", "reliable")
 func _rpc_start_game() -> void:
-	game_started.emit()
+	game_started
