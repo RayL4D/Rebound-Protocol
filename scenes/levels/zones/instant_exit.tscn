@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://vn6kfcnbsw8a" path="res://scripts/levels/zones/instant_exit.gd" id="1_h18m8"]
 [ext_resource type="PackedScene" uid="uid://dbhdbhhp6hb6h" path="res://assets/models/environments/tutorial_and_first_level/platform_small.glb" id="2_53iif"]
 [ext_resource type="PackedScene" uid="uid://dvqrgi5mkvifa" path="res://assets/models/environments/tutorial_and_first_level/gate_complex.glb" id="3_mdsky"]
+[ext_resource type="Script" uid="uid://bqd5ied4y3nf0" path="res://scripts/levels/collision_area3d.gd" id="3_wob0w"]
 [ext_resource type="PackedScene" uid="uid://bd823ofpus08f" path="res://assets/models/environments/tutorial_and_first_level/stairs_short.glb" id="4_wob0w"]
 [ext_resource type="PackedScene" uid="uid://d2yvf13ndfbeu" path="res://assets/models/environments/tutorial_and_first_level/pipe_supportLow.glb" id="5_ntqt6"]
 [ext_resource type="Shader" uid="uid://ctto1apvv4vc4" path="res://assets/shaders/portal_effect.gdshader" id="6_7ra70"]
@@ -55,6 +56,7 @@ mesh = SubResource("BoxMesh_gpv4n")
 
 [node name="Portal" parent="." unique_id=938800193 instance=ExtResource("2_53iif")]
 transform = Transform3D(-0.018936679, 0, 6.999973, 0, 6.9999986, 0, -6.999973, 0, -0.018936679, -10.49735, -3.1132336, 13.955645)
+script = ExtResource("3_wob0w")
 
 [node name="portal" parent="Portal" unique_id=1182424489 instance=ExtResource("3_mdsky")]
 transform = Transform3D(-0.002219064, 0, -0.7142823, 0, 0.7142857, 0, 0.7142823, 0, -0.002219064, 3.0709915, 0.04685068, 0.07218552)
@@ -65,17 +67,20 @@ transform = Transform3D(-0.0020694558, 0, 1.42857, 0, 1.428571, 0, -1.42857, 0, 
 [node name="support" parent="Portal" unique_id=1561241038 instance=ExtResource("5_ntqt6")]
 transform = Transform3D(0.71428573, 0, 0, 0, 0.71428573, 0, 0, 0, 0.71428573, 0.59555054, -0.28933454, 0.44521952)
 
-[node name="Mesh_portal_effect_1" type="MeshInstance3D" parent="Portal" unique_id=1828404971]
-transform = Transform3D(-0.0013118169, -0.099971786, -0.00197596, -0.09998215, 0.0012845927, 0.0013846334, -0.0013588598, 0.001993772, -0.09997082, 1.9742591, 0.4362299, 1.4979396)
+[node name="Mesh_container" type="Node3D" parent="Portal" unique_id=2055952921]
+transform = Transform3D(0.7142857, 0, -1.1641532e-10, 0, 0.71428555, 0, 1.1641532e-10, 0, 0.7142857, 0.59555054, -0.2893345, 0.44521952)
+
+[node name="Mesh_portal_effect_1" type="MeshInstance3D" parent="Portal/Mesh_container" unique_id=1828404971]
+transform = Transform3D(-0.0018365434, -0.13996048, -0.0027663438, -0.13997498, 0.0017984295, 0.0019384865, -0.0019024037, 0.0027912806, -0.13995913, 1.9301918, 1.01579, 1.473808)
 material_override = SubResource("ShaderMaterial_g886o")
 mesh = SubResource("PlaneMesh_e0ikm")
 
-[node name="Mesh_portal_effect_2" type="MeshInstance3D" parent="Portal" unique_id=702327956]
-transform = Transform3D(-6.579979e-05, -0.09998003, -0.0019939207, -0.09999049, 3.831777e-05, 0.0013783606, -0.001377322, 0.0019946387, -0.09997062, 2.0195305, 0.41491246, 1.5057199)
+[node name="Mesh_portal_effect_2" type="MeshInstance3D" parent="Portal/Mesh_container" unique_id=702327956]
+transform = Transform3D(-9.2119684e-05, -0.13997202, -0.0027914888, -0.13998666, 5.364487e-05, 0.0019297047, -0.0019282507, 0.002792494, -0.13995886, 1.9935716, 0.9859456, 1.4847003)
 material_override = SubResource("ShaderMaterial_g886o")
 mesh = SubResource("PlaneMesh_3n08m")
 
-[node name="Mesh_portal_effect_3" type="MeshInstance3D" parent="Portal" unique_id=1133174982]
-transform = Transform3D(-6.5799766e-05, -0.09997998, -0.0019939207, -0.09999049, 3.831777e-05, 0.0013783606, -0.001377322, 0.0019946387, -0.09997062, 2.0195649, 0.47392628, 1.4927691)
+[node name="Mesh_portal_effect_3" type="MeshInstance3D" parent="Portal/Mesh_container" unique_id=1133174982]
+transform = Transform3D(-9.2119655e-05, -0.13997196, -0.0027914888, -0.13998666, 5.364487e-05, 0.0019297047, -0.0019282507, 0.002792494, -0.13995886, 1.9936197, 1.0685649, 1.4665693)
 material_override = SubResource("ShaderMaterial_g886o")
 mesh = SubResource("PlaneMesh_3ew3f")
