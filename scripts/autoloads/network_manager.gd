@@ -60,7 +60,7 @@ func _process(_delta: float) -> void:
 func _http_request(url: String, method: HTTPClient.Method = HTTPClient.METHOD_GET,
 		headers: PackedStringArray = [], body: String = "") -> Array:
 	var req := HTTPRequest.new()
-	req.timeout = 8.0
+	req.timeout = 15.0
 	add_child(req)
 	var err := req.request(url, headers, method, body)
 	if err != OK:
