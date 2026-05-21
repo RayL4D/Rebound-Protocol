@@ -1,17 +1,11 @@
-# =============================================================
-# instant_exit.gd - Sortie de niveau générique
-# =============================================================
+# Portail pour sortir d'une scène (dans le cas d'un niveau avec plusieurs scènes)
 extends Area3D
 
 @export_category("Level Transition")
-## Chemin de la prochaine scène à charger. 
 @export_file("*.tscn") var next_scene_path: String
 
-@onready var animation_player: AnimationPlayer = $AnimationPlayer
-
 func _ready() -> void:
-	if animation_player and animation_player.has_animation("direction_animation"):
-		animation_player.play("direction_animation")
+	CollisionManager.add_missing_collisions(self)
 	body_entered.connect(_on_body_entered)
 
 func _on_body_entered(body: Node3D) -> void:
