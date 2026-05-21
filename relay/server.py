@@ -150,12 +150,13 @@ class RelayHandler(BaseHTTPRequestHandler):
                     self._send(404, {"error": "Room not found"})
                     return
                 max_p = room.get("max_players", 4)
-                # peer_id 1 = host, clients get 2, 3, 4, …
-                if room["next_peer_id"] > max_p:
+                # peer_id 1 = host; max_p - 1 client slots
+                if len(room["active_peer_ids"]) >= max_p - 1:
                     self._send(409, {"error": "Room full"})
                     return
                 peer_id = room["next_peer_id"]
                 room["next_peer_id"] += 1
+                room["active_peer_ids"].append(peer_id)
                 room["pending_peers"].append(peer_id)
                 room["created"] = time.time()  # refresh TTL
             print(f"[relay] Peer {peer_id} joining room {code}")
@@ -220,16 +221,17 @@ class RelayHandler(BaseHTTPRequestHandler):
             with _lock:
                 code = _generate_code()
                 _rooms[code] = {
-                    "ip":           ip,
-                    "lan_ip":       lan_ip,
-                    "port":         int(port),
-                    "player_name":  name,
-                    "created":      time.time(),
-                    "max_players":  max_p,
-                    "next_peer_id": 2,       # host is always peer 1
-                    "pending_peers": [],
-                    "webrtc_offer":  {},     # {peer_id: offer_data}
-                    "webrtc_answer": {},     # {peer_id: answer_data}
+                    "ip":             ip,
+                    "lan_ip":         lan_ip,
+                    "port":           int(port),
+                    "player_name":    name,
+                    "created":        time.time(),
+                    "max_players":    max_p,
+                    "next_peer_id":   2,       # host is always peer 1; increments only
+                    "active_peer_ids": [],     # currently connected client peer IDs
+                    "pending_peers":  [],
+                    "webrtc_offer":   {},      # {peer_id: offer_data}
+                    "webrtc_answer":  {},      # {peer_id: answer_data}
                 }
             print(f"[relay] Created room {code} → {ip} ({name}, max {max_p})")
             self._send(200, {"code": code})
@@ -257,6 +259,7 @@ class RelayHandler(BaseHTTPRequestHandler):
         self._send(404, {"error": "Not found"})
 
     def do_DELETE(self):
+        # ── DELETE /host/<code> ───────────────────────────────────────────────
         if self.path.startswith("/host/"):
             code = self.path[6:].upper().strip()
             with _lock:
@@ -266,8 +269,34 @@ class RelayHandler(BaseHTTPRequestHandler):
                 self._send(200, {"ok": True})
             else:
                 self._send(404, {"error": "Room not found"})
-        else:
-            self._send(404, {"error": "Not found"})
+            return
+
+        # ── DELETE /signal/<code>/peer/<peer_id> ──────────────────────────────
+        # Called by the host when a client disconnects, freeing their slot.
+        if self.path.startswith("/signal/"):
+            parts = [p for p in self.path[8:].split("/") if p]
+            if len(parts) == 3 and parts[1].lower() == "peer":
+                code = parts[0].upper().strip()
+                try:
+                    peer_id = int(parts[2])
+                except ValueError:
+                    self._send(400, {"error": "Invalid peer_id"})
+                    return
+                with _lock:
+                    room = _rooms.get(code)
+                    if room is None:
+                        self._send(404, {"error": "Room not found"})
+                        return
+                    if peer_id in room["active_peer_ids"]:
+                        room["active_peer_ids"].remove(peer_id)
+                    # Nettoie aussi les données de signaling pour ce peer
+                    room["webrtc_offer"].pop(peer_id, None)
+                    room["webrtc_answer"].pop(peer_id, None)
+                print(f"[relay] Peer {peer_id} freed slot in room {code}")
+                self._send(200, {"ok": True})
+                return
+
+        self._send(404, {"error": "Not found"})
 
 
 if __name__ == "__main__":

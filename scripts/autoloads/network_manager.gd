@@ -464,6 +464,21 @@ func _on_peer_disconnected(id: int) -> void:
 		_webrtc_conns.erase(id)
 		if is_instance_valid(conn):
 			conn.close()
+	# Libère le slot sur le relay pour que quelqu'un d'autre puisse rejoindre
+	if multiplayer.is_server() and room_code != "":
+		_notify_relay_peer_left(id)
+
+
+## Notifie le relay qu'un pair a quitté (fire-and-forget, pas d'await à l'appel).
+func _notify_relay_peer_left(peer_id: int) -> void:
+	var req := HTTPRequest.new()
+	req.timeout = 5.0
+	add_child(req)
+	req.request(
+		relay_url + "/signal/" + room_code + "/peer/" + str(peer_id),
+		[], HTTPClient.METHOD_DELETE)
+	await req.request_completed
+	req.queue_free()
 
 
 func _on_connected_to_server() -> void:
