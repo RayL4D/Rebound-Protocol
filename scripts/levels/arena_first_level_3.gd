@@ -49,21 +49,21 @@ func _setup_waves() -> void:
 		
 	var waves_z2: Array[WaveManager.WaveData] = [
 		# Chiens (Index 0)
-		#WaveManager.WaveData.new(8, 2, tr("ARENA_LVL3_WAVE_DOGS"), 0),
-		#WaveManager.WaveData.new(10, 2, "", 0),
-		#
-		## Vaches (Index 1)
-		#WaveManager.WaveData.new(12, 2, tr("ARENA_LVL3_WAVE_COWS"), 1),
-		#WaveManager.WaveData.new(14, 3, "", 1),
-		#
-		## Chats (Index 2)
-		#WaveManager.WaveData.new(15, 3, tr("ARENA_LVL3_WAVE_CATS"), 2),
-		#WaveManager.WaveData.new(18, 3, "", 2),
-		#WaveManager.WaveData.new(20, 4, "", 2),
-		#
-		## Mix (Index 0 ou 2 selon tes préférences)
-		#WaveManager.WaveData.new(22, 4, tr("ARENA_LVL3_WAVE_MIX"), 0),
-		#WaveManager.WaveData.new(25, 4, "", 2),
+		WaveManager.WaveData.new(8, 2, tr("ARENA_LVL3_WAVE_DOGS"), 0),
+		WaveManager.WaveData.new(10, 2, "", 0),
+		
+		# Vaches (Index 1)
+		WaveManager.WaveData.new(12, 2, tr("ARENA_LVL3_WAVE_COWS"), 1),
+		WaveManager.WaveData.new(14, 3, "", 1),
+		
+		# Chats (Index 2)
+		WaveManager.WaveData.new(15, 3, tr("ARENA_LVL3_WAVE_CATS"), 2),
+		WaveManager.WaveData.new(18, 3, "", 2),
+		WaveManager.WaveData.new(20, 4, "", 2),
+		
+		# Mix (Index 0 ou 2 selon tes préférences)
+		WaveManager.WaveData.new(22, 4, tr("ARENA_LVL3_WAVE_MIX"), 0),
+		WaveManager.WaveData.new(25, 4, "", 2),
 		
 		# Boss (Index 3 - Lion)
 		WaveManager.WaveData.new(1, 1, tr("ARENA_LVL3_WAVE_BOSS"), 3)

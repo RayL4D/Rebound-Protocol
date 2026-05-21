@@ -13,4 +13,4 @@ func activate():
 
 func _on_body_entered(body: Node3D):
 	if body is Player:
-		ScoreManager.end_level()
+		ScoreManager.call_deferred("end_level")
