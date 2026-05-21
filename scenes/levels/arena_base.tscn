@@ -1216,6 +1216,7 @@ glow_bloom = 0.2
 script = ExtResource("1_7emnw")
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=835675540]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.018486738, 0.010636985, -0.016721725)
 navigation_mesh = SubResource("NavigationMesh_3ojju")
 
 [node name="Ground" type="StaticBody3D" parent="NavigationRegion3D" unique_id=1694744146]

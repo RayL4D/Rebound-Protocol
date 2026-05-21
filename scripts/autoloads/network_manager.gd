@@ -168,33 +168,40 @@ func host_game(player_name: String) -> void:
 
 	_webrtc_conn = WebRTCPeerConnection.new()
 	_webrtc_conn.initialize({"iceServers": STUN_SERVERS})
-	mp.add_peer(_webrtc_conn, 2)  # Le client aura l'ID 2
-
-	players[1] = {"name": player_name}
-	players_updated.emit(players.duplicate(true))
 
 	# 3 – Collecte l'offer SDP et les candidats ICE
-	var offer_sdp  := ""
-	var offer_type := ""
-	var ice_list:   Array = []
+	# IMPORTANT : les lambdas GDScript ne peuvent pas réassigner des variables
+	# primitives (String) depuis l'extérieur. On utilise un Dictionary (type référence)
+	# pour que la mutation soit visible dans la coroutine.
+	var offer := {"type": "", "sdp": ""}
+	var ice_list: Array = []
 
+	# Connecter les signaux AVANT add_peer pour ne rien manquer
 	_webrtc_conn.session_description_created.connect(
 		func(type: String, sdp: String):
 			_webrtc_conn.set_local_description(type, sdp)
-			offer_type = type
-			offer_sdp  = sdp
+			offer["type"] = type
+			offer["sdp"]  = sdp
 	)
 	_webrtc_conn.ice_candidate_created.connect(
 		func(media: String, index: int, cand: String):
 			ice_list.append({"media": media, "index": index, "candidate": cand})
 	)
+
+	mp.add_peer(_webrtc_conn, 2)  # Le client aura l'ID 2
+
+	players[1] = {"name": player_name}
+	players_updated.emit(players.duplicate(true))
+
+	# Attendre un frame pour que le multiplayer peer crée les data channels
+	await get_tree().process_frame
 	_webrtc_conn.create_offer()
 
 	# Attend la création de l'offer (max 5s)
 	var deadline := Time.get_ticks_msec() + 5000
-	while offer_sdp.is_empty() and Time.get_ticks_msec() < deadline:
+	while (offer["sdp"] as String).is_empty() and Time.get_ticks_msec() < deadline:
 		await get_tree().process_frame
-	if offer_sdp.is_empty():
+	if (offer["sdp"] as String).is_empty():
 		_busy = false
 		is_host = false
 		connection_failed.emit("Échec création offre WebRTC. Réseau indisponible ?")
@@ -209,7 +216,7 @@ func host_game(player_name: String) -> void:
 
 	# 4 – Envoie offer + ICE candidates au relay
 	var offer_body := JSON.stringify(
-		{"type": offer_type, "sdp": offer_sdp, "candidates": ice_list})
+		{"type": offer["type"], "sdp": offer["sdp"], "candidates": ice_list})
 	var sr := await _http_request(
 		relay_url + "/signal/" + room_code + "/offer",
 		HTTPClient.METHOD_POST, hdrs, offer_body)
@@ -283,23 +290,29 @@ func join_game(code: String, player_name: String) -> void:
 
 	_webrtc_conn = WebRTCPeerConnection.new()
 	_webrtc_conn.initialize({"iceServers": STUN_SERVERS})
-	mp.add_peer(_webrtc_conn, 1)  # L'hôte est le peer 1
 
 	# 3 – Collecte answer SDP et candidats ICE
-	var answer_sdp  := ""
-	var answer_type := ""
-	var ice_list:   Array = []
+	# Même précaution que pour l'offer : Dictionary pour contourner la capture
+	# par valeur des Strings dans les lambdas GDScript.
+	var answer := {"type": "", "sdp": ""}
+	var ice_list: Array = []
 
+	# Connecter les signaux AVANT add_peer
 	_webrtc_conn.session_description_created.connect(
 		func(type: String, sdp: String):
 			_webrtc_conn.set_local_description(type, sdp)
-			answer_type = type
-			answer_sdp  = sdp
+			answer["type"] = type
+			answer["sdp"]  = sdp
 	)
 	_webrtc_conn.ice_candidate_created.connect(
 		func(media: String, index: int, cand: String):
 			ice_list.append({"media": media, "index": index, "candidate": cand})
 	)
+
+	mp.add_peer(_webrtc_conn, 1)  # L'hôte est le peer 1
+
+	# Attendre un frame pour que le multiplayer peer crée les data channels
+	await get_tree().process_frame
 
 	# Applique l'offer de l'hôte → déclenche la création de l'answer
 	_webrtc_conn.set_remote_description(
@@ -310,9 +323,9 @@ func join_game(code: String, player_name: String) -> void:
 
 	# Attend la création de l'answer (max 5s)
 	var deadline := Time.get_ticks_msec() + 5000
-	while answer_sdp.is_empty() and Time.get_ticks_msec() < deadline:
+	while (answer["sdp"] as String).is_empty() and Time.get_ticks_msec() < deadline:
 		await get_tree().process_frame
-	if answer_sdp.is_empty():
+	if (answer["sdp"] as String).is_empty():
 		_busy = false
 		connection_failed.emit("Échec création réponse WebRTC")
 		return
@@ -327,7 +340,7 @@ func join_game(code: String, player_name: String) -> void:
 	# 4 – Envoie answer + ICE candidates au relay
 	var hdrs: PackedStringArray = ["Content-Type: application/json"]
 	var answer_body := JSON.stringify(
-		{"type": answer_type, "sdp": answer_sdp, "candidates": ice_list})
+		{"type": answer["type"], "sdp": answer["sdp"], "candidates": ice_list})
 	var sr := await _http_request(
 		relay_url + "/signal/" + room_code + "/answer",
 		HTTPClient.METHOD_POST, hdrs, answer_body)
