@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dk06s35f0t3hw"]
 
-[ext_resource type="Script" path="res://scripts/ui/score_summary.gd" id="1_vycar"]
+[ext_resource type="Script" uid="uid://bagwc3rj31pw2" path="res://scripts/ui/score_summary.gd" id="1_vycar"]
 [ext_resource type="FontFile" uid="uid://ci0o36dhvuhqf" path="res://ui_theme/fonts/Xolonium-Regular.ttf" id="2_font"]
 
 [node name="ScoreSummary" type="CanvasLayer" unique_id=1211133162]
@@ -161,16 +161,6 @@ layout_mode = 2
 theme_override_constants/separation = 30
 alignment = 1
 
-[node name="BtnRestart" type="Button" parent="CenterContainer/MainVBox/ButtonsContainer" unique_id=292683466]
-custom_minimum_size = Vector2(200, 60)
-layout_mode = 2
-theme_override_colors/font_color = Color(0, 0.851, 1, 1)
-theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
-theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 22
-text = "UI_SCORE_BTN_RETRY"
-
 [node name="BtnMenu" type="Button" parent="CenterContainer/MainVBox/ButtonsContainer" unique_id=796018913]
 custom_minimum_size = Vector2(200, 60)
 layout_mode = 2
@@ -210,5 +200,5 @@ grow_vertical = 0
 theme_override_colors/font_color = Color(0, 0.851, 1, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 12
-text = "UI_SCORE_DATA_SIGNAL ◆◆◆◆◇"
+text = "UI_SCORE_DATA_SIGNAL"
 horizontal_alignment = 2
