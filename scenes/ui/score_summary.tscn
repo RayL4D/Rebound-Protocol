@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dk06s35f0t3hw"]
 
-[ext_resource type="Script" uid="uid://bagwc3rj31pw2" path="res://scripts/ui/score_summary.gd" id="1_vycar"]
+[ext_resource type="Script" path="res://scripts/ui/score_summary.gd" id="1_vycar"]
 [ext_resource type="FontFile" uid="uid://ci0o36dhvuhqf" path="res://ui_theme/fonts/Xolonium-Regular.ttf" id="2_font"]
 
 [node name="ScoreSummary" type="CanvasLayer" unique_id=1211133162]
