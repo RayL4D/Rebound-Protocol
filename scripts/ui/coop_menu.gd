@@ -913,6 +913,7 @@ func _on_copy_pressed() -> void:
 func _on_room_code_ready(code: String) -> void:
 	_show_lobby()
 	_lbl_code.text = code
+	_set_status("", false)
 
 
 func _on_connection_success() -> void:

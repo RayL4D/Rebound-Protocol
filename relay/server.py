@@ -4,19 +4,26 @@ Rebound Protocol – Relay Server
 ---------------------------------
 Maps random 6-character room codes to (ip, port) so players behind NAT
 can find each other without knowing the host's public IP.
+Also acts as WebRTC signaling server for NAT traversal.
 
 Endpoints
 ---------
 POST /host
-    Body (JSON): {"ip": "1.2.3.4", "port": 7777, "player_name": "Rayan"}
+    Body (JSON): {"ip": "webrtc", "port": 0, "player_name": "Rayan"}
     Response:    {"code": "ABC123"}
 
 GET  /join/<code>
-    Response:    {"ip": "1.2.3.4", "port": 7777, "player_name": "Rayan"}
+    Response:    {"ip": "...", "port": ..., "player_name": "..."}
     Or 404:      {"error": "Room not found"}
 
 DELETE /host/<code>
     Response:    {"ok": true}
+
+-- WebRTC signaling --
+POST /signal/<code>/offer   Body: {type, sdp, candidates:[]}
+GET  /signal/<code>/offer   Response: offer JSON or 404
+POST /signal/<code>/answer  Body: {type, sdp, candidates:[]}
+GET  /signal/<code>/answer  Response: answer JSON or 404
 
 Rooms expire after 30 minutes.
 Run: python3 relay/server.py [--host 0.0.0.0] [--port 9090]
@@ -80,6 +87,18 @@ class RelayHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _parse_signal_path(self):
+        """Parse /signal/<code>/<kind> → (code, kind) or None."""
+        tail = self.path[8:]  # strip "/signal/"
+        slash = tail.find("/")
+        if slash < 0:
+            return None
+        code = tail[:slash].upper().strip()
+        kind = tail[slash + 1:].lower().strip()
+        if kind not in ("offer", "answer"):
+            return None
+        return code, kind
+
     def do_OPTIONS(self):
         self.send_response(204)
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -100,6 +119,24 @@ class RelayHandler(BaseHTTPRequestHandler):
                     _rooms[code]["created"] = time.time()  # refresh TTL
             self._send(200, {"ip": room["ip"], "lan_ip": room.get("lan_ip", ""),
                              "port": room["port"], "player_name": room["player_name"]})
+
+        elif self.path.startswith("/signal/"):
+            parsed = self._parse_signal_path()
+            if parsed is None:
+                self._send(404, {"error": "Not found"})
+                return
+            code, kind = parsed
+            with _lock:
+                room = _rooms.get(code)
+            if room is None:
+                self._send(404, {"error": "Room not found"})
+                return
+            data = room.get("webrtc_" + kind)
+            if data is None:
+                self._send(404, {"error": "Not ready"})
+                return
+            self._send(200, data)
+
         elif self.path in ("/ping", "/"):
             self._send(200, {"ok": True, "rooms": len(_rooms)})
         else:
@@ -112,15 +149,32 @@ class RelayHandler(BaseHTTPRequestHandler):
             lan_ip = data.get("lan_ip", "")
             port   = data.get("port", 0)
             name   = data.get("player_name", "Host")
-            if not ip or not port:
-                self._send(400, {"error": "ip and port required"})
+            # Pour WebRTC, ip="webrtc" et port=0 sont acceptés
+            if not ip:
+                self._send(400, {"error": "ip required"})
                 return
             with _lock:
                 code = _generate_code()
                 _rooms[code] = {"ip": ip, "lan_ip": lan_ip, "port": int(port),
-                                "player_name": name, "created": time.time()}
-            print(f"[relay] Created room {code} → {ip} / LAN {lan_ip}:{port} ({name})")
+                                "player_name": name, "created": time.time(),
+                                "webrtc_offer": None, "webrtc_answer": None}
+            print(f"[relay] Created room {code} → {ip} ({name})")
             self._send(200, {"code": code})
+
+        elif self.path.startswith("/signal/"):
+            parsed = self._parse_signal_path()
+            if parsed is None:
+                self._send(404, {"error": "Not found"})
+                return
+            code, kind = parsed
+            with _lock:
+                if code not in _rooms:
+                    self._send(404, {"error": "Room not found"})
+                    return
+                _rooms[code]["webrtc_" + kind] = self._body()
+            print(f"[relay] Signal {kind} stored for room {code}")
+            self._send(200, {"ok": True})
+
         else:
             self._send(404, {"error": "Not found"})
 
@@ -142,8 +196,6 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", default="0.0.0.0")
-    # Render (et la plupart des clouds) injectent la variable PORT automatiquement.
-    # En local, on tombe sur 9090 par défaut.
     parser.add_argument("--port", type=int,
                         default=int(os.environ.get("PORT", 9090)))
     args = parser.parse_args()
