@@ -1,0 +1,75 @@
+[gd_scene format=3 uid="uid://dk06s35f0t3hw"]
+
+[ext_resource type="Script" uid="uid://bagwc3rj31pw2" path="res://scripts/ui/score_summary.gd" id="1_vycar"]
+
+[node name="ScoreSummary" type="CanvasLayer" unique_id=47071526]
+script = ExtResource("1_vycar")
+
+[node name="Background" type="ColorRect" parent="." unique_id=785059838]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.1, 0.1, 0.9)
+
+[node name="Panel" type="Panel" parent="." unique_id=131302844]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -400.0
+offset_top = -350.0
+offset_right = 400.0
+offset_bottom = 350.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel" unique_id=262970228]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 40.0
+offset_top = 40.0
+offset_right = -40.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="Panel/VBoxContainer" unique_id=2079562821]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.3, 1)
+theme_override_font_sizes/font_size = 48
+text = "MISSION TERMINÉE"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HSeparator1" type="HSeparator" parent="Panel/VBoxContainer" unique_id=619157778]
+layout_mode = 2
+
+[node name="RowsContainer" type="VBoxContainer" parent="Panel/VBoxContainer" unique_id=1943242409]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 15
+
+[node name="HSeparator2" type="HSeparator" parent="Panel/VBoxContainer" unique_id=691477044]
+layout_mode = 2
+
+[node name="TotalLabel" type="Label" parent="Panel/VBoxContainer" unique_id=300568554]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 1, 0.5, 1)
+theme_override_font_sizes/font_size = 40
+text = "SCORE TOTAL : 0"
+horizontal_alignment = 1
+
+[node name="HSeparator3" type="HSeparator" parent="Panel/VBoxContainer" unique_id=1152523179]
+layout_mode = 2
+
+[node name="BtnContinue" type="Button" parent="Panel/VBoxContainer" unique_id=671882842]
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "RETOUR AU MENU"

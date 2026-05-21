@@ -17,6 +17,7 @@
 [ext_resource type="PackedScene" uid="uid://dgaaan3vs5ujh" path="res://assets/models/environments/tutorial_and_first_level/machine_generator.glb" id="7_dppew"]
 [ext_resource type="PackedScene" uid="uid://dysysxe40a80g" path="res://assets/models/environments/tutorial_and_first_level/craft_speederB.glb" id="8_f2nsb"]
 [ext_resource type="PackedScene" uid="uid://mwlayrnfs41m" path="res://assets/models/environments/tutorial_and_first_level/platform_large.glb" id="9_74u5m"]
+[ext_resource type="PackedScene" uid="uid://bk14aw3kobgpm" path="res://scenes/levels/zones/instant_exit.tscn" id="9_qsnft"]
 [ext_resource type="PackedScene" uid="uid://cw87pir38gk1v" path="res://assets/models/environments/tutorial_and_first_level/machine_wirelessCable.glb" id="10_pxsce"]
 [ext_resource type="PackedScene" uid="uid://0knuqo2qton5" path="res://assets/models/environments/tutorial_and_first_level/desk_computerScreen.glb" id="11_pxsce"]
 [ext_resource type="PackedScene" uid="uid://1jmmybq2se2u" path="res://assets/models/environments/tutorial_and_first_level/bones.glb" id="12_5o6i8"]
@@ -28,7 +29,6 @@
 [ext_resource type="PackedScene" uid="uid://d2r5655th8tr0" path="res://assets/models/environments/tutorial_and_first_level/satelliteDish_large.glb" id="18_wfgd2"]
 [ext_resource type="PackedScene" uid="uid://0ero3rux6g5" path="res://assets/models/environments/tutorial_and_first_level/pipe_straight.glb" id="19_604h8"]
 [ext_resource type="PackedScene" uid="uid://b57x1blw0xa1i" path="res://assets/models/environments/tutorial_and_first_level/pipe_ringHigh.glb" id="20_wfgd2"]
-[ext_resource type="PackedScene" uid="uid://b2hehayj3ft7e" path="res://scenes/levels/zones/level_exit.tscn" id="21_0fow6"]
 [ext_resource type="PackedScene" uid="uid://cinres82bexi7" path="res://assets/models/environments/tutorial_and_first_level/machine_barrelLarge.glb" id="21_ib6yp"]
 [ext_resource type="PackedScene" uid="uid://qagbhcmna37w" path="res://assets/models/environments/tutorial_and_first_level/pipe_ring.glb" id="22_mvard"]
 [ext_resource type="PackedScene" uid="uid://bumx75jt682hh" path="res://assets/models/environments/tutorial_and_first_level/pipe_corner.glb" id="23_4wpjm"]
@@ -758,17 +758,17 @@ shadow_enabled = true
 [node name="KillZone" parent="Zones" unique_id=1786468622 instance=ExtResource("5_tbebd")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 94.67728, 114.01021, 9.754303)
 
-[node name="LevelExit" parent="Zones" unique_id=336532745 instance=ExtResource("21_0fow6")]
-transform = Transform3D(0.018446987, 0, -0.99982977, 0, 1, 0, 0.99982977, 0, 0.018446987, 254.10689, 24.65823, -34.82171)
-next_scene = "uid://cndnvc3c1yt7p"
+[node name="LevelExit" parent="Zones" unique_id=882866086 instance=ExtResource("9_qsnft")]
+transform = Transform3D(0.025374386, 0, 0.999678, 0, 1, 0, -0.999678, 0, 0.025374386, 254.30865, 24.696598, -34.648926)
+next_scene_path = "uid://cndnvc3c1yt7p"
 
 [node name="MeshInstance3D2" type="MeshInstance3D" parent="Zones/LevelExit" unique_id=774001037]
-transform = Transform3D(-0.015271548, 0.0015603844, -0.9998835, -0.99659026, 0.08106916, 0.015347825, 0.0810836, 0.9967084, 0.0003169868, 0.08444595, 0.04242325, 0.24749756)
+transform = Transform3D(-0.08135151, -0.9965099, -0.01876177, -0.99659026, 0.08106916, 0.015347825, -0.013773201, 0.019946385, -0.9997074, 253.861, 24.700653, -34.73271)
 material_override = SubResource("ShaderMaterial_ydtev")
 mesh = SubResource("PlaneMesh_e3tnm")
 
 [node name="MeshInstance3D3" type="MeshInstance3D" parent="Zones/LevelExit" unique_id=782671484]
-transform = Transform3D(-0.013783017, 0.0014996734, -0.9999067, -0.99990493, 0.0003828965, 0.013783619, 0.00040378186, 1.0000012, 0.0014942158, 0.02773285, 0.0025730133, -0.025909424)
+transform = Transform3D(-0.0006579682, -0.9998033, -0.019939227, -0.99990493, 0.0003828965, 0.013783619, -0.013773222, 0.019946428, -0.99970895, 254.1333, 24.660803, -34.79446)
 material_override = SubResource("ShaderMaterial_ydtev")
 mesh = SubResource("PlaneMesh_ydtev")
 

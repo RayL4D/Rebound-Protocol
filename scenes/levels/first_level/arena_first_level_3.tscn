@@ -1187,6 +1187,7 @@ transform = Transform3D(5.6061006, 0, -8.2808, 0, 10, 0, 8.2808, 0, 5.6061006, 1
 transform = Transform3D(-0.32669008, 0, -0.9451316, 0, 1, 0, 0.9451316, 0, -0.32669008, 4.5557275, 39.964878, -0.33545315)
 move_speed = 20.0
 jump_force = 7.0
+max_hp = 10000
 
 [node name="HUD" parent="." unique_id=1994348935 instance=ExtResource("36_5boxw")]
 

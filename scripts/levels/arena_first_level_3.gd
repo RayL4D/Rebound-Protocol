@@ -49,21 +49,21 @@ func _setup_waves() -> void:
 		
 	var waves_z2: Array[WaveManager.WaveData] = [
 		# Chiens (Index 0)
-		WaveManager.WaveData.new(8, 2, tr("ARENA_LVL3_WAVE_DOGS"), 0),
-		WaveManager.WaveData.new(10, 2, "", 0),
-		
-		# Vaches (Index 1)
-		WaveManager.WaveData.new(12, 2, tr("ARENA_LVL3_WAVE_COWS"), 1),
-		WaveManager.WaveData.new(14, 3, "", 1),
-		
-		# Chats (Index 2)
-		WaveManager.WaveData.new(15, 3, tr("ARENA_LVL3_WAVE_CATS"), 2),
-		WaveManager.WaveData.new(18, 3, "", 2),
-		WaveManager.WaveData.new(20, 4, "", 2),
-		
-		# Mix (Index 0 ou 2 selon tes préférences)
-		WaveManager.WaveData.new(22, 4, tr("ARENA_LVL3_WAVE_MIX"), 0),
-		WaveManager.WaveData.new(25, 4, "", 2),
+		#WaveManager.WaveData.new(8, 2, tr("ARENA_LVL3_WAVE_DOGS"), 0),
+		#WaveManager.WaveData.new(10, 2, "", 0),
+		#
+		## Vaches (Index 1)
+		#WaveManager.WaveData.new(12, 2, tr("ARENA_LVL3_WAVE_COWS"), 1),
+		#WaveManager.WaveData.new(14, 3, "", 1),
+		#
+		## Chats (Index 2)
+		#WaveManager.WaveData.new(15, 3, tr("ARENA_LVL3_WAVE_CATS"), 2),
+		#WaveManager.WaveData.new(18, 3, "", 2),
+		#WaveManager.WaveData.new(20, 4, "", 2),
+		#
+		## Mix (Index 0 ou 2 selon tes préférences)
+		#WaveManager.WaveData.new(22, 4, tr("ARENA_LVL3_WAVE_MIX"), 0),
+		#WaveManager.WaveData.new(25, 4, "", 2),
 		
 		# Boss (Index 3 - Lion)
 		WaveManager.WaveData.new(1, 1, tr("ARENA_LVL3_WAVE_BOSS"), 3)
@@ -112,6 +112,7 @@ func _on_trigger_zone_2_body_entered(body: Node3D) -> void:
 
 func _on_zone_2_finished() -> void:
 	"""Victoire : Ouverture du portail et message final"""
+	
 	if level_exit and level_exit.has_method("activate"):
 		level_exit.activate()
 	

@@ -326,6 +326,9 @@ func _spawn_damage_number(amount: int) -> void:
 
 func _die() -> void:
 	enemy_died.emit()
+	if has_node("/root/ScoreManager"):
+		ScoreManager.add_kill()
+		print("✅ Enemy died - Score updated")
 	_drop_coins()
 	# Drop XP — seulement si XpManager est présent (pas toujours en menu)
 	if get_tree() != null and get_tree().root.has_node("XpManager"):
