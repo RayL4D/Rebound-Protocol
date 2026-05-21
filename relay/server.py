@@ -23,6 +23,7 @@ Run: python3 relay/server.py [--host 0.0.0.0] [--port 9090]
 """
 
 import json
+import os
 import random
 import string
 import time
@@ -86,6 +87,24 @@ class RelayHandler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
 
+    def do_GET(self):
+        if self.path.startswith("/join/"):
+            code = self.path[6:].upper().strip()
+            with _lock:
+                room = _rooms.get(code)
+            if room is None:
+                self._send(404, {"error": "Room not found"})
+                return
+            with _lock:
+                if code in _rooms:
+                    _rooms[code]["created"] = time.time()  # refresh TTL
+            self._send(200, {"ip": room["ip"], "port": room["port"],
+                             "player_name": room["player_name"]})
+        elif self.path in ("/ping", "/"):
+            self._send(200, {"ok": True, "rooms": len(_rooms)})
+        else:
+            self._send(404, {"error": "Not found"})
+
     def do_POST(self):
         if self.path == "/host":
             data = self._body()
@@ -101,22 +120,6 @@ class RelayHandler(BaseHTTPRequestHandler):
                                 "player_name": name, "created": time.time()}
             print(f"[relay] Created room {code} → {ip}:{port} ({name})")
             self._send(200, {"code": code})
-        else:
-            self._send(404, {"error": "Not found"})
-
-    def do_GET(self):
-        if self.path.startswith("/join/"):
-            code = self.path[6:].upper().strip()
-            with _lock:
-                room = _rooms.get(code)
-            if room is None:
-                self._send(404, {"error": "Room not found"})
-                return
-            with _lock:
-                if code in _rooms:
-                    _rooms[code]["created"] = time.time()  # refresh TTL
-            self._send(200, {"ip": room["ip"], "port": room["port"],
-                             "player_name": room["player_name"]})
         else:
             self._send(404, {"error": "Not found"})
 
@@ -138,7 +141,10 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", default="0.0.0.0")
-    parser.add_argument("--port", type=int, default=9090)
+    # Render (et la plupart des clouds) injectent la variable PORT automatiquement.
+    # En local, on tombe sur 9090 par défaut.
+    parser.add_argument("--port", type=int,
+                        default=int(os.environ.get("PORT", 9090)))
     args = parser.parse_args()
 
     _cleanup()

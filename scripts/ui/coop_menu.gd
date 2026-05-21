@@ -480,7 +480,6 @@ var _btn_start:     Button
 var _lbl_wait:      Label
 var _entry_name:      LineEdit
 var _entry_code:      LineEdit   # rejoindre par code relay
-var _entry_relay_url: LineEdit   # URL du serveur relay (côté client)
 var _entry_ip:        LineEdit   # rejoindre par IP directe
 var _panel_main:    Control
 var _panel_lobby:   Control
@@ -502,6 +501,10 @@ func _ready() -> void:
 	NetworkManager.connection_failed.connect(_on_connection_failed)
 	NetworkManager.players_updated.connect(_on_players_updated)
 	NetworkManager.game_started.connect(_on_game_started)
+	NetworkManager.relay_awake.connect(_on_relay_awake)
+	# Réveille le relay dès l'ouverture (Render free tier peut dormir)
+	_set_status("Connexion au serveur relay…", false)
+	NetworkManager.ping_relay()
 
 
 func _exit_tree() -> void:
@@ -515,6 +518,8 @@ func _exit_tree() -> void:
 		NetworkManager.players_updated.disconnect(_on_players_updated)
 	if NetworkManager.game_started.is_connected(_on_game_started):
 		NetworkManager.game_started.disconnect(_on_game_started)
+	if NetworkManager.relay_awake.is_connected(_on_relay_awake):
+		NetworkManager.relay_awake.disconnect(_on_relay_awake)
 
 
 # ── Animation d'entrée ────────────────────────────────────────────────────────
@@ -680,22 +685,6 @@ func _build_main_panel() -> void:
 	_entry_code = _make_line_edit("ABC123", 6)
 	_entry_code.text = ""
 	_panel_code.add_child(_entry_code)
-	_add_spacer(_panel_code, 10)
-
-	_add_field_label(_panel_code, "URL DU SERVEUR RELAY")
-	_add_spacer(_panel_code, 5)
-	_entry_relay_url = _make_line_edit("http://127.0.0.1:9090", 128)
-	_entry_relay_url.text = NetworkManager.relay_url
-	_panel_code.add_child(_entry_relay_url)
-	_add_spacer(_panel_code, 10)
-
-	var lbl_relay_hint := Label.new()
-	lbl_relay_hint.text = "Même réseau : http://192.168.x.x:9090  |  Internet : URL ngrok"
-	lbl_relay_hint.add_theme_font_size_override("font_size", 10)
-	lbl_relay_hint.add_theme_color_override("font_color", Color(C_CYAN, 0.28))
-	if _font: lbl_relay_hint.add_theme_font_override("font", _font)
-	lbl_relay_hint.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_panel_code.add_child(lbl_relay_hint)
 	_add_spacer(_panel_code, 10)
 
 	var btn_join_code := _make_action_button("REJOINDRE  →", Color(0.0, 0.55, 0.22))
@@ -888,10 +877,6 @@ func _on_join_pressed() -> void:
 	if c.length() != 6:
 		_set_status("Le code doit faire 6 caractères.", true)
 		return
-	# Applique l'URL relay saisie (permet de pointer vers LAN IP ou ngrok)
-	var url := _entry_relay_url.text.strip_edges()
-	if not url.is_empty():
-		NetworkManager.relay_url = url
 	_set_status("Connexion en cours…", false)
 	NetworkManager.join_game(c, n)
 
@@ -944,6 +929,13 @@ func _on_players_updated(updated: Dictionary) -> void:
 	_rebuild_player_slots(updated)
 	if _screen == Screen.LOBBY and NetworkManager.is_host:
 		_btn_start.visible = true
+
+
+func _on_relay_awake(ok: bool) -> void:
+	if ok:
+		_set_status("", false)
+	else:
+		_set_status("Serveur relay hors ligne. Mode LAN uniquement.", true)
 
 
 func _on_game_started() -> void:

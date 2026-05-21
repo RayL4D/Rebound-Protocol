@@ -11,11 +11,12 @@ extends Node
 ## Une fois les 2 joueurs dans le lobby, l'hôte appelle NetworkManager.start_game().
 
 # ── Config ─────────────────────────────────────────────────────────────────────
-## URL du serveur relay. Modifiable depuis le menu coop (champ "URL du relay").
-## Défaut : 127.0.0.1 pour tests sur le même PC.
-## Pour joindre depuis un autre appareil (téléphone, 2ème PC) sur le même réseau,
-## remplacer par l'IP LAN du PC hôte (ex : http://192.168.1.42:9090).
-var relay_url: String = "http://127.0.0.1:9090"
+## URL du serveur relay public (Render.com ou autre cloud).
+## ⚠️  Après déploiement, remplace CHANGE_ME par ton sous-domaine Render.
+## Exemple : "https://rebound-relay.onrender.com"
+const RELAY_URL_DEFAULT := "https://CHANGE_ME.onrender.com"
+
+var relay_url: String = RELAY_URL_DEFAULT
 const GAME_PORT  := 7777
 const MAX_PLAYERS := 2
 
@@ -64,6 +65,16 @@ func _http_request(url: String, method: HTTPClient.Method = HTTPClient.METHOD_GE
 
 
 # ── API publique ───────────────────────────────────────────────────────────────
+
+## Réveille le relay (Render free tier dort après 15 min d'inactivité).
+## Retourne true si le relay répond, false sinon.
+## Appelle cette fonction dès l'ouverture du menu coop.
+signal relay_awake(ok: bool)
+
+func ping_relay() -> void:
+	var result: Array = await _http_request(relay_url + "/ping")
+	relay_awake.emit(result[0] == HTTPRequest.RESULT_SUCCESS and result[1] == 200)
+
 
 ## Retourne l'IP LAN du PC (192.168.x.x ou 10.x.x.x) pour l'afficher dans le lobby.
 func get_lan_ip() -> String:
