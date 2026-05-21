@@ -6,14 +6,18 @@ extends Node
 ##         ou signal connection_failed(reason)
 ##
 ## Mode LAN : host_lan / join_lan  (WebSocket TCP, même réseau)
-## Mode Internet : host_game / join_game  (WebRTC + STUN, cross-réseau)
+## Mode Internet : host_game / join_game  (WebRTC + STUN, cross-réseau, 2–4 joueurs)
+##
+## Topologie : étoile — l'hôte (peer 1) maintient une WebRTCPeerConnection par client.
+## Les clients n'ont qu'une connexion vers l'hôte (peer 1).
+## Chaque client reçoit un peer_id unique (2, 3, 4) assigné par le relay.
 
 # ── Config ─────────────────────────────────────────────────────────────────────
 const RELAY_URL_DEFAULT := "https://rebound-protocol.onrender.com"
 
 var relay_url: String = RELAY_URL_DEFAULT
 const GAME_PORT   := 7777
-const MAX_PLAYERS := 2
+const MAX_PLAYERS := 4
 
 ## Serveurs STUN gratuits Google – permettent la traversée NAT sans port forwarding.
 const STUN_SERVERS := [
@@ -38,7 +42,10 @@ var room_code: String = ""
 var is_host: bool = false
 
 var _busy: bool = false
-var _webrtc_conn: WebRTCPeerConnection = null
+## Dictionnaire { peer_id (int) → WebRTCPeerConnection }
+## Hôte : une entrée par client connecté.
+## Client : une seule entrée (peer_id du client → connexion vers l'hôte).
+var _webrtc_conns: Dictionary = {}
 
 
 # ── Cycle de vie ───────────────────────────────────────────────────────────────
@@ -52,8 +59,9 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	## WebRTC nécessite un appel à poll() chaque frame pour traiter les événements.
-	if _webrtc_conn != null and is_instance_valid(_webrtc_conn):
-		_webrtc_conn.poll()
+	for conn in _webrtc_conns.values():
+		if is_instance_valid(conn):
+			conn.poll()
 
 
 # ── Requête HTTP générique ────────────────────────────────────────────────────
@@ -133,7 +141,7 @@ func join_lan(host_ip: String, player_name: String) -> void:
 	multiplayer.multiplayer_peer = peer
 
 
-# ── Mode Internet (WebRTC + STUN) ─────────────────────────────────────────────
+# ── Mode Internet (WebRTC + STUN, 2–4 joueurs) ───────────────────────────────
 
 func host_game(player_name: String) -> void:
 	if _busy:
@@ -145,7 +153,7 @@ func host_game(player_name: String) -> void:
 	# 1 – Réserve un code salon sur le relay
 	var hdrs: PackedStringArray = ["Content-Type: application/json"]
 	var body := JSON.stringify({"ip": "webrtc", "lan_ip": get_lan_ip(),
-		"port": 0, "player_name": player_name})
+		"port": 0, "player_name": player_name, "max_players": MAX_PLAYERS})
 	var relay_resp: Array = await _http_request(
 		relay_url + "/host", HTTPClient.METHOD_POST, hdrs, body)
 	if relay_resp[0] != HTTPRequest.RESULT_SUCCESS or relay_resp[1] != 200:
@@ -166,80 +174,120 @@ func host_game(player_name: String) -> void:
 	mp.create_server()
 	multiplayer.multiplayer_peer = mp
 
-	_webrtc_conn = WebRTCPeerConnection.new()
-	_webrtc_conn.initialize({"iceServers": STUN_SERVERS})
+	players[1] = {"name": player_name}
+	players_updated.emit(players.duplicate(true))
 
-	# 3 – Collecte l'offer SDP et les candidats ICE
-	# IMPORTANT : les lambdas GDScript ne peuvent pas réassigner des variables
-	# primitives (String) depuis l'extérieur. On utilise un Dictionary (type référence)
-	# pour que la mutation soit visible dans la coroutine.
+	_busy = false
+	room_code_ready.emit(room_code)
+
+	# 3 – Lance le polling des nouveaux clients en arrière-plan (non bloquant)
+	_poll_for_new_clients()
+
+
+## Interroge /signal/<code>/pending toutes les 0.5s.
+## Dès qu'un nouveau peer_id apparaît, lance _make_offer_for_peer() en parallèle.
+func _poll_for_new_clients() -> void:
+	for _i in 240:  # 120 secondes max avant timeout (suffisant pour une partie)
+		await get_tree().create_timer(0.5).timeout
+
+		if multiplayer.multiplayer_peer == null or room_code.is_empty():
+			return
+		if _webrtc_conns.size() >= MAX_PLAYERS - 1:
+			# Tous les slots sont pris, arrêt du polling
+			return
+
+		var result := await _http_request(
+			relay_url + "/signal/" + room_code + "/pending")
+		if result[0] != HTTPRequest.RESULT_SUCCESS or result[1] != 200:
+			continue
+
+		var data: Variant = JSON.parse_string(result[3].get_string_from_utf8())
+		if data == null:
+			continue
+
+		var peers: Array = (data as Dictionary).get("peers", [])
+		for raw_id in peers:
+			var pid: int = int(raw_id)
+			if not _webrtc_conns.has(pid):
+				# Lance la négociation WebRTC pour ce peer en parallèle
+				_make_offer_for_peer(pid)
+
+
+## Crée une WebRTCPeerConnection pour le peer <peer_id>, génère l'offer,
+## l'envoie au relay, puis attend la réponse.
+func _make_offer_for_peer(peer_id: int) -> void:
+	var mp := multiplayer.multiplayer_peer as WebRTCMultiplayerPeer
+	if mp == null:
+		return
+
+	var conn := WebRTCPeerConnection.new()
+	conn.initialize({"iceServers": STUN_SERVERS})
+	_webrtc_conns[peer_id] = conn
+
+	# Collecte offer SDP et candidats ICE via Dictionary (contourne le bug
+	# de capture par valeur des Strings dans les lambdas GDScript)
 	var offer := {"type": "", "sdp": ""}
 	var ice_list: Array = []
 
-	# Connecter les signaux AVANT add_peer pour ne rien manquer
-	_webrtc_conn.session_description_created.connect(
+	conn.session_description_created.connect(
 		func(type: String, sdp: String):
-			_webrtc_conn.set_local_description(type, sdp)
+			conn.set_local_description(type, sdp)
 			offer["type"] = type
 			offer["sdp"]  = sdp
 	)
-	_webrtc_conn.ice_candidate_created.connect(
+	conn.ice_candidate_created.connect(
 		func(media: String, index: int, cand: String):
 			ice_list.append({"media": media, "index": index, "candidate": cand})
 	)
 
-	mp.add_peer(_webrtc_conn, 2)  # Le client aura l'ID 2
+	# Ajoute le peer au multiplayer (crée les data channels)
+	mp.add_peer(conn, peer_id)
 
-	players[1] = {"name": player_name}
-	players_updated.emit(players.duplicate(true))
-
-	# Attendre un frame pour que le multiplayer peer crée les data channels
+	# Attend un frame pour que le multiplayer peer initialise les data channels
 	await get_tree().process_frame
-	_webrtc_conn.create_offer()
+	conn.create_offer()
 
 	# Attend la création de l'offer (max 5s)
 	var deadline := Time.get_ticks_msec() + 5000
 	while (offer["sdp"] as String).is_empty() and Time.get_ticks_msec() < deadline:
 		await get_tree().process_frame
 	if (offer["sdp"] as String).is_empty():
-		_busy = false
-		is_host = false
-		connection_failed.emit("Échec création offre WebRTC. Réseau indisponible ?")
+		_webrtc_conns.erase(peer_id)
+		conn.close()
 		return
 
 	# Attend la fin du gathering ICE (max 5s supplémentaires)
 	deadline = Time.get_ticks_msec() + 5000
-	while _webrtc_conn.get_gathering_state() \
+	while conn.get_gathering_state() \
 			!= WebRTCPeerConnection.GATHERING_STATE_COMPLETE \
 			and Time.get_ticks_msec() < deadline:
 		await get_tree().process_frame
 
-	# 4 – Envoie offer + ICE candidates au relay
+	# Envoie offer + ICE candidates au relay
+	var hdrs: PackedStringArray = ["Content-Type: application/json"]
 	var offer_body := JSON.stringify(
 		{"type": offer["type"], "sdp": offer["sdp"], "candidates": ice_list})
 	var sr := await _http_request(
-		relay_url + "/signal/" + room_code + "/offer",
+		relay_url + "/signal/" + room_code + "/offer/" + str(peer_id),
 		HTTPClient.METHOD_POST, hdrs, offer_body)
-	_busy = false
 	if sr[0] != HTTPRequest.RESULT_SUCCESS or sr[1] != 200:
-		connection_failed.emit("Échec envoi offre WebRTC au relay")
 		return
 
-	room_code_ready.emit(room_code)
-
-	# 5 – Attend la réponse du client en arrière-plan
-	_poll_for_webrtc_answer()
+	# Attend la réponse du client
+	_wait_for_peer_answer(peer_id, conn)
 
 
-func _poll_for_webrtc_answer() -> void:
-	var hdrs: PackedStringArray = ["Content-Type: application/json"]
+## Interroge /signal/<code>/answer/<peer_id> jusqu'à réception de la réponse
+## (max 30s). Applique ensuite la remote description.
+func _wait_for_peer_answer(peer_id: int, conn: WebRTCPeerConnection) -> void:
 	for _i in 60:  # 30 secondes max
 		await get_tree().create_timer(0.5).timeout
-		if _webrtc_conn == null or not is_instance_valid(_webrtc_conn):
+
+		if not _webrtc_conns.has(peer_id) or not is_instance_valid(conn):
 			return
 
 		var result := await _http_request(
-			relay_url + "/signal/" + room_code + "/answer")
+			relay_url + "/signal/" + room_code + "/answer/" + str(peer_id))
 		if result[0] != HTTPRequest.RESULT_SUCCESS or result[1] != 200:
 			continue
 
@@ -247,15 +295,11 @@ func _poll_for_webrtc_answer() -> void:
 		if data == null or not (data as Dictionary).has("sdp"):
 			continue
 
-		# Applique la réponse du client
-		_webrtc_conn.set_remote_description(
+		conn.set_remote_description(
 			(data as Dictionary)["type"], (data as Dictionary)["sdp"])
 		for cand in (data as Dictionary).get("candidates", []):
-			_webrtc_conn.add_ice_candidate(
-				cand["media"], cand["index"], cand["candidate"])
+			conn.add_ice_candidate(cand["media"], cand["index"], cand["candidate"])
 		return
-
-	connection_failed.emit("Timeout : aucun joueur n'a rejoint (30s).")
 
 
 func join_game(code: String, player_name: String) -> void:
@@ -266,11 +310,34 @@ func join_game(code: String, player_name: String) -> void:
 	is_host = false
 	room_code = code.to_upper().strip_edges()
 
-	# 1 – Récupère l'offer WebRTC du relay (polling max 10s)
+	# 1 – S'enregistre sur le relay → reçoit un peer_id unique
+	var join_resp := await _http_request(relay_url + "/join/" + room_code)
+	if join_resp[0] != HTTPRequest.RESULT_SUCCESS or join_resp[1] == 404:
+		_busy = false
+		connection_failed.emit("Salon introuvable ou expiré (code : %s)" % room_code)
+		return
+	if join_resp[1] == 409:
+		_busy = false
+		connection_failed.emit("Le salon est complet.")
+		return
+	if join_resp[1] != 200:
+		_busy = false
+		connection_failed.emit("Erreur relay (%d)" % join_resp[1])
+		return
+
+	var join_data: Variant = JSON.parse_string(join_resp[3].get_string_from_utf8())
+	if join_data == null or not (join_data as Dictionary).has("peer_id"):
+		_busy = false
+		connection_failed.emit("Relay : réponse invalide")
+		return
+	var my_peer_id: int = int((join_data as Dictionary)["peer_id"])
+
+	# 2 – Attend l'offer WebRTC de l'hôte (polling max 15s)
+	# L'hôte doit d'abord traiter notre entry dans /pending avant d'envoyer l'offer.
 	var offer_data: Variant = null
-	for _i in 20:
+	for _i in 30:
 		var result := await _http_request(
-			relay_url + "/signal/" + room_code + "/offer")
+			relay_url + "/signal/" + room_code + "/offer/" + str(my_peer_id))
 		if result[0] == HTTPRequest.RESULT_SUCCESS and result[1] == 200:
 			var d: Variant = JSON.parse_string(result[3].get_string_from_utf8())
 			if d != null and (d as Dictionary).has("sdp"):
@@ -280,46 +347,44 @@ func join_game(code: String, player_name: String) -> void:
 
 	if offer_data == null:
 		_busy = false
-		connection_failed.emit("Salon introuvable ou expiré (code : %s)" % room_code)
+		connection_failed.emit("Aucune offre reçue de l'hôte (code : %s)" % room_code)
 		return
 
-	# 2 – Crée le peer WebRTC (client = peer 2)
+	# 3 – Crée le peer WebRTC client avec le peer_id assigné
 	var mp := WebRTCMultiplayerPeer.new()
-	mp.create_client(2)
+	mp.create_client(my_peer_id)
 	multiplayer.multiplayer_peer = mp
 
-	_webrtc_conn = WebRTCPeerConnection.new()
-	_webrtc_conn.initialize({"iceServers": STUN_SERVERS})
+	var conn := WebRTCPeerConnection.new()
+	conn.initialize({"iceServers": STUN_SERVERS})
+	_webrtc_conns[my_peer_id] = conn
 
-	# 3 – Collecte answer SDP et candidats ICE
-	# Même précaution que pour l'offer : Dictionary pour contourner la capture
-	# par valeur des Strings dans les lambdas GDScript.
+	# 4 – Collecte answer SDP et candidats ICE
 	var answer := {"type": "", "sdp": ""}
 	var ice_list: Array = []
 
-	# Connecter les signaux AVANT add_peer
-	_webrtc_conn.session_description_created.connect(
+	conn.session_description_created.connect(
 		func(type: String, sdp: String):
-			_webrtc_conn.set_local_description(type, sdp)
+			conn.set_local_description(type, sdp)
 			answer["type"] = type
 			answer["sdp"]  = sdp
 	)
-	_webrtc_conn.ice_candidate_created.connect(
+	conn.ice_candidate_created.connect(
 		func(media: String, index: int, cand: String):
 			ice_list.append({"media": media, "index": index, "candidate": cand})
 	)
 
-	mp.add_peer(_webrtc_conn, 1)  # L'hôte est le peer 1
+	# L'hôte est toujours peer 1
+	mp.add_peer(conn, 1)
 
-	# Attendre un frame pour que le multiplayer peer crée les data channels
+	# Attend un frame pour que le multiplayer peer initialise les data channels
 	await get_tree().process_frame
 
 	# Applique l'offer de l'hôte → déclenche la création de l'answer
-	_webrtc_conn.set_remote_description(
+	conn.set_remote_description(
 		(offer_data as Dictionary)["type"], (offer_data as Dictionary)["sdp"])
 	for cand in (offer_data as Dictionary).get("candidates", []):
-		_webrtc_conn.add_ice_candidate(
-			cand["media"], cand["index"], cand["candidate"])
+		conn.add_ice_candidate(cand["media"], cand["index"], cand["candidate"])
 
 	# Attend la création de l'answer (max 5s)
 	var deadline := Time.get_ticks_msec() + 5000
@@ -332,17 +397,17 @@ func join_game(code: String, player_name: String) -> void:
 
 	# Attend la fin du gathering ICE (max 5s)
 	deadline = Time.get_ticks_msec() + 5000
-	while _webrtc_conn.get_gathering_state() \
+	while conn.get_gathering_state() \
 			!= WebRTCPeerConnection.GATHERING_STATE_COMPLETE \
 			and Time.get_ticks_msec() < deadline:
 		await get_tree().process_frame
 
-	# 4 – Envoie answer + ICE candidates au relay
+	# 5 – Envoie answer + ICE candidates au relay
 	var hdrs: PackedStringArray = ["Content-Type: application/json"]
 	var answer_body := JSON.stringify(
 		{"type": answer["type"], "sdp": answer["sdp"], "candidates": ice_list})
 	var sr := await _http_request(
-		relay_url + "/signal/" + room_code + "/answer",
+		relay_url + "/signal/" + room_code + "/answer/" + str(my_peer_id),
 		HTTPClient.METHOD_POST, hdrs, answer_body)
 	_busy = false
 	if sr[0] != HTTPRequest.RESULT_SUCCESS or sr[1] != 200:
@@ -359,9 +424,11 @@ func start_game() -> void:
 
 func disconnect_from_game() -> void:
 	_busy = false
-	if _webrtc_conn != null and is_instance_valid(_webrtc_conn):
-		_webrtc_conn.close()
-	_webrtc_conn = null
+	for pid in _webrtc_conns.keys():
+		var conn = _webrtc_conns[pid]
+		if is_instance_valid(conn):
+			conn.close()
+	_webrtc_conns.clear()
 	if room_code != "" and is_host:
 		var req := HTTPRequest.new()
 		add_child(req)
@@ -391,6 +458,12 @@ func _on_peer_disconnected(id: int) -> void:
 		players_updated.emit(players.duplicate(true))
 		if multiplayer.is_server():
 			_rpc_player_left.rpc(id)
+	# Nettoie la connexion WebRTC associée si elle existe
+	if _webrtc_conns.has(id):
+		var conn = _webrtc_conns[id]
+		_webrtc_conns.erase(id)
+		if is_instance_valid(conn):
+			conn.close()
 
 
 func _on_connected_to_server() -> void:

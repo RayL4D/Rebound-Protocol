@@ -738,7 +738,7 @@ func _build_lobby_panel() -> void:
 	code_inner.add_child(_lbl_code)
 
 	var lbl_hint := Label.new()
-	lbl_hint.text = "Partage ce code ou cette IP avec ton ami"
+	lbl_hint.text = "Partage ce code avec tes amis (2 à 4 joueurs)"
 	lbl_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl_hint.add_theme_color_override("font_color", Color(C_CYAN, 0.40))
 	lbl_hint.add_theme_font_size_override("font_size", 11)
@@ -818,7 +818,8 @@ func _show_lobby() -> void:
 	_lbl_code.text = NetworkManager.room_code if NetworkManager.room_code != "" else "------"
 	if _lbl_lan_ip != null:
 		_lbl_lan_ip.text = NetworkManager.get_lan_ip()
-	_btn_start.visible = NetworkManager.is_host
+	# Le bouton LANCER n'apparaît que lorsqu'il y a au moins 2 joueurs (via _on_players_updated)
+	_btn_start.visible = NetworkManager.is_host and NetworkManager.players.size() >= 2
 	_lbl_wait.visible  = not NetworkManager.is_host
 	# Adapte le label du bouton copier : IP directe ou code relay
 	if _btn_copy != null:
@@ -929,7 +930,7 @@ func _on_connection_failed(reason: String) -> void:
 func _on_players_updated(updated: Dictionary) -> void:
 	_rebuild_player_slots(updated)
 	if _screen == Screen.LOBBY and NetworkManager.is_host:
-		_btn_start.visible = true
+		_btn_start.visible = updated.size() >= 2
 
 
 func _on_relay_awake(ok: bool) -> void:
@@ -997,7 +998,7 @@ func _rebuild_player_slots(updated: Dictionary) -> void:
 
 
 # ── Helpers visuels ───────────────────────────────────────────────────────────
-const MAX_PLAYERS := 2
+const MAX_PLAYERS := 4
 
 func _set_status(text: String, error: bool) -> void:
 	_lbl_status.text = text

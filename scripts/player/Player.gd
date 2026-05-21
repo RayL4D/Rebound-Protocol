@@ -473,7 +473,10 @@ func _physics_process(delta: float) -> void:
 	# ── Multijoueur : envoyer position + orientation + HP aux autres pairs ──
 	# has_multiplayer_peer() est false en solo → aucun coût.
 	if multiplayer.has_multiplayer_peer():
-		_rpc_sync_transform.rpc(global_position, robot_model.global_rotation.y, current_hp)
+		var pb := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
+		var anim_state: String = pb.get_current_node() if pb != null else "idle"
+		_rpc_sync_transform.rpc(global_position, robot_model.global_rotation.y, current_hp,
+			shield.global_position, shield.global_rotation.y, anim_state)
 
 
 # =============================================================
@@ -1027,12 +1030,23 @@ func _die() -> void:
 ## Mode unreliable_ordered : les paquets perdus ne sont pas réémis, la dernière
 ## position reçue est toujours la plus récente.
 @rpc("authority", "unreliable_ordered")
-func _rpc_sync_transform(pos: Vector3, model_yaw: float, hp: int) -> void:
-	global_position            = pos
+func _rpc_sync_transform(pos: Vector3, model_yaw: float, hp: int,
+		shield_pos: Vector3 = Vector3.ZERO, shield_yaw: float = 0.0,
+		anim_state: String = "") -> void:
+	global_position               = pos
 	robot_model.global_rotation.y = model_yaw
 	if current_hp != hp:
 		current_hp = hp
 		hp_changed.emit(current_hp)
+	# Sync bouclier distant
+	if shield_pos != Vector3.ZERO:
+		shield.global_position   = shield_pos
+		shield.global_rotation.y = shield_yaw
+	# Sync animation distante
+	if not anim_state.is_empty():
+		var pb := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
+		if pb != null and pb.get_current_node() != anim_state:
+			pb.travel(anim_state)
 
 
 # =============================================================

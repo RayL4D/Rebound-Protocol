@@ -11,10 +11,12 @@ extends Node3D
 
 const PLAYER_SCENE := "res://scenes/player/player.tscn"
 
-## Positions de départ : slot 0 = hôte (peer 1), slot 1 = client.
+## Positions de départ : slot 0 = hôte (peer 1), slots 1–3 = clients.
 const SPAWN_POSITIONS: Array[Vector3] = [
-	Vector3(-3.0, 1.0, 0.0),
-	Vector3( 3.0, 1.0, 0.0),
+	Vector3(-3.0, 1.0,  0.0),
+	Vector3( 3.0, 1.0,  0.0),
+	Vector3( 0.0, 1.0, -3.0),
+	Vector3( 0.0, 1.0,  3.0),
 ]
 
 ## { peer_id (int) → Player node }
@@ -42,6 +44,10 @@ func _ready() -> void:
 
 	# ── Signaux NetworkManager ────────────────────────────────────────────────
 	NetworkManager.player_left.connect(_on_player_left)
+
+	# ── Client : retour au menu si l'hôte coupe la connexion ─────────────────
+	if not multiplayer.is_server():
+		NetworkManager.connection_failed.connect(_on_host_disconnected)
 
 	# ── Seul l'hôte déclenche le spawn (le spawner propage vers les clients) ──
 	if multiplayer.is_server():
@@ -98,6 +104,12 @@ func _on_player_left(id: int) -> void:
 		if is_instance_valid(node):
 			node.queue_free()
 	_check_game_over()
+
+
+func _on_host_disconnected(_reason: String) -> void:
+	await get_tree().create_timer(1.0).timeout
+	NetworkManager.disconnect_from_game()
+	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
 
 
 func _check_game_over() -> void:
