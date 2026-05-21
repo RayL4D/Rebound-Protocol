@@ -62,7 +62,7 @@ var _current_wave_data: WaveData = null
 # =============================================================
 
 func _ready() -> void:
-	pass
+	TranslationServer.set_locale(SceneManager.current_lang)
 
 func _find_player() -> void:
 	"""Trouve et stocke la référence au joueur"""

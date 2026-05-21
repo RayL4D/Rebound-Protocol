@@ -4,9 +4,9 @@
 extends Node3D
 
 @onready var hud: Node = $HUD
+@onready var level_exit: Node = $Instant_exit
 
 func _ready() -> void:
-	
 	MusicManager.play("gameplay")
 	AmbientManager.play("arena")
 	TranslationServer.set_locale(SceneManager.current_lang)
@@ -14,6 +14,9 @@ func _ready() -> void:
 	CollisionManager.add_missing_collisions(self)
 	_setup_ui()
 	_set_permanent_message("LVL2_CAVE_ENTRY")
+	
+	if level_exit and level_exit.has_method("activate"):
+		level_exit.activate()
 
 func _setup_ui() -> void:
 	if not hud:

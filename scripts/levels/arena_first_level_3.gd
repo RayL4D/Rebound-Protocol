@@ -5,7 +5,7 @@ extends Node3D
 
 # --- RÉFÉRENCES AUX NŒUDS ---
 @onready var wave_manager_zone2: WaveManager = $Wave_manager_container/WaveManager_Zone2
-@onready var level_exit: Node = $WorldObjects_container/portal_container/exit_portal/LevelExit
+@onready var level_exit: Node = $WorldObjects_container/portal_container/LevelExit
 @onready var hud: Node = $HUD
 
 # Variables de contrôle
@@ -48,7 +48,7 @@ func _setup_waves() -> void:
 	if not wave_manager_zone2: return
 		
 	var waves_z2: Array[WaveManager.WaveData] = [
-		# Chiens (Index 0)
+		## Chiens (Index 0)
 		WaveManager.WaveData.new(8, 2, tr("ARENA_LVL3_WAVE_DOGS"), 0),
 		WaveManager.WaveData.new(10, 2, "", 0),
 		
