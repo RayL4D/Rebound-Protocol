@@ -9,7 +9,6 @@ extends CanvasLayer
 @onready var performance_stats = $CenterContainer/MainVBox/StatsPanel/StatsMargin/StatsVBox/PerformanceSection/PerformanceStats
 @onready var score_label = $CenterContainer/MainVBox/TotalScoreContainer/ScoreLabel
 @onready var rank_label = $CenterContainer/MainVBox/TotalScoreContainer/RankLabel
-@onready var btn_restart = $CenterContainer/MainVBox/ButtonsContainer/BtnRestart
 @onready var btn_menu = $CenterContainer/MainVBox/ButtonsContainer/BtnMenu
 @onready var main_title = $CenterContainer/MainVBox/TitleSection/MainTitle
 @onready var mission_status = $CenterContainer/MainVBox/TitleSection/MissionStatus
@@ -166,6 +165,7 @@ class _BgFX extends Control:
 # =============================================================
 
 func _ready() -> void:
+	TranslationServer.set_locale(SceneManager.current_lang)
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -198,10 +198,9 @@ func _build_animated_background() -> void:
 	move_child(fx, 1)
 
 func _update_signal_label() -> void:
-	signal_label.text = tr("UI_SCORE_DATA_SIGNAL") % [
-		"◆".repeat(_signal_level),
-		"◇".repeat(5 - _signal_level)
-	]
+	signal_label.text = tr("UI_SCORE_DATA_SIGNAL") % (
+		"◆".repeat(_signal_level) + "◇".repeat(5 - _signal_level)
+	)
 
 # =============================================================
 # STATISTIQUES DÉTAILLÉES
@@ -310,7 +309,7 @@ func _setup_buttons() -> void:
 	hover_style.corner_radius_bottom_left = 4
 	hover_style.corner_radius_bottom_right = 4
 	
-	for btn in [btn_restart, btn_menu]:
+	for btn in [btn_menu]:
 		btn.add_theme_stylebox_override("hover", hover_style)
 		
 		# Animations hover
@@ -330,7 +329,6 @@ func _setup_buttons() -> void:
 		)
 	
 	# Connexions
-	btn_restart.pressed.connect(_on_restart)
 	btn_menu.pressed.connect(_on_menu)
 
 func _on_restart() -> void:
@@ -391,11 +389,9 @@ func _animate_entrance() -> void:
 	tw_score.tween_callback(_start_score_pulse)
 	
 	# Boutons
-	btn_restart.modulate.a = 0.0
 	btn_menu.modulate.a = 0.0
 	var tw_btns := create_tween()
 	tw_btns.tween_interval(2.0)
-	tw_btns.tween_property(btn_restart, "modulate:a", 1.0, 0.38)
 	tw_btns.parallel().tween_property(btn_menu, "modulate:a", 1.0, 0.38)
 
 func _glitch_title() -> void:
