@@ -1033,6 +1033,9 @@ func _die() -> void:
 func _rpc_sync_transform(pos: Vector3, model_yaw: float, hp: int,
 		shield_pos: Vector3 = Vector3.ZERO, shield_yaw: float = 0.0,
 		anim_state: String = "") -> void:
+	# Le nœud peut avoir été libéré entre deux paquets unreliable → guard obligatoire.
+	if not is_inside_tree():
+		return
 	global_position               = pos
 	robot_model.global_rotation.y = model_yaw
 	if current_hp != hp:
