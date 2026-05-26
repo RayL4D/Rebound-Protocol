@@ -1,0 +1,314 @@
+[gd_scene format=3 uid="uid://fr7n01kwgucg"]
+
+[ext_resource type="FontFile" uid="uid://ci0o36dhvuhqf" path="res://ui_theme/fonts/Xolonium-Regular.ttf" id="1_font"]
+[ext_resource type="Script" uid="uid://byqp1cr1rmjqa" path="res://scripts/ui/credits.gd" id="2_script"]
+[ext_resource type="Texture2D" uid="uid://p0slbvwsry7t" path="res://assets/ui/github_icon.png" id="3_pqmjv"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_title"]
+font = ExtResource("1_font")
+font_size = 50
+outline_size = 4
+shadow_color = Color(0, 0, 0, 1)
+shadow_offset = Vector2(5, 5)
+
+[sub_resource type="LabelSettings" id="LabelSettings_section"]
+font = ExtResource("1_font")
+font_size = 35
+outline_size = 3
+shadow_color = Color(0, 0, 0, 1)
+shadow_offset = Vector2(4, 4)
+
+[sub_resource type="LabelSettings" id="LabelSettings_name"]
+font = ExtResource("1_font")
+font_size = 25
+outline_size = 2
+shadow_color = Color(0, 0, 0, 1)
+shadow_offset = Vector2(3, 3)
+
+[sub_resource type="LabelSettings" id="LabelSettings_role"]
+font = ExtResource("1_font")
+font_size = 18
+outline_size = 2
+shadow_color = Color(0, 0, 0, 1)
+shadow_offset = Vector2(2, 2)
+
+[node name="Credits" type="Control" unique_id=99569589]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_script")
+
+[node name="Background" type="ColorRect" parent="." unique_id=2126473706]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.025, 0.045, 0.075, 1)
+
+[node name="ScrollContainer" type="ScrollContainer" parent="." unique_id=1786602901]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -1.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 0
+
+[node name="CreditsVBox" type="VBoxContainer" parent="ScrollContainer" unique_id=760320977]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 40
+alignment = 1
+
+[node name="Spacer1" type="Control" parent="ScrollContainer/CreditsVBox" unique_id=1852894926]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+
+[node name="GameTitle" type="Label" parent="ScrollContainer/CreditsVBox" unique_id=89153238]
+layout_mode = 2
+text = "REBOUND PROTOCOL"
+label_settings = SubResource("LabelSettings_title")
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="ScrollContainer/CreditsVBox" unique_id=1558456689]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+theme_override_fonts/font = ExtResource("1_font")
+theme_override_font_sizes/font_size = 20
+text = "CREDITS_FORMATION_DESC"
+horizontal_alignment = 1
+
+[node name="Spacer2" type="Control" parent="ScrollContainer/CreditsVBox" unique_id=230376183]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+
+[node name="DevSection" type="Label" parent="ScrollContainer/CreditsVBox" unique_id=1749044800]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+text = "CREDITS_DEV"
+label_settings = SubResource("LabelSettings_section")
+horizontal_alignment = 1
+
+[node name="Dev1Name" type="Label" parent="ScrollContainer/CreditsVBox" unique_id=2131221483]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "Rayan LADRAIT"
+label_settings = SubResource("LabelSettings_name")
+horizontal_alignment = 1
+
+[node name="Dev1Role" type="Label" parent="ScrollContainer/CreditsVBox" unique_id=1191775692]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+text = "CREDITS_DEV_ROLE"
+label_settings = SubResource("LabelSettings_role")
+horizontal_alignment = 1
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="ScrollContainer/CreditsVBox" unique_id=422147459]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="ScrollContainer/CreditsVBox/HBoxContainer2" unique_id=1029952560]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+texture = ExtResource("3_pqmjv")
+expand_mode = 2
+
+[node name="LinkButton2" type="LinkButton" parent="ScrollContainer/CreditsVBox/HBoxContainer2" unique_id=1430487425]
+layout_mode = 2
+theme_override_colors/font_hover_color = Color(0.77083945, 0.7708394, 0.77084005, 1)
+theme_override_fonts/font = ExtResource("1_font")
+theme_override_font_sizes/font_size = 20
+text = "RayL4D"
+underline = 2
+uri = "https://github.com/RayL4D"
+
+[node name="Space1" type="Control" parent="ScrollContainer/CreditsVBox" unique_id=1813122070]
+custom_minimum_size = Vector2(0, 20)
+layout_mode = 2
+
+[node name="Dev2Name" type="Label" parent="ScrollContainer/CreditsVBox" unique_id=440952948]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "Kevin SIDER"
+label_settings = SubResource("LabelSettings_name")
+horizontal_alignment = 1
+
+[node name="Dev2Role" type="Label" parent="ScrollContainer/CreditsVBox" unique_id=1080940387]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+text = "CREDITS_DEV_ROLE"
+label_settings = SubResource("LabelSettings_role")
+horizontal_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ScrollContainer/CreditsVBox" unique_id=510749717]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="ScrollContainer/CreditsVBox/HBoxContainer" unique_id=886848387]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+texture = ExtResource("3_pqmjv")
+expand_mode = 2
+
+[node name="LinkButton" type="LinkButton" parent="ScrollContainer/CreditsVBox/HBoxContainer" unique_id=1548497794]
+layout_mode = 2
+theme_override_colors/font_hover_color = Color(0.77083945, 0.7708394, 0.77084005, 1)
+theme_override_fonts/font = ExtResource("1_font")
+theme_override_font_sizes/font_size = 20
+text = "KevinSIDER"
+underline = 2
+uri = "https://github.com/KevinSIDER"
+
+[node name="Spacer3" type="Control" parent="ScrollContainer/CreditsVBox" unique_id=255533754]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+
+[node name="DesignSection" type="Label" parent="ScrollContainer/CreditsVBox" unique_id=894819179]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+text = "CREDITS_DESIGN"
+label_settings = SubResource("LabelSettings_section")
+horizontal_alignment = 1
+
+[node name="Designer1Name" type="Label" parent="ScrollContainer/CreditsVBox" unique_id=355522363]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "Sacha  THIEL"
+label_settings = SubResource("LabelSettings_name")
+horizontal_alignment = 1
+
+[node name="Designer1Role" type="Label" parent="ScrollContainer/CreditsVBox" unique_id=308941169]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+text = "CREDITS_DESIGN_ROLE"
+label_settings = SubResource("LabelSettings_role")
+horizontal_alignment = 1
+
+[node name="Spacer4" type="Control" parent="ScrollContainer/CreditsVBox" unique_id=933351999]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+
+[node name="ManagementSection" type="Label" parent="ScrollContainer/CreditsVBox" unique_id=1850967792]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+text = "CREDITS_MGMT"
+label_settings = SubResource("LabelSettings_section")
+horizontal_alignment = 1
+
+[node name="Manager1Name" type="Label" parent="ScrollContainer/CreditsVBox" unique_id=444658301]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "Cédric Turban"
+label_settings = SubResource("LabelSettings_name")
+horizontal_alignment = 1
+
+[node name="Manager1Role" type="Label" parent="ScrollContainer/CreditsVBox" unique_id=263657564]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+text = "CREDITS_MGMT_ROLE"
+label_settings = SubResource("LabelSettings_role")
+horizontal_alignment = 1
+
+[node name="Spacer5" type="Control" parent="ScrollContainer/CreditsVBox" unique_id=2091024956]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+
+[node name="ThanksSection" type="Label" parent="ScrollContainer/CreditsVBox" unique_id=665101907]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+text = "CREDITS_THANKS"
+label_settings = SubResource("LabelSettings_section")
+horizontal_alignment = 1
+
+[node name="ThanksText" type="Label" parent="ScrollContainer/CreditsVBox" unique_id=1429759200]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_fonts/font = ExtResource("1_font")
+theme_override_font_sizes/font_size = 20
+text = "CREDITS_THANKS_MSG"
+horizontal_alignment = 1
+
+[node name="Spacer6" type="Control" parent="ScrollContainer/CreditsVBox" unique_id=991178332]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+
+[node name="EngineSection" type="Label" parent="ScrollContainer/CreditsVBox" unique_id=114263117]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+text = "CREDITS_ENGINE"
+label_settings = SubResource("LabelSettings_section")
+horizontal_alignment = 1
+
+[node name="EngineName" type="Label" parent="ScrollContainer/CreditsVBox" unique_id=2119594119]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+text = "Godot Engine 4.3"
+label_settings = SubResource("LabelSettings_name")
+horizontal_alignment = 1
+
+[node name="EngineUrl" type="Label" parent="ScrollContainer/CreditsVBox" unique_id=1735946870]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.7, 1, 1)
+theme_override_fonts/font = ExtResource("1_font")
+theme_override_font_sizes/font_size = 18
+text = "godotengine.org"
+horizontal_alignment = 1
+
+[node name="Spacer7" type="Control" parent="ScrollContainer/CreditsVBox" unique_id=1022844693]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+
+[node name="Copyright" type="Label" parent="ScrollContainer/CreditsVBox" unique_id=795677190]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+theme_override_fonts/font = ExtResource("1_font")
+theme_override_font_sizes/font_size = 16
+text = "CREDITS_COPYRIGHT"
+horizontal_alignment = 1
+
+[node name="Spacer8" type="Control" parent="ScrollContainer/CreditsVBox" unique_id=1433043473]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+
+[node name="BottomPanel" type="Panel" parent="." unique_id=1492479819]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -80.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="BottomHBox" type="HBoxContainer" parent="BottomPanel" unique_id=1755152321]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="BtnBack" type="Button" parent="BottomPanel/BottomHBox" unique_id=1935799867]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+theme_override_colors/font_pressed_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("1_font")
+theme_override_font_sizes/font_size = 25
+text = "SETTINGS_BACK"
+
+[connection signal="pressed" from="BottomPanel/BottomHBox/BtnBack" to="." method="_on_btn_back_pressed"]

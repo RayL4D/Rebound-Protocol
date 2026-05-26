@@ -4,14 +4,6 @@
 # =============================================================
 # CanvasLayer construit entièrement en code.
 # Accessible via PauseMenu (bouton "Boutique").
-#
-# Layout :
-#   ┌─ En-tête : pièces courantes ──────────────────────────┐
-#   │  Onglets : JOUEUR | BOUCLIER | PASSIFS                 │
-#   │  ┌─ Liste scrollable des upgrades ──────────────────┐  │
-#   │  │  [Nom]  [Palier]  [Desc]  [Prix]  [ACHETER]      │  │
-#   │  └───────────────────────────────────────────────────┘  │
-#   └─ Bouton FERMER ───────────────────────────────────────┘
 # =============================================================
 
 class_name Shop
@@ -25,24 +17,24 @@ const COLOR_PANEL := Color(0.04, 0.08,  0.12, 0.97)
 const COLOR_DIM   := Color(0.45, 0.5,   0.55, 1.0)
 const FONT_PATH   := "res://ui_theme/fonts/Xolonium-Regular.ttf"
 
-# Noms affichables des upgrades (clé → [nom, description])
+# Noms affichables des upgrades (clé → [clé_nom, clé_description])
 const UPGRADE_LABELS: Dictionary = {
-	"hp_max":           ["HP Maximum",          "+5 HP max par palier"],
-	"move_speed":       ["Vitesse",              "+5 % vitesse de déplacement"],
-	"damage_reduction": ["Réduction dégâts",     "−5 % dégâts reçus par palier"],
-	"pickup_radius":    ["Rayon collecte",        "+15 % portée des pièces"],
-	"shield_size":      ["Taille bouclier",       "+8 % rayon du bouclier"],
-	"shield_duration":  ["Durée activation",     "+10 % durée de parade active"],
-	"parry_damage":     ["Dégâts renvoi",         "+10 % dégâts balles renvoyées"],
-	"parry_window":     ["Fenêtre critique",      "+1 frame de fenêtre critique"],
-	"hp_regen":         ["Régén. HP",             "Palier 1→30s, 2→20s, 3→12s"],
-	"xp_bonus":         ["Bonus XP",              "+10 % XP par ennemi tué"],
-	"dash_cooldown":    ["Cooldown Dash",         "−10 % de rechargement du dash par palier"],
-	"stomp_damage":     ["Dégâts Stomp",          "+15 % de dégâts de saut écrasant par palier"],
-	"parry_heal":       ["Soin Parade",           "+1 HP soigné sur chaque parade critique"],
-	"reflect_speed":    ["Vitesse Renvoi",        "+20 % de vitesse des balles renvoyées"],
-	"coin_bonus":       ["Bonus Pièces",          "+1 pièce droppée par ennemi vaincu"],
-	"dash_armor":       ["Armure Dash",           "1: invincible pendant le dash, 2-3: +durée après"],
+	"hp_max":           ["SHOP_NAME_hp_max", "SHOP_DESC_hp_max"],
+	"move_speed":       ["SHOP_NAME_move_speed", "SHOP_DESC_move_speed"],
+	"damage_reduction": ["SHOP_NAME_damage_reduction", "SHOP_DESC_damage_reduction"],
+	"pickup_radius":    ["SHOP_NAME_pickup_radius", "SHOP_DESC_pickup_radius"],
+	"shield_size":      ["SHOP_NAME_shield_size", "SHOP_DESC_shield_size"],
+	"shield_duration":  ["SHOP_NAME_shield_duration", "SHOP_DESC_shield_duration"],
+	"parry_damage":     ["SHOP_NAME_parry_damage", "SHOP_DESC_parry_damage"],
+	"parry_window":     ["SHOP_NAME_parry_window", "SHOP_DESC_parry_window"],
+	"hp_regen":         ["SHOP_NAME_hp_regen", "SHOP_DESC_hp_regen"],
+	"xp_bonus":         ["SHOP_NAME_xp_bonus", "SHOP_DESC_xp_bonus"],
+	"dash_cooldown":    ["SHOP_NAME_dash_cooldown", "SHOP_DESC_dash_cooldown"],
+	"stomp_damage":     ["SHOP_NAME_stomp_damage", "SHOP_DESC_stomp_damage"],
+	"parry_heal":       ["SHOP_NAME_parry_heal", "SHOP_DESC_parry_heal"],
+	"reflect_speed":    ["SHOP_NAME_reflect_speed", "SHOP_DESC_reflect_speed"],
+	"coin_bonus":       ["SHOP_NAME_coin_bonus", "SHOP_DESC_coin_bonus"],
+	"dash_armor":       ["SHOP_NAME_dash_armor", "SHOP_DESC_dash_armor"],
 }
 
 const _SFX_BUY:   AudioStream = preload("res://audio/sfx/ui/shop_buy.wav")
@@ -70,7 +62,7 @@ func _ready() -> void:
 	if ResourceLoader.exists(FONT_PATH):
 		_font = load(FONT_PATH)
 
-	_sfx_player             = AudioStreamPlayer.new()
+	_sfx_player              = AudioStreamPlayer.new()
 	_sfx_player.bus         = "SFX"
 	_sfx_player.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(_sfx_player)
@@ -117,7 +109,7 @@ func _build_ui() -> void:
 	var header := HBoxContainer.new()
 	root.add_child(header)
 
-	var title := _make_label("BOUTIQUE", 28, COLOR_CYAN)
+	var title := _make_label(tr("UI_SHOP_TITLE"), 28, COLOR_CYAN)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
 
@@ -135,9 +127,14 @@ func _build_ui() -> void:
 	tabs.add_theme_constant_override("separation", 8)
 	root.add_child(tabs)
 
+	var label_map := {
+		"joueur": "UI_SHOP_TAB_PLAYER", 
+		"bouclier": "UI_SHOP_TAB_SHIELD", 
+		"passifs": "UI_SHOP_TAB_PASSIVES"
+	}
+	
 	for cat in ["joueur", "bouclier", "passifs"]:
-		var label_map := {"joueur": "JOUEUR", "bouclier": "BOUCLIER", "passifs": "PASSIFS"}
-		var btn := _make_tab_button(label_map[cat], cat)
+		var btn := _make_tab_button(tr(label_map[cat]), cat)
 		tabs.add_child(btn)
 		_tab_buttons[cat] = btn
 
@@ -154,7 +151,7 @@ func _build_ui() -> void:
 	root.add_child(_make_separator())
 
 	# ── Bouton fermer ────────────────────────────────────────
-	var close_btn := _make_button("FERMER", _on_close)
+	var close_btn := _make_button(tr("UI_SHOP_CLOSE"), _on_close)
 	close_btn.custom_minimum_size = Vector2(160, 40)
 	var close_center := CenterContainer.new()
 	close_center.add_child(close_btn)
@@ -179,7 +176,7 @@ func _switch_tab(cat: String) -> void:
 			btn.add_theme_color_override("font_color", COLOR_DIM)
 			btn.modulate = Color(0.7, 0.7, 0.7, 1)
 
-	# Vider la liste et la reconstruire (free() immédiat, pas queue_free())
+	# Vider la liste et la reconstruire
 	for child in _list_container.get_children():
 		child.queue_free()
 
@@ -197,9 +194,9 @@ func _switch_tab(cat: String) -> void:
 # =============================================================
 
 func _build_upgrade_row(id: String, _entry: Dictionary) -> Control:
-	var labels: Array   = UPGRADE_LABELS.get(id, [id, ""])
-	var name_str: String = labels[0]
-	var desc_str: String = labels[1]
+	var keys: Array   = UPGRADE_LABELS.get(id, ["", ""])
+	var name_str: String = tr(keys[0])
+	var desc_str: String = tr(keys[1])
 	var max_tier: int    = SaveData.CATALOG[id]["max_tier"]
 
 	var panel := PanelContainer.new()
@@ -260,7 +257,7 @@ func _build_upgrade_row(id: String, _entry: Dictionary) -> Control:
 	hbox.add_child(price_lbl)
 
 	# ── Bouton acheter ────────────────────────────────────────────
-	var btn := _make_button("ACHETER", func(): _on_buy(id))
+	var btn := _make_button(tr("UI_SHOP_BUY"), func(): _on_buy(id))
 	btn.custom_minimum_size = Vector2(90, 34)
 	hbox.add_child(btn)
 
@@ -316,7 +313,7 @@ func _refresh_row(id: String) -> void:
 			seg.color = Color(0.12, 0.18, 0.24)
 
 	if price < 0:
-		price_lbl.text = "MAX"
+		price_lbl.text = tr("UI_SHOP_MAX")
 		price_lbl.add_theme_color_override("font_color", COLOR_GREEN)
 		btn.disabled = true
 		btn.modulate = Color(0.5, 0.5, 0.5, 0.7)
@@ -345,8 +342,7 @@ func _on_buy(id: String) -> void:
 		if player:
 			player.refresh_upgrades()
 
-		# Son d'achat : pitch qui monte progressiveme(nt avec le palier
-		# (palier 1 = grave, palier max-1 = aigu) → shop_buy_max à l'ultime palier
+		# Son d'achat : pitch qui monte progressivement avec le palier
 		var new_tier: int = SaveData.get_upgrade_tier(id)
 		var max_tier: int = SaveData.CATALOG[id]["max_tier"]
 		if new_tier >= max_tier:
@@ -366,7 +362,6 @@ func _on_buy(id: String) -> void:
 
 
 func _on_close() -> void:
-	# Son de fermeture boutique — floating player car queue_free() suit immédiatement
 	if _SFX_CLOSE != null:
 		var p := AudioStreamPlayer.new()
 		p.stream      = _SFX_CLOSE
@@ -424,8 +419,6 @@ func _make_button(text: String, callback: Callable) -> Button:
 			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
 			_sfx_player.play()
 	)
-	# Son de click connecté AVANT le callback : le callback (qui peut jouer
-	# un son d'achat distinct) se connecte en dernier et s'entend en dernier.
 	btn.pressed.connect(func():
 		if _sfx_player and _SFX_CLICK:
 			_sfx_player.stream      = _SFX_CLICK
@@ -463,5 +456,4 @@ func _make_separator() -> HSeparator:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and not event.is_echo():
 		_on_close()
-		get_viewport().set_input_as_handled() # Indique à Godot que l'action a été traitée
-                                                                                      
+		get_viewport().set_input_as_handled()

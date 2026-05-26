@@ -1,7 +1,12 @@
 [gd_scene format=3 uid="uid://bk14aw3kobgpm"]
 
 [ext_resource type="Script" uid="uid://vn6kfcnbsw8a" path="res://scripts/levels/zones/instant_exit.gd" id="1_h18m8"]
-[ext_resource type="Texture2D" uid="uid://b4g1i85803qpq" path="res://ui_theme/png/cursor/cursor_pointer3D.png" id="1_o6v2b"]
+[ext_resource type="PackedScene" uid="uid://dbhdbhhp6hb6h" path="res://assets/models/environments/tutorial_and_first_level/platform_small.glb" id="2_53iif"]
+[ext_resource type="PackedScene" uid="uid://dvqrgi5mkvifa" path="res://assets/models/environments/tutorial_and_first_level/gate_complex.glb" id="3_mdsky"]
+[ext_resource type="Script" uid="uid://bqd5ied4y3nf0" path="res://scripts/levels/collision_area3d.gd" id="3_wob0w"]
+[ext_resource type="PackedScene" uid="uid://bd823ofpus08f" path="res://assets/models/environments/tutorial_and_first_level/stairs_short.glb" id="4_wob0w"]
+[ext_resource type="PackedScene" uid="uid://d2yvf13ndfbeu" path="res://assets/models/environments/tutorial_and_first_level/pipe_supportLow.glb" id="5_ntqt6"]
+[ext_resource type="Shader" uid="uid://ctto1apvv4vc4" path="res://assets/shaders/portal_effect.gdshader" id="6_7ra70"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_h18m8"]
 size = Vector3(3.052208, 3.0622559, 0.6731262)
@@ -13,67 +18,27 @@ albedo_color = Color(0, 0.83137256, 1, 1)
 material = SubResource("StandardMaterial3D_80rfq")
 size = Vector3(3, 3, 0)
 
-[sub_resource type="Animation" id="Animation_agokr"]
-length = 0.001
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("ArrowPivot/Sprite3D:position")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [Vector3(0.030884624, 1.9817233, 0)]
-}
-tracks/1/type = "value"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath("ArrowPivot/Sprite3D:rotation")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [Vector3(-7.769448e-08, -3.1415925, 2.6653447)]
-}
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_g886o"]
+render_priority = 0
+shader = ExtResource("6_7ra70")
+shader_parameter/base_color = Color(0, 0.83, 1, 1)
+shader_parameter/speed = 1.0
+shader_parameter/distortion = 2.0
 
-[sub_resource type="Animation" id="Animation_6bulu"]
-resource_name = "direction_animation"
-length = 4.0
-loop_mode = 2
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("ArrowPivot/Sprite3D:position")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 2, 4),
-"transitions": PackedFloat32Array(1, 1, 1),
-"update": 0,
-"values": [Vector3(0.030884624, 1.9817233, 0), Vector3(0.030884624, 2.3377168, 0), Vector3(0.030884624, 1.9817233, 0)]
-}
-tracks/1/type = "value"
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/path = NodePath("ArrowPivot/Sprite3D:rotation")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [Vector3(-7.769448e-08, -3.1415925, 2.6653447)]
-}
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hrfqu"]
+albedo_color = Color(0.40545133, 1.4369954, 1.4369954, 0.42745098)
 
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_xqna2"]
-_data = {
-&"RESET": SubResource("Animation_agokr"),
-&"direction_animation": SubResource("Animation_6bulu")
-}
+[sub_resource type="PlaneMesh" id="PlaneMesh_e0ikm"]
+material = SubResource("StandardMaterial3D_hrfqu")
+size = Vector2(5, 5)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_3n08m"]
+material = SubResource("StandardMaterial3D_hrfqu")
+size = Vector2(6, 4)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_3ew3f"]
+material = SubResource("StandardMaterial3D_hrfqu")
+size = Vector2(3, 6)
 
 [node name="Instant_exit" type="Area3D" unique_id=882866086]
 script = ExtResource("1_h18m8")
@@ -85,16 +50,37 @@ shape = SubResource("BoxShape3D_h18m8")
 [node name="GuideTarget" type="Marker3D" parent="." unique_id=535887219]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.21416986, 0)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=2054332960]
+[node name="Mesh_detector" type="MeshInstance3D" parent="." unique_id=2054332960]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.008865714, -0.032667637, 0.04934454)
 mesh = SubResource("BoxMesh_gpv4n")
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=922719862]
-libraries/ = SubResource("AnimationLibrary_xqna2")
+[node name="Portal" parent="." unique_id=938800193 instance=ExtResource("2_53iif")]
+transform = Transform3D(-0.018936679, 0, 6.999973, 0, 6.9999986, 0, -6.999973, 0, -0.018936679, -10.49735, -3.1132336, 13.955645)
+script = ExtResource("3_wob0w")
 
-[node name="ArrowPivot" type="Node3D" parent="." unique_id=1101234176]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0.24089515)
+[node name="portal" parent="Portal" unique_id=1182424489 instance=ExtResource("3_mdsky")]
+transform = Transform3D(-0.002219064, 0, -0.7142823, 0, 0.7142857, 0, 0.7142823, 0, -0.002219064, 3.0709915, 0.04685068, 0.07218552)
 
-[node name="Sprite3D" type="Sprite3D" parent="ArrowPivot" unique_id=243041040]
-transform = Transform3D(1.7774425, 0.9168957, -3.019916e-07, 0.9168957, -1.7774425, 1.5538896e-07, -1.9714862e-07, -2.7654485e-07, -2, 0.030884624, 1.9817233, 0)
-texture = ExtResource("1_o6v2b")
+[node name="stairs" parent="Portal" unique_id=2134146169 instance=ExtResource("4_wob0w")]
+transform = Transform3D(-0.0020694558, 0, 1.42857, 0, 1.428571, 0, -1.42857, 0, -0.0020694558, -0.8989146, -0.38553926, 4.3671923)
+
+[node name="support" parent="Portal" unique_id=1561241038 instance=ExtResource("5_ntqt6")]
+transform = Transform3D(0.71428573, 0, 0, 0, 0.71428573, 0, 0, 0, 0.71428573, 0.59555054, -0.28933454, 0.44521952)
+
+[node name="Mesh_container" type="Node3D" parent="Portal" unique_id=2055952921]
+transform = Transform3D(0.7142857, 0, -1.1641532e-10, 0, 0.71428555, 0, 1.1641532e-10, 0, 0.7142857, 0.59555054, -0.2893345, 0.44521952)
+
+[node name="Mesh_portal_effect_1" type="MeshInstance3D" parent="Portal/Mesh_container" unique_id=1828404971]
+transform = Transform3D(-0.0018365434, -0.13996048, -0.0027663438, -0.13997498, 0.0017984295, 0.0019384865, -0.0019024037, 0.0027912806, -0.13995913, 1.9301918, 1.01579, 1.473808)
+material_override = SubResource("ShaderMaterial_g886o")
+mesh = SubResource("PlaneMesh_e0ikm")
+
+[node name="Mesh_portal_effect_2" type="MeshInstance3D" parent="Portal/Mesh_container" unique_id=702327956]
+transform = Transform3D(-9.2119684e-05, -0.13997202, -0.0027914888, -0.13998666, 5.364487e-05, 0.0019297047, -0.0019282507, 0.002792494, -0.13995886, 1.9935716, 0.9859456, 1.4847003)
+material_override = SubResource("ShaderMaterial_g886o")
+mesh = SubResource("PlaneMesh_3n08m")
+
+[node name="Mesh_portal_effect_3" type="MeshInstance3D" parent="Portal/Mesh_container" unique_id=1133174982]
+transform = Transform3D(-9.2119655e-05, -0.13997196, -0.0027914888, -0.13998666, 5.364487e-05, 0.0019297047, -0.0019282507, 0.002792494, -0.13995886, 1.9936197, 1.0685649, 1.4665693)
+material_override = SubResource("ShaderMaterial_g886o")
+mesh = SubResource("PlaneMesh_3ew3f")
