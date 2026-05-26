@@ -123,7 +123,7 @@ func _build_card_new_game(slot: int, info: Dictionary, used: bool) -> PanelConta
 
 	if used:
 		info_vbox.add_child(_make_label(tr("UI_SLOT_USED"), 11, COLOR_ORANGE))
-		var level_txt: String = info["level"] if info["level"] != "" else tr("UI_SLOT_LEVEL_UNKNOWN")
+		var level_txt: String = _get_level_display_name(info["level"])
 		info_vbox.add_child(_make_label(level_txt, 14, Color(0.7, 0.6, 0.6)))
 		info_vbox.add_child(_make_label(tr("UI_SLOT_STATS") % [info["coins"], info["hp"]], 12, Color(0.6, 0.5, 0.5)))
 		info_vbox.add_child(_make_label(_format_timestamp(info["timestamp"]), 10, Color(0.4, 0.35, 0.35)))
@@ -182,7 +182,7 @@ func _build_card_continue(slot: int, info: Dictionary, used: bool) -> PanelConta
 	hbox.add_child(info_vbox)
 
 	if used:
-		var level_txt: String = info["level"] if info["level"] != "" else tr("UI_SLOT_LEVEL_UNKNOWN")
+		var level_txt: String = _get_level_display_name(info["level"])
 		info_vbox.add_child(_make_label(level_txt, 16, Color(0.9, 0.95, 1.0)))
 		info_vbox.add_child(_make_label(tr("UI_SLOT_STATS") % [info["coins"], info["hp"]], 13, COLOR_GOLD))
 		info_vbox.add_child(_make_label(_format_timestamp(info["timestamp"]), 11, COLOR_DIM))
@@ -294,7 +294,7 @@ func _build_confirm_dialog(msg: String, on_yes: Callable, on_no: Callable) -> Co
 	vbox.add_theme_constant_override("separation", 8)
 	panel.add_child(vbox)
 	vbox.add_child(_make_label(tr("UI_DIALOG_WARN"), 16, COLOR_ORANGE))
-	vbox.add_label(_make_label(msg, 18, Color(0.9, 0.9, 1.0)))
+	vbox.add_child(_make_label(msg, 18, Color(0.9, 0.9, 1.0)))
 	vbox.add_child(_make_label(tr("UI_DIALOG_CONFIRM_DESC"), 12, COLOR_DIM))
 	var hbox := HBoxContainer.new()
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -348,3 +348,16 @@ func _make_button(text: String, callback: Callable, color: Color, filled: bool) 
 	btn.add_theme_stylebox_override("hover", hover)
 	btn.pressed.connect(callback)
 	return btn
+
+func _get_level_display_name(level_id: String) -> String:
+	if level_id == "":
+		return tr("UI_SLOT_LEVEL_UNKNOWN")
+		
+	match level_id:
+		"arena_base":
+			return tr("ARENA_BASE_TITLE")
+		"arena_first_level_1":
+			return tr("ARENA_FIRST_LEVEL_1_TITLE")
+		_:
+			# Si le niveau n'est pas dans la liste, on affiche l'ID brut par sécurité
+			return level_id.capitalize()
