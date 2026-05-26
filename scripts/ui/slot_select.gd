@@ -293,7 +293,7 @@ func _build_confirm_dialog(msg: String, on_yes: Callable, on_no: Callable) -> Co
 	vbox.add_theme_constant_override("separation", 8)
 	panel.add_child(vbox)
 	vbox.add_child(_make_label(tr("UI_DIALOG_WARN"), 16, COLOR_ORANGE))
-	vbox.add_label(_make_label(msg, 18, Color(0.9, 0.9, 1.0)))
+	vbox.add_child(_make_label(msg, 18, Color(0.9, 0.9, 1.0)))
 	vbox.add_child(_make_label(tr("UI_DIALOG_CONFIRM_DESC"), 12, COLOR_DIM))
 	var hbox := HBoxContainer.new()
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
