@@ -283,13 +283,14 @@ func _build_card_continue(slot: int, info: Dictionary, used: bool) -> PanelConta
 func _on_continue(slot: int) -> void:
 	SaveData.load_slot(slot)
 	var level := SaveData.get_current_level()
-	if level == "" or level == "arena_first_level_1":
+	if level == "arena_first_level_1":
 		SceneManager.load_level("res://scenes/levels/first_level/arena_first_level_1.tscn")
 	elif level == "arena_first_level_2":
 		SceneManager.load_level("res://scenes/levels/first_level/arena_first_level_2.tscn")
 	elif level == "arena_first_level_3":
 		SceneManager.load_level("res://scenes/levels/first_level/arena_first_level_3.tscn")
 	else:
+		# "" (pas encore de checkpoint), "arena_base", ou tout autre niveau → tutoriel
 		SceneManager.load_level("res://scenes/levels/arena_base.tscn")
 
 
@@ -495,3 +496,4 @@ func _make_button(text: String, callback: Callable, color: Color, filled: bool) 
 	btn.add_theme_stylebox_override("hover",  hover)
 	btn.pressed.connect(callback)
 	return btn
+                                                                                                                                                                                                                                                                                                                                             

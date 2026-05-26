@@ -1419,7 +1419,7 @@ next_scene = "uid://dpcguux7a3rqn"
 [node name="MobileControls" parent="." unique_id=246116136 instance=ExtResource("22_dyu6h")]
 
 [node name="SavePoint" parent="." unique_id=1095395053 instance=ExtResource("32_2i80p")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015538096, 1.1920929e-07, -0.008488417)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.6326685, 1.1920929e-07, -0.008488417)
 
 [node name="Chest" parent="." unique_id=1892450482 instance=ExtResource("25_3ojju")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.8892765)
@@ -1433,3 +1433,5 @@ environment = SubResource("Environment_quicy")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.238122, 0, 0)
 
 [node name="PetDog" parent="." unique_id=437757490 instance=ExtResource("24_lj50e")]
+coin_drop_max = 500
+xp_reward = 100

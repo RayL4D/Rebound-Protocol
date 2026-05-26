@@ -15,6 +15,9 @@ func _ready() -> void:
 	_setup_ui()
 	_set_permanent_message("LVL2_CAVE_ENTRY")
 
+	# Filet de sécurité : restaurer position + HP après TOUS les _ready() de la scène.
+	call_deferred("_deferred_restore_player")
+
 func _setup_ui() -> void:
 	if not hud:
 		push_error("HUD non trouvé dans la grotte !")
@@ -48,3 +51,11 @@ func _set_permanent_message(translation_key: String) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_TRANSLATION_CHANGED:
 		_set_permanent_message("LVL2_CAVE_ENTRY")
+
+
+func _deferred_restore_player() -> void:
+	var player: Player = get_tree().get_first_node_in_group("player")
+	if player == null:
+		return
+	print("[Level2] _deferred_restore_player — appel restore_from_checkpoint()")
+	player.restore_from_checkpoint()

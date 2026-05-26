@@ -157,6 +157,11 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _base_max_hp:     int   = 0
 var _base_move_speed: float = 0.0
 
+# Drapeau : restaurer position + HP au premier frame de physique.
+# call_deferred() sur méthode GDScript peut échouer silencieusement dans
+# certaines versions de Godot 4 — on passe par _physics_process à la place.
+var _restore_pending: bool = false
+
 # Régénération HP passive (upgrade "hp_regen")
 const _REGEN_INTERVALS: Array = [0.0, 30.0, 20.0, 12.0]  # index = palier
 var _regen_timer:    float = 0.0
@@ -194,6 +199,11 @@ signal parried         # Émis à chaque appui parade (clavier ET mobile)
 # =============================================================
 
 func _ready() -> void:
+	print("[Player] _ready() — SaveData.active_slot=", SaveData.active_slot,
+		"  checkpoint='", SaveData.get_checkpoint(), "'",
+		"  saved_pos=", SaveData.get_player_position(),
+		"  saved_hp=", SaveData.get_player_hp())
+
 	# ── Modèle + texture selon le slot co-op ─────────────────────────────────
 	# Doit être fait EN PREMIER : robot_model n'est pas @onready, on le capture
 	# ici après l'éventuel swap de GLB.
@@ -235,16 +245,10 @@ func _ready() -> void:
 	_target_snap_yaw  = _cam_yaw   # Synchroniser la cible sur l'angle initial
 	_target_zoom      = spring_arm.spring_length
 
-	# Restaurer la position du checkpoint IMMÉDIATEMENT, avant le premier frame
-	# de physique. Sans ça, le joueur spawne à la position par défaut de la scène
-	# pendant au moins un frame avant d'être téléporté.
-	# En mode coopératif (multiplayer peer actif), on saute cette restauration :
-	# la position est déjà fixée par CoopArena._spawn_player_from_data() avant
-	# add_child(), et la position sauvegardée (donjon solo) n'a rien à faire ici.
-	if SaveData.active_slot >= 0 and not multiplayer.has_multiplayer_peer():
-		var saved_pos := SaveData.get_player_position()
-		if saved_pos != Vector3.ZERO:
-			global_position = saved_pos
+	# La restauration de position est déplacée dans _restore_from_save() (call_deferred).
+	# Raison : arena_base._ready() s'exécute APRÈS Player._ready() (parent après enfant)
+	# et appelle CollisionManager.add_missing_collisions() qui peut remettre le joueur
+	# à la position scène éditeur. En différant, on s'assure d'écraser en dernier.
 
 	# Positionner le spring arm sur la position finale du joueur (checkpoint ou défaut).
 	# Évite que la caméra soit dans le corps du joueur pendant le premier frame rendu.
@@ -323,13 +327,13 @@ func _ready() -> void:
 	_sfx_impact.bus = "SFX"
 	add_child(_sfx_impact)
 
-	# Restaurer les HP en deferred : le HUD (qui écoute hp_changed) n'est pas
-	# encore connecté pendant _ready(), on attend la fin du frame.
+	# Position + HP restaurés au premier frame de physique (_restore_pending),
+	# APRÈS que tous les _ready() de la scène ont tourné.
 	# En mode co-op, on émet directement hp_changed sans toucher au SaveData.
 	if multiplayer.has_multiplayer_peer():
 		call_deferred("emit_signal", "hp_changed", current_hp)
 	else:
-		call_deferred("_restore_hp_from_save")
+		_restore_pending = true
 
 
 # =============================================================
@@ -474,26 +478,60 @@ func _update_regen_timer() -> void:
 			_regen_timer = _regen_interval   # Réinitialiser le timer
 
 
-## Restaure les HP depuis la dernière sauvegarde.
-## Appelée en deferred depuis _ready() — attend que le HUD soit connecté.
-## La position est déjà restaurée directement dans _ready().
-func _restore_hp_from_save() -> void:
+## Point d'entrée public : appelé par les scripts de niveau via call_deferred
+## pour déclencher la restauration depuis l'extérieur (filet de sécurité).
+## Marque _restore_pending à false pour éviter un double-appel depuis _physics_process.
+func restore_from_checkpoint() -> void:
+	_restore_pending = false
+	_restore_from_save()
+
+
+## Restaure position + HP depuis le dernier checkpoint sauvegardé.
+## Appelée soit via _restore_pending dans _physics_process, soit via restore_from_checkpoint().
+func _restore_from_save() -> void:
+	# ── Print en toute première ligne — si cette ligne n'apparaît pas, la fonction
+	# n'est jamais appelée. Si elle apparaît mais que la suite n'apparaît pas, c'est
+	# un crash silencieux dans le corps de la fonction.
+	print("[Player] _restore_from_save CALLED — active_slot=", SaveData.active_slot,
+		"  checkpoint='", SaveData.get_checkpoint(), "'")
+
 	if SaveData.active_slot < 0:
+		print("[Player] _restore_from_save — active_slot < 0, skip.")
+		hp_changed.emit(current_hp)
 		return
 
-	var saved_hp := SaveData.get_player_hp()
-	if saved_hp > 0:
-		current_hp = min(saved_hp, max_hp)
+	if SaveData.get_checkpoint() != "":
+		# ── Lire les valeurs AVANT toute assignation (évite crash silencieux
+		#    qui masque les prints suivants).
+		var saved_pos := SaveData.get_player_position()
+		var saved_hp  := SaveData.get_player_hp()
+		print("[Player] Données à restaurer — pos=", saved_pos,
+			"  hp=", saved_hp, "  max_hp=", max_hp)
+
+		# ── Position ──────────────────────────────────────────────
+		global_position = saved_pos
+		print("[Player] global_position appliquée : ", global_position)
+
+		# spring_arm peut être null si la scène est chargée partiellement
+		if is_instance_valid(spring_arm):
+			spring_arm.global_position = saved_pos + Vector3(0, 0.9, 0)
+			print("[Player] spring_arm.global_position appliquée : ", spring_arm.global_position)
+		else:
+			push_warning("[Player] _restore_from_save — spring_arm invalide, skip.")
+
+		# ── HP ────────────────────────────────────────────────────
+		if saved_hp > 0:
+			current_hp = mini(saved_hp, max_hp)
+		print("[Player] HP final : ", current_hp, " / ", max_hp)
+	else:
+		print("[Player] _restore_from_save — aucun checkpoint, position et HP = défaut.")
+		# Premier lancement : enregistrer le HP initial en mémoire (pas d'écriture disque).
+		if SaveData.get_player_hp() == 0:
+			SaveData.set_player_hp(current_hp)
 
 	# Toujours émettre pour que le HUD affiche le bon HP dès le départ.
 	hp_changed.emit(current_hp)
-
-	# Si aucun checkpoint n'a encore été activé (HP sauvegardé = 0),
-	# écrire le HP de départ sur disque pour que le slot affiche une valeur correcte.
-	# Pièces et upgrades ne sont PAS sauvegardées ici — uniquement aux checkpoints.
-	if SaveData.get_player_hp() == 0:
-		SaveData.set_player_hp(current_hp)
-		SaveData.save_current()
+	print("[Player] hp_changed émis avec ", current_hp)
 
 # Applique la texture sur tous les MeshInstance3D du modèle (tête, torse,
 # bras, jambes) en un seul appel.
@@ -507,6 +545,12 @@ func _apply_texture_recursive(node: Node) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	# ── Restauration checkpoint (premier frame uniquement) ─────────────────────
+	if _restore_pending:
+		_restore_pending = false
+		_restore_from_save()
+		return   # Skip la physique ce frame pour éviter un move_and_slide parasite
+
 	# Multijoueur : seul le pair local contrôle sa propre physique.
 	# MultiplayerSynchronizer écrit la position du joueur distant directement.
 	if not is_multiplayer_authority():

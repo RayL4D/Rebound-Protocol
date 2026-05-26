@@ -185,8 +185,17 @@ func load_slot(slot: int) -> bool:
 	# accumulée depuis le dernier checkpoint (pièces, upgrades non sauvegardées).
 	_load_from_disk()
 	if not saves[slot].get("used", false):
+		push_warning("[SaveData] load_slot(%d) — slot non utilisé après _load_from_disk, active_slot reste %d" % [slot, active_slot])
 		return false
 	active_slot = slot
+	print("[SaveData] load_slot(%d) OK — checkpoint='%s'  pos=(%s,%s,%s)  hp=%d" % [
+		slot,
+		saves[slot].get("checkpoint_id", ""),
+		saves[slot].get("pos_x", 0.0),
+		saves[slot].get("pos_y", 0.0),
+		saves[slot].get("pos_z", 0.0),
+		saves[slot].get("hp", 0),
+	])
 	slot_loaded.emit()
 	return true
 
@@ -281,8 +290,9 @@ func get_player_position() -> Vector3:
 	var x := float(saves[active_slot].get("pos_x", 0.0))
 	var y := float(saves[active_slot].get("pos_y", 0.0))
 	var z := float(saves[active_slot].get("pos_z", 0.0))
-	if x == 0.0 and y == 0.0 and z == 0.0:
-		return Vector3.ZERO
+	# NOTE : pas de guard x==0&&y==0&&z==0.
+	# Si le checkpoint était à l'origine, (0,0,0) est une position valide.
+	# On s'appuie sur get_checkpoint() != "" pour savoir si un checkpoint a été atteint.
 	return Vector3(x, y, z)
 
 func get_xp() -> int:
@@ -527,3 +537,4 @@ func _active() -> Dictionary:
 	assert(active_slot >= 0 and active_slot < MAX_SLOTS,
 		"SaveData : aucun slot actif — appelle new_game() ou load_slot() d'abord.")
 	return saves[active_slot]
+                                                                                                                                                                                 

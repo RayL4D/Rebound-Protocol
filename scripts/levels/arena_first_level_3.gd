@@ -22,6 +22,9 @@ func _ready() -> void:
 	_setup_waves()
 	_connect_signals()
 
+	# Filet de sécurité : restaurer position + HP après TOUS les _ready() de la scène.
+	call_deferred("_deferred_restore_player")
+
 
 # =============================================================
 # CONFIGURATION
@@ -124,3 +127,11 @@ func _on_zone_2_finished() -> void:
 		panel.visible = true
 		await get_tree().create_timer(5.0).timeout
 		panel.visible = false
+
+
+func _deferred_restore_player() -> void:
+	var player: Player = get_tree().get_first_node_in_group("player")
+	if player == null:
+		return
+	print("[Level3] _deferred_restore_player — appel restore_from_checkpoint()")
+	player.restore_from_checkpoint()
