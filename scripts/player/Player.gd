@@ -1377,6 +1377,11 @@ func _do_stomp_shockwave() -> void:
 func _spawn_shockwave_ring() -> void:
 	if not is_inside_tree():
 		return
+	# Capturer la position pendant que le joueur est dans l'arbre —
+	# global_position sur un nœud orphelin (.new() non encore add_child)
+	# génère "!is_inside_tree()" dans get_global_transform().
+	var spawn_pos := global_position + Vector3.DOWN * 0.05
+
 	# Anneau expansif simple (torus aplati)
 	var ring := MeshInstance3D.new()
 	var mesh := TorusMesh.new()
@@ -1386,7 +1391,6 @@ func _spawn_shockwave_ring() -> void:
 	mesh.ring_segments = 16
 	ring.mesh         = mesh
 	ring.rotation.x   = PI * 0.5
-	ring.global_position = global_position + Vector3.DOWN * 0.05
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color              = Color(0.0, 0.7, 1.0, 0.9)
 	mat.emission_enabled          = true
@@ -1394,7 +1398,8 @@ func _spawn_shockwave_ring() -> void:
 	mat.emission_energy_multiplier = 3.0
 	mat.transparency              = BaseMaterial3D.TRANSPARENCY_ALPHA
 	ring.set_surface_override_material(0, mat)
-	get_tree().current_scene.add_child(ring)
+	get_tree().current_scene.add_child(ring)  # ← dans l'arbre d'abord
+	ring.global_position = spawn_pos           # ← puis positionner
 
 	var tw := ring.create_tween().set_parallel(true)
 	tw.tween_property(ring, "scale", Vector3(12, 1, 12), 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)

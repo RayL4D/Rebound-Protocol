@@ -22,9 +22,12 @@
 class_name BossLion
 extends Enemy
 
-# --- Signal émis à la mort (connecté par arena_base) ----------
+# --- Signaux ----------------------------------------------------
 signal boss_died
 signal boss_hp_changed(current_hp: int, max_hp: int)
+## Émis depuis _die() juste après avoir instancié la clé.
+## Permet aux niveaux de connecter key.key_collected sans référence directe au boss.
+signal key_spawned(key: Node3D)
 
 # --- Seuil de transition de phase (50 % HP) -------------------
 const PHASE2_THRESHOLD := 0.5
@@ -445,10 +448,15 @@ func _die() -> void:
 	boss_died.emit()
 
 	# ── Drop de la clé de boss ────────────────────────────────
+	# IMPORTANT : positionner la clé AVANT add_child.
+	# _ready() de boss_key.gd calcule _base_y depuis global_position.
+	# Si on fait add_child() en premier, global_position vaut (0,0,0)
+	# et la clé finit spawner à l'origine de la scène au lieu d'ici.
 	var key_script: GDScript = load("res://scripts/pickups/boss_key.gd")
 	var key: Node3D = key_script.new()
+	key.position = global_position        # ← positionner AVANT add_child
 	get_tree().current_scene.add_child(key)
-	key.global_position = global_position
+	key_spawned.emit(key)                 # ← signal pour que le niveau ouvre le portail
 
 	# Player flottant — survit au queue_free du boss
 	if _SFX_BOSS_DIE != null:

@@ -10,6 +10,7 @@ extends Node3D
 
 # Variables de contrôle
 var _zone2_triggered: bool = false
+var _boss_key_connected: bool = false   # garde-fou anti-double connexion
 
 
 func _ready() -> void:
@@ -51,22 +52,22 @@ func _setup_waves() -> void:
 	if not wave_manager_zone2: return
 		
 	var waves_z2: Array[WaveManager.WaveData] = [
-		# Chiens (Index 0)
-		WaveManager.WaveData.new(8, 2, tr("ARENA_LVL3_WAVE_DOGS"), 0),
-		WaveManager.WaveData.new(10, 2, "", 0),
-		
-		# Vaches (Index 1)
-		WaveManager.WaveData.new(12, 2, tr("ARENA_LVL3_WAVE_COWS"), 1),
-		WaveManager.WaveData.new(14, 3, "", 1),
-		
-		# Chats (Index 2)
-		WaveManager.WaveData.new(15, 3, tr("ARENA_LVL3_WAVE_CATS"), 2),
-		WaveManager.WaveData.new(18, 3, "", 2),
-		WaveManager.WaveData.new(20, 4, "", 2),
-		
-		# Mix (Index 0 ou 2 selon tes préférences)
-		WaveManager.WaveData.new(22, 4, tr("ARENA_LVL3_WAVE_MIX"), 0),
-		WaveManager.WaveData.new(25, 4, "", 2),
+		## Chiens (Index 0)
+		#WaveManager.WaveData.new(8, 2, tr("ARENA_LVL3_WAVE_DOGS"), 0),
+		#WaveManager.WaveData.new(10, 2, "", 0),
+		#
+		## Vaches (Index 1)
+		#WaveManager.WaveData.new(12, 2, tr("ARENA_LVL3_WAVE_COWS"), 1),
+		#WaveManager.WaveData.new(14, 3, "", 1),
+		#
+		## Chats (Index 2)
+		#WaveManager.WaveData.new(15, 3, tr("ARENA_LVL3_WAVE_CATS"), 2),
+		#WaveManager.WaveData.new(18, 3, "", 2),
+		#WaveManager.WaveData.new(20, 4, "", 2),
+		#
+		## Mix (Index 0 ou 2 selon tes préférences)
+		#WaveManager.WaveData.new(22, 4, tr("ARENA_LVL3_WAVE_MIX"), 0),
+		#WaveManager.WaveData.new(25, 4, "", 2),
 		
 		# Boss (Index 3 - Lion)
 		WaveManager.WaveData.new(1, 1, tr("ARENA_LVL3_WAVE_BOSS"), 3)
@@ -75,10 +76,14 @@ func _setup_waves() -> void:
 
 
 func _connect_signals() -> void:
-	"""Connecte la fin des vagues à l'ouverture du portail"""
 	if wave_manager_zone2:
 		if not wave_manager_zone2.all_waves_finished.is_connected(_on_zone_2_finished):
 			wave_manager_zone2.all_waves_finished.connect(_on_zone_2_finished)
+
+	# Observer les nœuds ajoutés à la scène pour détecter le BossLion
+	# spawné dynamiquement par le WaveManager via le Dropship.
+	# Dès qu'il est trouvé, on s'y connecte pour recevoir key_spawned.
+	get_tree().node_added.connect(_on_scene_node_added)
 
 
 # =============================================================
@@ -114,23 +119,60 @@ func _on_trigger_zone_2_body_entered(body: Node3D) -> void:
 # =============================================================
 
 func _on_zone_2_finished() -> void:
-	"""Victoire : Ouverture du portail et message final"""
-	if level_exit and level_exit.has_method("activate"):
-		level_exit.activate()
-	
+	# Le portail n'est plus activé ici — c'est la collecte de la clé
+	# du boss qui en est responsable (voir _on_boss_key_spawned / _on_key_collected).
+	# On affiche juste un message d'indication pour guider le joueur.
 	var message_label = hud.get_node_or_null("%MessageLabel")
 	var panel = hud.get_node_or_null("%PanelContainer")
-	
+	if message_label:
+		message_label.text = tr("ARENA_LVL3_PICK_KEY")   # "Ramasse la clé !"
+	if panel:
+		panel.visible = true
+		await get_tree().create_timer(3.0).timeout
+		if is_instance_valid(panel):
+			panel.visible = false
+
+
+# =============================================================
+# CHAÎNE CLÉ → PORTAIL
+# =============================================================
+
+## Appelée pour chaque nœud ajouté à la scène.
+## Filtre sur BossLion, se déconnecte dès qu'on l'a trouvé.
+func _on_scene_node_added(node: Node) -> void:
+	if not (node is BossLion):
+		return
+	# On n'a besoin de connecter qu'une seule fois
+	get_tree().node_added.disconnect(_on_scene_node_added)
+	if not _boss_key_connected:
+		_boss_key_connected = true
+		(node as BossLion).key_spawned.connect(_on_boss_key_spawned)
+
+
+## Reçoit la clé dès qu'elle est instanciée dans _die() du BossLion.
+func _on_boss_key_spawned(key: Node3D) -> void:
+	if key.has_signal("key_collected"):
+		key.key_collected.connect(_on_key_collected)
+
+
+## La clé vient d'être ramassée : ouvrir le portail et afficher la victoire.
+func _on_key_collected() -> void:
+	if level_exit and level_exit.has_method("activate"):
+		level_exit.activate()
+
+	var message_label = hud.get_node_or_null("%MessageLabel")
+	var panel = hud.get_node_or_null("%PanelContainer")
 	if message_label:
 		message_label.text = tr("ARENA_LVL3_WIN")
 	if panel:
 		panel.visible = true
 		await get_tree().create_timer(5.0).timeout
-		panel.visible = false
+		if is_instance_valid(panel):
+			panel.visible = false
 
 
 func _deferred_restore_player() -> void:
-	var player: Player = get_tree().get_first_node_in_group("player")
+	var player: Player = get_tree().get_first_node_in_group("player") as Player
 	if player == null:
 		return
 	print("[Level3] _deferred_restore_player — appel restore_from_checkpoint()")
