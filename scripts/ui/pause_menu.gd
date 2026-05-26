@@ -227,7 +227,7 @@ func _show_skills_panel() -> void:
 
 	if acquired.is_empty():
 		var lbl := Label.new()
-		lbl.text = "SKILL_VIEW"
+		lbl.text = tr("SKILL_VIEW")
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.add_theme_color_override("font_color", Color(0.50, 0.55, 0.60))
 		if _font:
