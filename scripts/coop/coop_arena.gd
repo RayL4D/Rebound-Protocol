@@ -42,6 +42,7 @@ func _ready() -> void:
 	spawner.spawn_path     = NodePath("../Players")
 	spawner.spawn_function = _spawn_player_from_data
 	add_child(spawner)
+	CollisionManager.add_missing_collisions(self)
 
 	# ── Signaux NetworkManager ────────────────────────────────────────────────
 	NetworkManager.player_left.connect(_on_player_left)
