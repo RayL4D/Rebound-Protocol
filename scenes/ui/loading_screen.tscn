@@ -2,30 +2,121 @@
 
 [ext_resource type="Script" uid="uid://uvh5qm1cyi12" path="res://scripts/ui/loading_screen.gd" id="1_5fj0j"]
 [ext_resource type="Texture2D" uid="uid://blmsyhc3ofpkr" path="res://assets/loader/loader_player-head.JPG" id="1_q4fso"]
+[ext_resource type="Texture2D" uid="uid://dkhvehbd1pg0e" path="res://assets/ui/loading_screen_background/arena_first_level_1.JPG" id="2_q4fso"]
+[ext_resource type="FontFile" uid="uid://ci0o36dhvuhqf" path="res://ui_theme/fonts/Xolonium-Regular.ttf" id="3_s2kth"]
 
-[node name="LoadingScreen" type="CanvasLayer" unique_id=703256322]
+[sub_resource type="LabelSettings" id="LabelSettings_s41fs"]
+font = ExtResource("3_s2kth")
+font_size = 20
+outline_size = 1
+outline_color = Color(0, 0, 0.03137255, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_y06jl"]
+font = ExtResource("3_s2kth")
+font_size = 20
+outline_size = 1
+outline_color = Color(0, 0, 0, 1)
+
+[node name="LoadingScreen" type="Control" unique_id=223009638]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 script = ExtResource("1_5fj0j")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=362776036]
+[node name="Background" type="TextureRect" parent="." unique_id=127689443]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 0.75
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_q4fso")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="BottomBanner" type="ColorRect" parent="." unique_id=906961707]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.75
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.13, 0.13, 0.14, 1)
+
+[node name="TopLine" type="ColorRect" parent="BottomBanner" unique_id=1843045000]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 2.0
+grow_horizontal = 2
+color = Color(0.9, 0.9, 0.9, 0.15)
+
+[node name="HBoxContainer" type="HBoxContainer" parent="BottomBanner" unique_id=1350850745]
+layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.75686276, 0.83137256, 1, 0.84313726)
+theme_override_constants/separation = 0
 
-[node name="TextureRect" type="TextureRect" parent="ColorRect" unique_id=935436641]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -59.0
-offset_top = -54.0
-offset_right = 59.0
-offset_bottom = 54.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="TitleContainer" type="MarginContainer" parent="BottomBanner/HBoxContainer" unique_id=268900518]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="TitleLabel" type="Label" parent="BottomBanner/HBoxContainer/TitleContainer" unique_id=2011308197]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 22
+text = "Chargement..."
+label_settings = SubResource("LabelSettings_s41fs")
+horizontal_alignment = 1
+
+[node name="Separator1" type="VSeparator" parent="BottomBanner/HBoxContainer" unique_id=1737657231]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="DescContainer" type="MarginContainer" parent="BottomBanner/HBoxContainer" unique_id=1791199909]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.0
+theme_override_constants/margin_left = 30
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 30
+theme_override_constants/margin_bottom = 20
+
+[node name="DescLabel" type="Label" parent="BottomBanner/HBoxContainer/DescContainer" unique_id=102126805]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.78, 0.78, 1)
+theme_override_font_sizes/font_size = 14
+text = "Veuillez patienter..."
+label_settings = SubResource("LabelSettings_y06jl")
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Separator2" type="VSeparator" parent="BottomBanner/HBoxContainer" unique_id=935957294]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="LogoContainer" type="MarginContainer" parent="BottomBanner/HBoxContainer" unique_id=2032093753]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.7
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 16
+
+[node name="LoadingLogo" type="TextureRect" parent="BottomBanner/HBoxContainer/LogoContainer" unique_id=2049527588]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
 texture = ExtResource("1_q4fso")
+stretch_mode = 5

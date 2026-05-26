@@ -52,7 +52,7 @@ func _ready() -> void:
 
 	# Pas de boss dans le tutoriel — la sortie s'active directement après les vagues.
 	wave_manager.all_waves_finished.connect(func():
-		var exit_zone = $LevelExit
+		var exit_zone = $Hangar_exit
 		exit_zone.activate()
 	)
 
