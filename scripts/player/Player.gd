@@ -25,12 +25,38 @@ extends CharacterBody3D
 # --- Références nœuds --------------------------------------------
 @onready var spring_arm: SpringArm3D  = $SpringArm3D
 @onready var shield: Node3D           = $Shield
-@onready var robot_model: Node3D      = $RobotModel
 @onready var camera: Camera3D         = $SpringArm3D/Camera3D
 @onready var anim_tree: AnimationTree = $AnimationTree
 
-# Texture du modèle — chargée une seule fois au démarrage
-var _player_texture: Texture2D = preload("res://assets/textures/player/texture-g.png")
+## Modèle 3D actif — initialisé dans _ready() APRÈS l'éventuel swap de modèle.
+## NE PAS mettre @onready : on doit d'abord swapper le GLB si player_slot > 0.
+var robot_model: Node3D
+
+# Texture du modèle — initialisée dans _ready() selon player_slot.
+var _player_texture: Texture2D
+
+# ── Slot co-op (0 = hôte, 1-3 = clients) ─────────────────────────────────────
+## Défini par CoopArena avant que _ready() soit appelé.
+var player_slot: int = 0
+
+## Chemins des 4 modèles GLB et de leurs textures correspondantes.
+const _MODEL_PATHS: Array[String] = [
+	"res://assets/models/player/character0001.glb",
+	"res://assets/models/player/character0002.glb",
+	"res://assets/models/player/character0003.glb",
+	"res://assets/models/player/character0004.glb",
+]
+const _TEXTURE_PATHS: Array[String] = [
+	"res://assets/textures/player/texture0001.png",
+	"res://assets/textures/player/texture0002.png",
+	"res://assets/textures/player/texture0003.png",
+	"res://assets/textures/player/texture0004.png",
+]
+## Nom du nœud racine interne dans chaque GLB (nom de la scène GLTF).
+## Modèles 1-2 : "character-g" | Modèles 3-4 : "character-h"
+const _MODEL_ROOT_NAMES: Array[String] = [
+	"character-g", "character-g", "character-h", "character-h",
+]
 
 # --- Variables d'état --------------------------------------------
 var current_hp: int
@@ -168,6 +194,15 @@ signal parried         # Émis à chaque appui parade (clavier ET mobile)
 # =============================================================
 
 func _ready() -> void:
+	# ── Modèle + texture selon le slot co-op ─────────────────────────────────
+	# Doit être fait EN PREMIER : robot_model n'est pas @onready, on le capture
+	# ici après l'éventuel swap de GLB.
+	var slot := clampi(player_slot, 0, _MODEL_PATHS.size() - 1)
+	if slot > 0:
+		_swap_robot_model(slot)
+	robot_model    = get_node("RobotModel") as Node3D
+	_player_texture = load(_TEXTURE_PATHS[slot]) as Texture2D
+
 	# ── Stocker les valeurs de base AVANT d'appliquer les upgrades ──
 	_base_max_hp     = max_hp
 	_base_move_speed = move_speed
@@ -233,6 +268,21 @@ func _ready() -> void:
 	var anim_player := robot_model.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if anim_player:
 		anim_player.stop()
+		# Forcer le loop linéaire sur les animations cycliques.
+		# Le GLB importé peut ne pas avoir loop_mode activé sur ces pistes
+		# (surtout après un renommage de fichier qui recrée le .import).
+		for _loop_anim: String in ["idle", "sprint"]:
+			var _anim := anim_player.get_animation(_loop_anim)
+			if _anim != null:
+				_anim.loop_mode = Animation.LOOP_LINEAR
+
+	# Re-connecter l'AnimationTree au nouvel AnimationPlayer après swap de modèle.
+	# Quand remove_child + add_child remplace RobotModel, la référence interne
+	# du NodePath peut être invalidée → l'AnimationTree ne pilote plus rien.
+	if slot > 0:
+		anim_tree.active      = false
+		anim_tree.anim_player = NodePath("../RobotModel/AnimationPlayer")
+		anim_tree.active      = true
 
 	# AudioStreamPlayer pour les SFX joueur (bus SFX, polyphonie simple)
 	_sfx = AudioStreamPlayer.new()
@@ -280,6 +330,82 @@ func _ready() -> void:
 		call_deferred("emit_signal", "hp_changed", current_hp)
 	else:
 		call_deferred("_restore_hp_from_save")
+
+
+# =============================================================
+# SWAP DE MODÈLE CO-OP
+# =============================================================
+
+## Remplace le nœud RobotModel par le GLB correspondant au slot donné.
+## Ré-applique ensuite les transforms des os tels qu'ils sont définis dans
+## player.tscn pour le slot 0 (le slot de référence).
+func _swap_robot_model(slot: int) -> void:
+	var old_model := get_node_or_null("RobotModel") as Node3D
+	if old_model == null:
+		push_error("Player._swap_robot_model: nœud RobotModel introuvable")
+		return
+
+	var old_transform := old_model.transform
+	var old_idx:      int = old_model.get_index()
+
+	# Instancier le nouveau modèle
+	var model_path: String = _MODEL_PATHS[slot]
+	if not ResourceLoader.exists(model_path):
+		push_error("Player._swap_robot_model: modèle introuvable → " + model_path)
+		return
+
+	var new_model: Node3D = load(model_path).instantiate()
+	new_model.name      = "RobotModel"
+	new_model.transform = old_transform
+
+	# Remplacer dans l'arbre
+	remove_child(old_model)
+	old_model.queue_free()
+	add_child(new_model)
+	move_child(new_model, old_idx)
+
+	# ── Ré-appliquer les transforms d'os ────────────────────────────────────
+	# Ces transforms sont baked dans player.tscn uniquement pour slot 0.
+	# On les recopie sur le nouveau modèle pour une pose identique.
+	var root_name: String   = _MODEL_ROOT_NAMES[slot]
+	var model_root          := new_model.get_node_or_null(root_name + "/root") as Node3D
+	if model_root == null:
+		push_warning("Player._swap_robot_model: chemin os introuvable (" + root_name + "/root)")
+		return
+
+	# Transform3D(Vector3 x_axis, Vector3 y_axis, Vector3 z_axis, Vector3 origin)
+	# Les valeurs correspondent aux overrides dans player.tscn (slot 0).
+	var torso := model_root.get_node_or_null("torso") as Node3D
+	if torso:
+		torso.transform = Transform3D(
+			Vector3(1.0, 0.0, 0.0),
+			Vector3(0.0, 0.9969973, 0.077432394),
+			Vector3(0.0, -0.077432394, 0.9969973),
+			Vector3(0.0, 0.7, 0.0))
+
+	var arm_l := model_root.get_node_or_null("torso/arm-left") as Node3D
+	if arm_l:
+		arm_l.transform = Transform3D(
+			Vector3(1.0, 0.0, 0.0),
+			Vector3(0.0, 0.97308624, 0.23044011),
+			Vector3(0.0, -0.23044011, 0.97308624),
+			Vector3(0.4000001, 1.1, -0.099999905))
+
+	var arm_r := model_root.get_node_or_null("torso/arm-right") as Node3D
+	if arm_r:
+		arm_r.transform = Transform3D(
+			Vector3(1.0, 0.0, 0.0),
+			Vector3(0.0, 0.97308624, 0.23044011),
+			Vector3(0.0, -0.23044011, 0.97308624),
+			Vector3(-0.4000001, 1.1, -0.099999905))
+
+	var head_nd := model_root.get_node_or_null("torso/head") as Node3D
+	if head_nd:
+		head_nd.transform = Transform3D(
+			Vector3(0.09730865, 0.0, 0.023044018),
+			Vector3(0.0, 0.1, 0.0),
+			Vector3(-0.023044018, 0.0, 0.09730865),
+			Vector3(0.0, 1.2, 0.0))
 
 
 # =============================================================

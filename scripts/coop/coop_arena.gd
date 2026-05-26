@@ -104,6 +104,10 @@ func _spawn_player_from_data(data: Dictionary) -> Node:
 	var player: Node = load(PLAYER_SCENE).instantiate()
 	player.name = str(peer_id)
 
+	# Slot co-op → modèle + texture différents par joueur.
+	# Doit être défini AVANT add_child() pour que _ready() y accède.
+	player.set("player_slot", slot)
+
 	# Authority définie AVANT add_child → is_multiplayer_authority() correct dès l'insertion.
 	player.set_multiplayer_authority(peer_id, true)
 	player.position = SPAWN_POSITIONS[min(slot, SPAWN_POSITIONS.size() - 1)]
