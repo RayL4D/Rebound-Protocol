@@ -62,6 +62,9 @@ func _ready() -> void:
 	
 	
 
+	# Filet de sécurité : restaurer position + HP après TOUS les _ready() de la scène.
+	call_deferred("_deferred_restore_player")
+
 # =============================================================
 # CONFIGURATION
 # =============================================================
@@ -200,3 +203,11 @@ func _set_permanent_message(translation_key: String) -> void:
 		
 	if panel:
 		panel.visible = true
+
+
+func _deferred_restore_player() -> void:
+	var player: Player = get_tree().get_first_node_in_group("player")
+	if player == null:
+		return
+	print("[Level1] _deferred_restore_player — appel restore_from_checkpoint()")
+	player.restore_from_checkpoint()

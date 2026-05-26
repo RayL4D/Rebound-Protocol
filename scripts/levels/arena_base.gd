@@ -56,9 +56,28 @@ func _ready() -> void:
 		exit_zone.activate()
 	)
 
+	# Filet de sécurité : restaurer position + HP après TOUS les _ready() de la scène.
+	# Fonctionne même si Player._restore_pending n'a pas pu s'exécuter.
+	call_deferred("_deferred_restore_player")
+
 
 func _on_tutorial_completed() -> void:
 	wave_manager.start()
+
+
+# =============================================================
+# RESTAURATION CHECKPOINT (filet de sécurité)
+# =============================================================
+# Appelée en deferred depuis _ready() — s'exécute donc APRÈS tous les _ready()
+# de la scène (CollisionManager, tutorial_manager, wave_manager…).
+# Si Player._restore_from_save() a déjà été déclenché via _restore_pending
+# dans _physics_process, cet appel est idempotent (il repose les mêmes valeurs).
+func _deferred_restore_player() -> void:
+	var player: Player = get_tree().get_first_node_in_group("player")
+	if player == null:
+		return
+	print("[ArenaBase] _deferred_restore_player — appel restore_from_checkpoint()")
+	player.restore_from_checkpoint()
 
 
 # =============================================================

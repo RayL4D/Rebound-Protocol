@@ -6,6 +6,7 @@ extends Control
 
 @onready var btn_new_game        = $CenterContainer/MainVBox/ButtonsVBox/BtnNewGame
 @onready var btn_continue        = $CenterContainer/MainVBox/ButtonsVBox/BtnContinue
+@onready var btn_coop            = $CenterContainer/MainVBox/ButtonsVBox/BtnCoop
 @onready var btn_options         = $CenterContainer/MainVBox/ButtonsVBox/BtnOptions
 @onready var btn_quit            = $CenterContainer/MainVBox/ButtonsVBox/BtnQuit
 @onready var btn_credits         = $CenterContainer/MainVBox/ButtonsVBox/BtnCredits
@@ -566,7 +567,7 @@ func _ready() -> void:
 	_build_title_decorations()
 
 	# SFX sur tous les boutons
-	for btn in [btn_new_game, btn_continue, btn_options, btn_quit,
+	for btn in [btn_new_game, btn_continue, btn_coop, btn_options, btn_quit,
 				btn_toggle_language, btn_flag_fr, btn_flag_en, btn_flag_es, btn_credits]:
 		btn.mouse_entered.connect(func():
 			if _sfx_player and is_inside_tree():
@@ -596,7 +597,7 @@ func _ready() -> void:
 	hover_style.corner_radius_bottom_left = 3
 	hover_style.corner_radius_bottom_right = 3
 
-	for btn in [btn_new_game, btn_continue, btn_options, btn_quit, btn_credits]:
+	for btn in [btn_new_game, btn_continue, btn_coop, btn_options, btn_quit, btn_credits]:
 		var b: Button = btn
 		b.add_theme_stylebox_override("hover", hover_style)
 		b.mouse_entered.connect(func():
@@ -618,6 +619,7 @@ func _ready() -> void:
 	btn_quit.pressed.connect(_on_quit_pressed)
 	btn_options.pressed.connect(_on_options_pressed)
 	btn_continue.pressed.connect(_on_continue_pressed)
+	btn_coop.pressed.connect(_on_coop_pressed)
 	btn_credits.pressed.connect(_on_credits_pressed)
 
 	var has_save := false
@@ -756,7 +758,7 @@ func _animate_entrance() -> void:
 		.set_trans(Tween.TRANS_LINEAR)
 
 	# Boutons : apparition décalée
-	var buttons := [btn_new_game, btn_continue, btn_options, btn_quit]
+	var buttons := [btn_new_game, btn_continue, btn_coop, btn_options, btn_quit, btn_credits]
 	for i in buttons.size():
 		var btn: Button = buttons[i]
 		btn.modulate.a = 0.0
@@ -788,6 +790,9 @@ func _start_title_pulse() -> void:
 # =============================================================
 # CALLBACKS
 # =============================================================
+
+func _on_coop_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/ui/coop_menu.tscn")
 
 func _on_new_game_pressed() -> void:
 	SaveData.new_game_mode = true

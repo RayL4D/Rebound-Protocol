@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dtemtoqfgarfw" path="res://scripts/player/Player.gd" id="1_8afob"]
 [ext_resource type="PackedScene" uid="uid://bx87d68g68wkc" path="res://scenes/player/shield.tscn" id="3_gmlin"]
-[ext_resource type="PackedScene" uid="uid://dvct7n48fh007" path="res://assets/models/player/character-g.glb" id="4_lvxji"]
+[ext_resource type="PackedScene" uid="uid://du8ywnsdenni0" path="res://assets/models/player/character0001.glb" id="4_lvxji"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_8afob"]
 radius = 0.25
@@ -66,16 +66,16 @@ spring_length = 8.0
 transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, -0.8, 0)
 
 [node name="torso" parent="RobotModel/character-g/root" parent_id_path=PackedInt32Array(1575018680, 91212867) index="2" unique_id=1572204047]
-transform = Transform3D(1, 0, 0, 0, 0.99983764, 0.018008687, 0, -0.018008687, 0.99983764, 0, 0.7, 0)
+transform = Transform3D(1, 0, 0, 0, 0.9969973, 0.077432394, 0, -0.077432394, 0.9969973, 0, 0.7, 0)
 
 [node name="arm-left" parent="RobotModel/character-g/root/torso" index="0" unique_id=1539902478]
-transform = Transform3D(1, 0, 0, 0, 0.9985406, 0.05400271, 0, -0.05400271, 0.9985406, 0.4000001, 1.1, -0.099999905)
+transform = Transform3D(1, 0, 0, 0, 0.97308624, 0.23044011, 0, -0.23044011, 0.97308624, 0.4000001, 1.1, -0.099999905)
 
 [node name="arm-right" parent="RobotModel/character-g/root/torso" index="1" unique_id=822799953]
-transform = Transform3D(1, 0, 0, 0, 0.9985406, 0.05400271, 0, -0.05400271, 0.9985406, -0.4000001, 1.1, -0.099999905)
+transform = Transform3D(1, 0, 0, 0, 0.97308624, 0.23044011, 0, -0.23044011, 0.97308624, -0.4000001, 1.1, -0.099999905)
 
 [node name="head" parent="RobotModel/character-g/root/torso" index="2" unique_id=793382359]
-transform = Transform3D(0.099854074, 0, 0.005400272, 0, 0.1, 0, -0.005400272, 0, 0.099854074, 0, 1.2, 0)
+transform = Transform3D(0.09730865, 0, 0.023044018, 0, 0.1, 0, -0.023044018, 0, 0.09730865, 0, 1.2, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=836211236]
 shape = SubResource("CapsuleShape3D_8afob")

@@ -20,6 +20,7 @@
 [ext_resource type="Script" uid="uid://c8iuwrbemhmo6" path="res://scripts/levels/wave_manager.gd" id="16_wvmgr"]
 [ext_resource type="PackedScene" uid="uid://b2hehayj3ft7e" path="res://scenes/levels/zones/level_exit.tscn" id="17_djr2x"]
 [ext_resource type="PackedScene" uid="uid://bxss4q4q2p5dq" path="res://scenes/ui/mobile_controls.tscn" id="22_dyu6h"]
+[ext_resource type="PackedScene" uid="uid://b2oxmnlr28vu" path="res://scenes/enemies/pet_dog.tscn" id="24_lj50e"]
 [ext_resource type="PackedScene" uid="uid://dugi48yxe82ny" path="res://scenes/pickups/chest.tscn" id="25_3ojju"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="28_pausemnu"]
 [ext_resource type="PackedScene" uid="uid://c1ba4apgy2p4p" path="res://scenes/levels/save_point.tscn" id="32_2i80p"]
@@ -1216,6 +1217,7 @@ glow_bloom = 0.2
 script = ExtResource("1_7emnw")
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=835675540]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.026336908, 0.021273553, -0.027632117)
 navigation_mesh = SubResource("NavigationMesh_3ojju")
 
 [node name="Ground" type="StaticBody3D" parent="NavigationRegion3D" unique_id=1694744146]
@@ -1417,7 +1419,7 @@ next_scene = "uid://dpcguux7a3rqn"
 [node name="MobileControls" parent="." unique_id=246116136 instance=ExtResource("22_dyu6h")]
 
 [node name="SavePoint" parent="." unique_id=1095395053 instance=ExtResource("32_2i80p")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.015538096, 1.1920929e-07, -0.008488417)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.6326685, 1.1920929e-07, -0.008488417)
 
 [node name="Chest" parent="." unique_id=1892450482 instance=ExtResource("25_3ojju")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.8892765)
@@ -1426,3 +1428,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.8892765)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Environment" unique_id=197659897]
 environment = SubResource("Environment_quicy")
+
+[node name="SavePoint2" parent="." unique_id=580765059 instance=ExtResource("32_2i80p")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.238122, 0, 0)
+
+[node name="PetDog" parent="." unique_id=437757490 instance=ExtResource("24_lj50e")]
+coin_drop_max = 500
+xp_reward = 100

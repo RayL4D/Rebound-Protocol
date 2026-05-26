@@ -207,8 +207,7 @@ func _build_card_continue(slot: int, info: Dictionary, used: bool) -> PanelConta
 func _on_continue(slot: int) -> void:
 	SaveData.load_slot(slot)
 	var level := SaveData.get_current_level()
-	# ... (Logique inchangée)
-	if level == "" or level == "arena_first_level_1":
+	if level == "arena_first_level_1":
 		SceneManager.load_level("res://scenes/levels/first_level/arena_first_level_1.tscn")
 	elif level == "arena_first_level_2":
 		SceneManager.load_level("res://scenes/levels/first_level/arena_first_level_2.tscn")
@@ -294,7 +293,7 @@ func _build_confirm_dialog(msg: String, on_yes: Callable, on_no: Callable) -> Co
 	vbox.add_theme_constant_override("separation", 8)
 	panel.add_child(vbox)
 	vbox.add_child(_make_label(tr("UI_DIALOG_WARN"), 16, COLOR_ORANGE))
-	vbox.add_label(_make_label(msg, 18, Color(0.9, 0.9, 1.0)))
+	vbox.add_child(_make_label(msg, 18, Color(0.9, 0.9, 1.0)))
 	vbox.add_child(_make_label(tr("UI_DIALOG_CONFIRM_DESC"), 12, COLOR_DIM))
 	var hbox := HBoxContainer.new()
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
