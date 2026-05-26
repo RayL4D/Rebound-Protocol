@@ -13,11 +13,12 @@ extends Node3D
 const PLAYER_SCENE := "res://scenes/player/player.tscn"
 
 ## Positions de départ : slot 0 = hôte (peer 1), slots 1–3 = clients.
+## Sol à y ≈ 749.22 ; on spawne à y = 751 pour atterrir proprement sans flotter.
 const SPAWN_POSITIONS: Array[Vector3] = [
-	Vector3(-3.0, 1.0,  0.0),
-	Vector3( 3.0, 1.0,  0.0),
-	Vector3( 0.0, 1.0, -3.0),
-	Vector3( 0.0, 1.0,  3.0),
+	Vector3(354.0, 751.0, -512.0),
+	Vector3(364.0, 751.0, -512.0),
+	Vector3(354.0, 751.0, -522.0),
+	Vector3(364.0, 751.0, -522.0),
 ]
 
 ## { peer_id (int) → Player node }
@@ -31,6 +32,11 @@ var _was_fully_connected:  bool = false  # true dès qu'on a vu CONNECTION_CONNE
 # ── Cycle de vie ───────────────────────────────────────────────────────────────
 
 func _ready() -> void:
+	# ── Supprime le joueur statique placé dans la scène (test/prévisualisation)
+	# Il entrerait en conflit avec les joueurs spawnés dynamiquement.
+	if has_node("Player"):
+		$Player.queue_free()
+
 	# ── Nœud racine des joueurs (requis par MultiplayerSpawner) ──────────────
 	var players_root := Node3D.new()
 	players_root.name = "Players"
@@ -49,14 +55,16 @@ func _ready() -> void:
 
 	# ── Client : 3 voies de détection du départ de l'hôte ────────────────────
 	if not multiplayer.is_server():
-		# Voie 1 – signal direct du MultiplayerAPI (le plus réactif avec WebRTC)
-		multiplayer.server_disconnected.connect(
-			func(): _trigger_host_left()
+		# Voie 1 – peer_disconnected filtré sur id==1 (le plus fiable avec WebRTC ;
+		# server_disconnected n'est pas toujours émis selon l'implémentation WebRTC).
+		multiplayer.peer_disconnected.connect(func(id: int):
+			if id == 1:
+				_trigger_host_left()
 		)
-		# Voie 2 – signal NetworkManager (timeout, relay, autres raisons)
-		NetworkManager.connection_failed.connect(
-			func(_r: String): _trigger_host_left()
-		)
+		# Voie 2 – server_disconnected (redondant mais fiable sur d'autres transports)
+		multiplayer.server_disconnected.connect(func(): _trigger_host_left())
+		# Voie 3 – signal NetworkManager (timeout, relay, autres raisons)
+		NetworkManager.connection_failed.connect(func(_r: String): _trigger_host_left())
 
 	# ── Seul l'hôte déclenche le spawn ────────────────────────────────────────
 	if multiplayer.is_server():
@@ -118,40 +126,47 @@ func _trigger_host_left() -> void:
 	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
 
 
-## Overlay "connexion perdue" affiché pendant 2 secondes.
+## Overlay "connexion perdue" amélioré : fond, panneau cyberpunk, barre de
+## compte à rebours et animation d'entrée (slide-down + fade-in).
 func _show_host_left_overlay() -> void:
 	var font: FontFile = null
 	if ResourceLoader.exists("res://ui_theme/fonts/Xolonium-Regular.ttf"):
 		font = load("res://ui_theme/fonts/Xolonium-Regular.ttf") as FontFile
 
+	# ── CanvasLayer ──────────────────────────────────────────────────────────
 	var layer := CanvasLayer.new()
 	layer.layer = 128
 	add_child(layer)
 
-	# Control intermédiaire pour le fade-in (CanvasLayer n'a pas de modulate)
+	# root_ctrl : plein écran, gère le fade-in et le slide-down global.
+	# add_child d'abord → puis set_anchors_and_offsets_preset → puis size explicite.
 	var root_ctrl := Control.new()
-	root_ctrl.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root_ctrl.modulate.a = 0.0
+	root_ctrl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(root_ctrl)
+	root_ctrl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root_ctrl.size    = get_viewport().get_visible_rect().size
+	root_ctrl.modulate.a = 0.0
+	root_ctrl.position.y = -14.0   # décalage initial pour l'animation slide-down
 
-	# Fond sombre
+	# Fond sombre bleu nuit
 	var bg := ColorRect.new()
-	bg.color = Color(0.0, 0.0, 0.0, 0.78)
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg.color = Color(0.0, 0.01, 0.04, 0.86)
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root_ctrl.add_child(bg)
 
-	# Panneau centré
+	# CenterContainer pour centrer le panneau
 	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root_ctrl.add_child(center)
 
+	# ── Panneau principal ────────────────────────────────────────────────────
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(400, 0)
+	panel.custom_minimum_size = Vector2(440, 0)
 	var ps := StyleBoxFlat.new()
-	ps.bg_color     = Color(0.012, 0.022, 0.038)
-	ps.border_color = Color(0.95, 0.22, 0.22)
-	ps.set_border_width_all(2)
-	ps.set_corner_radius_all(4)
+	ps.bg_color   = Color(0.006, 0.012, 0.026)
+	ps.border_color = Color(0.80, 0.14, 0.14)
+	ps.set_border_width_all(1)
+	ps.set_corner_radius_all(0)   # Coins carrés → look cyberpunk
 	ps.set_content_margin_all(0)
 	panel.add_theme_stylebox_override("panel", ps)
 	center.add_child(panel)
@@ -160,62 +175,135 @@ func _show_host_left_overlay() -> void:
 	outer_vb.add_theme_constant_override("separation", 0)
 	panel.add_child(outer_vb)
 
-	# Barre rouge en haut
+	# Ligne cyan fine (accent haut)
+	var cyan_line := ColorRect.new()
+	cyan_line.color = Color(0.0, 0.85, 1.0, 0.85)
+	cyan_line.custom_minimum_size = Vector2(0, 2)
+	outer_vb.add_child(cyan_line)
+
+	# Barre rouge header
 	var top_bar := ColorRect.new()
-	top_bar.color = Color(0.95, 0.22, 0.22, 0.90)
-	top_bar.custom_minimum_size = Vector2(0, 4)
+	top_bar.color = Color(0.82, 0.14, 0.14)
+	top_bar.custom_minimum_size = Vector2(0, 3)
 	outer_vb.add_child(top_bar)
 
 	# Contenu avec marges
 	var mc := MarginContainer.new()
-	mc.add_theme_constant_override("margin_left",   28)
-	mc.add_theme_constant_override("margin_right",  28)
-	mc.add_theme_constant_override("margin_top",    20)
-	mc.add_theme_constant_override("margin_bottom", 22)
+	mc.add_theme_constant_override("margin_left",   30)
+	mc.add_theme_constant_override("margin_right",  30)
+	mc.add_theme_constant_override("margin_top",    22)
+	mc.add_theme_constant_override("margin_bottom", 24)
 	outer_vb.add_child(mc)
 
 	var inner_vb := VBoxContainer.new()
-	inner_vb.add_theme_constant_override("separation", 10)
+	inner_vb.add_theme_constant_override("separation", 0)
 	mc.add_child(inner_vb)
+
+	# ── Titre : icône ✕ + texte ──────────────────────────────────────────────
+	var title_row := HBoxContainer.new()
+	title_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	title_row.add_theme_constant_override("separation", 9)
+	inner_vb.add_child(title_row)
+
+	var lbl_icon := Label.new()
+	lbl_icon.text = "✕"
+	lbl_icon.add_theme_font_size_override("font_size", 20)
+	lbl_icon.add_theme_color_override("font_color", Color(0.92, 0.22, 0.22))
+	lbl_icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	if font: lbl_icon.add_theme_font_override("font", font)
+	title_row.add_child(lbl_icon)
 
 	var lbl_title := Label.new()
 	lbl_title.text = "CONNEXION PERDUE"
-	lbl_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl_title.add_theme_font_size_override("font_size", 24)
-	lbl_title.add_theme_color_override("font_color", Color(0.95, 0.22, 0.22))
+	lbl_title.add_theme_font_size_override("font_size", 22)
+	lbl_title.add_theme_color_override("font_color", Color(0.92, 0.22, 0.22))
+	lbl_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	if font: lbl_title.add_theme_font_override("font", font)
-	inner_vb.add_child(lbl_title)
+	title_row.add_child(lbl_title)
 
+	# Espace
+	var sp1 := Control.new(); sp1.custom_minimum_size = Vector2(0, 16)
+	inner_vb.add_child(sp1)
+
+	# Séparateur cyan subtil
 	var sep := ColorRect.new()
-	sep.color = Color(0.0, 0.851, 1.0, 0.18)
+	sep.color = Color(0.0, 0.85, 1.0, 0.22)
 	sep.custom_minimum_size = Vector2(0, 1)
 	inner_vb.add_child(sep)
 
+	# Espace
+	var sp2 := Control.new(); sp2.custom_minimum_size = Vector2(0, 16)
+	inner_vb.add_child(sp2)
+
+	# Message principal
 	var lbl_msg := Label.new()
 	lbl_msg.text = "L'hôte a quitté la partie."
 	lbl_msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl_msg.add_theme_font_size_override("font_size", 14)
-	lbl_msg.add_theme_color_override("font_color", Color(0.88, 0.92, 0.96))
+	lbl_msg.add_theme_color_override("font_color", Color(0.78, 0.84, 0.90))
 	if font: lbl_msg.add_theme_font_override("font", font)
 	inner_vb.add_child(lbl_msg)
 
+	# Espace
+	var sp3 := Control.new(); sp3.custom_minimum_size = Vector2(0, 22)
+	inner_vb.add_child(sp3)
+
+	# ── Barre de compte à rebours ────────────────────────────────────────────
+	# bar_container : hauteur fixe, s'étire en largeur dans le VBox
+	var bar_container := Control.new()
+	bar_container.custom_minimum_size = Vector2(0, 5)
+	bar_container.size_flags_horizontal = Control.SIZE_FILL
+	inner_vb.add_child(bar_container)
+
+	# Fond sombre de la barre
+	var bar_bg := ColorRect.new()
+	bar_bg.color = Color(0.12, 0.02, 0.02)
+	bar_bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bar_container.add_child(bar_bg)
+
+	# Remplissage rouge (anchor_right 1→0 = barre qui se vide de droite à gauche)
+	var bar_fill := ColorRect.new()
+	bar_fill.color = Color(0.85, 0.16, 0.16)
+	bar_fill.anchor_left   = 0.0
+	bar_fill.anchor_top    = 0.0
+	bar_fill.anchor_right  = 1.0
+	bar_fill.anchor_bottom = 1.0
+	bar_fill.offset_left   = 0.0
+	bar_fill.offset_right  = 0.0
+	bar_fill.offset_top    = 0.0
+	bar_fill.offset_bottom = 0.0
+	bar_container.add_child(bar_fill)
+
+	# Espace
+	var sp4 := Control.new(); sp4.custom_minimum_size = Vector2(0, 13)
+	inner_vb.add_child(sp4)
+
+	# Sous-titre
 	var lbl_sub := Label.new()
 	lbl_sub.text = "Retour au menu principal…"
 	lbl_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl_sub.add_theme_font_size_override("font_size", 11)
-	lbl_sub.add_theme_color_override("font_color", Color(0.0, 0.851, 1.0, 0.50))
+	lbl_sub.add_theme_color_override("font_color", Color(0.0, 0.85, 1.0, 0.50))
 	if font: lbl_sub.add_theme_font_override("font", font)
 	inner_vb.add_child(lbl_sub)
 
-	# Barre rouge en bas
+	# Barre rouge bas (atténuée)
 	var bot_bar := ColorRect.new()
-	bot_bar.color = Color(0.95, 0.22, 0.22, 0.55)
-	bot_bar.custom_minimum_size = Vector2(0, 3)
+	bot_bar.color = Color(0.82, 0.14, 0.14, 0.35)
+	bot_bar.custom_minimum_size = Vector2(0, 2)
 	outer_vb.add_child(bot_bar)
 
-	# Fade-in
+	# ── Animations ───────────────────────────────────────────────────────────
 	var tw := root_ctrl.create_tween()
-	tw.tween_property(root_ctrl, "modulate:a", 1.0, 0.30)
+	tw.set_parallel(true)
+	# Fond : fade-in rapide
+	tw.tween_property(root_ctrl, "modulate:a", 1.0, 0.22)
+	# Panneau : slide-down (position Y -14 → 0, ease out cubic)
+	tw.tween_property(root_ctrl, "position:y", 0.0, 0.32) \
+		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	# Barre de compte à rebours : se vide en 2s (délai 0.1s pour laisser le fade finir)
+	tw.tween_property(bar_fill, "anchor_right", 0.0, 2.0) \
+		.set_delay(0.1).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_LINEAR)
 
 
 # ── Départ d'un joueur ────────────────────────────────────────────────────────
