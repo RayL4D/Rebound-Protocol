@@ -41,6 +41,8 @@
 [ext_resource type="PackedScene" uid="uid://chm01swb33150" path="res://scenes/ui/HUD.tscn" id="42_ayx3v"]
 [ext_resource type="PackedScene" uid="uid://pbrlw8kcrlq4" path="res://scenes/ui/game_over.tscn" id="43_om3xt"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="44_ctbie"]
+[ext_resource type="PackedScene" uid="uid://dugi48yxe82ny" path="res://scenes/pickups/chest.tscn" id="44_om3xt"]
+[ext_resource type="PackedScene" uid="uid://c1ba4apgy2p4p" path="res://scenes/levels/save_point.tscn" id="45_ctbie"]
 [ext_resource type="PackedScene" uid="uid://bxss4q4q2p5dq" path="res://scenes/ui/mobile_controls.tscn" id="45_hrfqu"]
 [ext_resource type="PackedScene" uid="uid://c1stu4jqgvuns" path="res://assets/models/environments/tutorial_and_first_level/hangar_smallA.glb" id="50_260nm"]
 
@@ -1124,7 +1126,7 @@ transform = Transform3D(4.7587223, 0, -1.5344577, 0, 5, 0, 1.5344577, 0, 4.75872
 
 [node name="Player" parent="." unique_id=222719199 instance=ExtResource("1_ha378")]
 transform = Transform3D(-0.9873115, 0, -0.15879565, 0, 1, 0, 0.15879565, 0, -0.9873115, -3.5227365, 0.43636608, -22.382069)
-move_speed = 20.0
+move_speed = 30.0
 max_hp = 10000
 
 [node name="Pet_Cow_1" parent="." unique_id=1156179715 instance=ExtResource("5_260nm")]
@@ -1143,6 +1145,35 @@ transform = Transform3D(0.7381964, 0, -0.6745859, 0, 1, 0, 0.6745859, 0, 0.73819
 [node name="PauseMenu" parent="." unique_id=1927269659 instance=ExtResource("44_ctbie")]
 
 [node name="MobileControls" parent="." unique_id=1449797109 instance=ExtResource("45_hrfqu")]
+
+[node name="Checkpoints_container" type="Node3D" parent="." unique_id=905400962]
+
+[node name="Chest_01" parent="Checkpoints_container" unique_id=1892450482 instance=ExtResource("44_om3xt")]
+transform = Transform3D(-0.9965626, 0, -0.082843006, 0, 1, 0, 0.082843006, 0, -0.9965626, 92.55415, 0.07699275, 70.739685)
+coin_count = 30
+
+[node name="Chest_02" parent="Checkpoints_container" unique_id=1638025450 instance=ExtResource("44_om3xt")]
+transform = Transform3D(0.6628815, 0, -0.74872434, 0, 1, 0, 0.74872434, 0, 0.6628815, 27.067623, 13.331487, 199.80609)
+coin_count = 30
+
+[node name="Chest_03" parent="Checkpoints_container" unique_id=1405561061 instance=ExtResource("44_om3xt")]
+transform = Transform3D(-0.04930298, 0, 0.9987839, 0, 1, 0, -0.9987839, 0, -0.04930298, 131.1032, 19.99145, -74.07633)
+coin_count = 30
+
+[node name="Chest_04" parent="Checkpoints_container" unique_id=316311473 instance=ExtResource("44_om3xt")]
+transform = Transform3D(-0.9987614, 0, -0.049756177, 0, 1, 0, 0.049756177, 0, -0.9987614, 248.86227, 19.99145, -86.46505)
+coin_count = 30
+
+[node name="SavePoint_container" type="Node3D" parent="." unique_id=1406053600]
+
+[node name="SavePoint_1" parent="SavePoint_container" unique_id=1095395053 instance=ExtResource("45_ctbie")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.666991, 13.002875, 175.01176)
+
+[node name="SavePoint_2" parent="SavePoint_container" unique_id=237861613 instance=ExtResource("45_ctbie")]
+transform = Transform3D(1, 0, 0, 0, 0.9784226, -0.20661405, 0, 0.20661405, 0.9784226, 172.06082, 18.74612, 45.999573)
+
+[node name="SavePoint_3" parent="SavePoint_container" unique_id=1766967230 instance=ExtResource("45_ctbie")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 245.08685, 19.556004, -36.59371)
 
 [connection signal="body_entered" from="Wave_manager_container/Trigger_Zone1" to="." method="_on_trigger_zone_1_body_entered"]
 [connection signal="body_entered" from="Wave_manager_container/Trigger_Zone2" to="." method="_on_trigger_zone_2_body_entered"]

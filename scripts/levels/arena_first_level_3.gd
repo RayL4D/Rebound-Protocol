@@ -7,6 +7,7 @@ extends Node3D
 @onready var wave_manager_zone2: WaveManager = $Wave_manager_container/WaveManager_Zone2
 @onready var level_exit: Node = $WorldObjects_container/portal_container/LevelExit
 @onready var hud: Node = $HUD
+@onready var hidden_save_point_1 = $SavePoint_container/SavePoint_2
 
 # Variables de contrôle
 var _zone2_triggered: bool = false
@@ -21,6 +22,11 @@ func _ready() -> void:
 	_setup_ui()
 	_setup_waves()
 	_connect_signals()
+	
+	# === DÉSACTIVATION DES SAVE POINTS AU LANCEMENT ===
+	if hidden_save_point_1:
+		hidden_save_point_1.visible = false
+		hidden_save_point_1.process_mode = Node.PROCESS_MODE_DISABLED
 
 
 # =============================================================
@@ -49,21 +55,21 @@ func _setup_waves() -> void:
 		
 	var waves_z2: Array[WaveManager.WaveData] = [
 		## Chiens (Index 0)
-		WaveManager.WaveData.new(8, 2, tr("ARENA_LVL3_WAVE_DOGS"), 0),
-		WaveManager.WaveData.new(10, 2, "", 0),
-		
-		# Vaches (Index 1)
-		WaveManager.WaveData.new(12, 2, tr("ARENA_LVL3_WAVE_COWS"), 1),
-		WaveManager.WaveData.new(14, 3, "", 1),
-		
-		# Chats (Index 2)
-		WaveManager.WaveData.new(15, 3, tr("ARENA_LVL3_WAVE_CATS"), 2),
-		WaveManager.WaveData.new(18, 3, "", 2),
-		WaveManager.WaveData.new(20, 4, "", 2),
-		
-		# Mix (Index 0 ou 2 selon tes préférences)
-		WaveManager.WaveData.new(22, 4, tr("ARENA_LVL3_WAVE_MIX"), 0),
-		WaveManager.WaveData.new(25, 4, "", 2),
+		#WaveManager.WaveData.new(8, 2, tr("ARENA_LVL3_WAVE_DOGS"), 0),
+		#WaveManager.WaveData.new(10, 2, "", 0),
+		#
+		## Vaches (Index 1)
+		#WaveManager.WaveData.new(12, 2, tr("ARENA_LVL3_WAVE_COWS"), 1),
+		#WaveManager.WaveData.new(14, 3, "", 1),
+		#
+		## Chats (Index 2)
+		#WaveManager.WaveData.new(15, 3, tr("ARENA_LVL3_WAVE_CATS"), 2),
+		#WaveManager.WaveData.new(18, 3, "", 2),
+		#WaveManager.WaveData.new(20, 4, "", 2),
+		#
+		## Mix (Index 0 ou 2 selon tes préférences)
+		#WaveManager.WaveData.new(22, 4, tr("ARENA_LVL3_WAVE_MIX"), 0),
+		#WaveManager.WaveData.new(25, 4, "", 2),
 		
 		# Boss (Index 3 - Lion)
 		WaveManager.WaveData.new(1, 1, tr("ARENA_LVL3_WAVE_BOSS"), 3)
@@ -76,6 +82,7 @@ func _connect_signals() -> void:
 	if wave_manager_zone2:
 		if not wave_manager_zone2.all_waves_finished.is_connected(_on_zone_2_finished):
 			wave_manager_zone2.all_waves_finished.connect(_on_zone_2_finished)
+			
 
 
 # =============================================================
@@ -111,11 +118,13 @@ func _on_trigger_zone_2_body_entered(body: Node3D) -> void:
 # =============================================================
 
 func _on_zone_2_finished() -> void:
-	"""Victoire : Ouverture du portail et message final"""
+	"""Victoire du combat : Active le portail directement sans condition de clé"""
 	
+	# 1. Activation du portail de sortie
 	if level_exit and level_exit.has_method("activate"):
 		level_exit.activate()
 	
+	# 2. Feedback visuel sur le HUD (Message de victoire)
 	var message_label = hud.get_node_or_null("%MessageLabel")
 	var panel = hud.get_node_or_null("%PanelContainer")
 	
@@ -123,5 +132,5 @@ func _on_zone_2_finished() -> void:
 		message_label.text = tr("ARENA_LVL3_WIN")
 	if panel:
 		panel.visible = true
-		await get_tree().create_timer(5.0).timeout
+		await get_tree().create_timer(4.0).timeout
 		panel.visible = false

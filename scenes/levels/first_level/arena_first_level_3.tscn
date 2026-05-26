@@ -38,7 +38,9 @@
 [ext_resource type="Shader" uid="uid://cijt4ea4tokdl" path="res://assets/shaders/oil_effect.gdshader" id="31_0xssw"]
 [ext_resource type="PackedScene" uid="uid://b2hehayj3ft7e" path="res://scenes/levels/zones/level_exit.tscn" id="35_1x23w"]
 [ext_resource type="PackedScene" uid="uid://chm01swb33150" path="res://scenes/ui/HUD.tscn" id="36_5boxw"]
+[ext_resource type="PackedScene" uid="uid://dugi48yxe82ny" path="res://scenes/pickups/chest.tscn" id="37_2bpxm"]
 [ext_resource type="PackedScene" uid="uid://pbrlw8kcrlq4" path="res://scenes/ui/game_over.tscn" id="37_jd7c2"]
+[ext_resource type="PackedScene" uid="uid://c1ba4apgy2p4p" path="res://scenes/levels/save_point.tscn" id="38_e52vl"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="38_pohuh"]
 [ext_resource type="PackedScene" uid="uid://bxss4q4q2p5dq" path="res://scenes/ui/mobile_controls.tscn" id="39_2bpxm"]
 
@@ -1139,11 +1141,47 @@ transform = Transform3D(-0.25583738, 0, -9.996727, 0, 10, 0, 9.996727, 0, -0.255
 [node name="satelliteDish_large4" parent="WorldObjects_container/others_container" unique_id=1682429997 instance=ExtResource("23_kxf5t")]
 transform = Transform3D(5.6061006, 0, -8.2808, 0, 10, 0, 8.2808, 0, 5.6061006, 172.52376, 54.79816, -458.2497)
 
+[node name="Chest_container" type="Node3D" parent="." unique_id=1754059796]
+
+[node name="Chest_1" parent="Chest_container" unique_id=1892450482 instance=ExtResource("37_2bpxm")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 137.55385, 43.745087, 92.62258)
+coin_count = 30
+
+[node name="Chest_2" parent="Chest_container" unique_id=2117020307 instance=ExtResource("37_2bpxm")]
+transform = Transform3D(-0.56257415, 0, 0.8267469, 0, 1, 0, -0.82674694, 0, -0.5625741, 194.07658, 41.163216, -507.08255)
+coin_count = 30
+
+[node name="SavePoint_container" type="Node3D" parent="." unique_id=1373700016]
+
+[node name="SavePoint_1" parent="SavePoint_container" unique_id=1095395053 instance=ExtResource("38_e52vl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 249.53648, 40.842236, -206.85587)
+
+[node name="SavePoint_2" parent="SavePoint_container" unique_id=198715134 instance=ExtResource("38_e52vl")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 309.40164, 40.854412, -372.50912)
+
 [node name="Player" parent="." unique_id=222719199 instance=ExtResource("1_75pew")]
 transform = Transform3D(-0.32669008, 0, -0.9451316, 0, 1, 0, 0.9451316, 0, -0.32669008, 4.5557275, 39.964878, -0.33545315)
 move_speed = 20.0
 jump_force = 7.0
 max_hp = 10000
+
+[node name="PetDog_01" parent="." unique_id=437757490 instance=ExtResource("6_dug3n")]
+transform = Transform3D(-0.22593728, 0, -0.97414184, 0, 1, 0, 0.97414184, 0, -0.22593728, 65.28167, 27.509583, 34.351276)
+
+[node name="PetDog_02" parent="." unique_id=924932980 instance=ExtResource("6_dug3n")]
+transform = Transform3D(-0.4777875, 0, -0.8784754, 0, 1, 0, 0.8784754, 0, -0.4777875, 69.26743, 27.50958, 46.538757)
+
+[node name="PetDog_03" parent="." unique_id=498003064 instance=ExtResource("6_dug3n")]
+transform = Transform3D(-0.4777875, 0, -0.8784754, 0, 1, 0, 0.8784754, 0, -0.4777875, 77.641975, 27.50958, 14.95891)
+
+[node name="PetDog_04" parent="." unique_id=634254636 instance=ExtResource("6_dug3n")]
+transform = Transform3D(-0.4777875, 0, -0.8784754, 0, 1, 0, 0.8784754, 0, -0.4777875, 131.88025, 42.84903, 101.910416)
+
+[node name="PetCat_01" parent="." unique_id=2070550458 instance=ExtResource("8_fn56f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 124.31125, 43.181744, 92.98407)
+
+[node name="PetCat_02" parent="." unique_id=838821827 instance=ExtResource("8_fn56f")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 141.10164, 40.28144, -55.47395)
 
 [node name="HUD" parent="." unique_id=1994348935 instance=ExtResource("36_5boxw")]
 
