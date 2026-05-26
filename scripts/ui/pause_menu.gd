@@ -137,7 +137,7 @@ func _build_main_panel() -> Control:
 	inner.add_child(HSeparator.new())
 	inner.add_child(_make_button("PAUSE_RESUME",    _resume))
 	inner.add_child(_make_button("PAUSE_SETTINGS",  _show_settings_panel))
-	inner.add_child(_make_button("COMPÉTENCES",     _show_skills_panel))
+	inner.add_child(_make_button("UI_BTN_SKILL",     _show_skills_panel))
 	inner.add_child(_make_button("PAUSE_QUIT_MENU", _quit_to_menu))
 
 	return center
@@ -227,7 +227,7 @@ func _show_skills_panel() -> void:
 
 	if acquired.is_empty():
 		var lbl := Label.new()
-		lbl.text = "Aucune compétence acquise pour l'instant."
+		lbl.text = tr("SKILL_VIEW")
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.add_theme_color_override("font_color", Color(0.50, 0.55, 0.60))
 		if _font:
@@ -351,7 +351,7 @@ func _build_skills_panel() -> Control:
 	inner.add_theme_constant_override("separation", 12)
 	panel.add_child(inner)
 
-	_add_title(inner, "⚡  COMPÉTENCES  ⚡")
+	_add_title(inner, "⚡  " + tr("UI_BTN_SKILL") + "  ⚡")
 	inner.add_child(HSeparator.new())
 
 	# ScrollContainer : hauteur bornée pour ne pas dépasser l'écran

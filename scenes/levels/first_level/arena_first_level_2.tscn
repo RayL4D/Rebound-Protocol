@@ -6,10 +6,11 @@
 [ext_resource type="PackedScene" uid="uid://bk14aw3kobgpm" path="res://scenes/levels/zones/instant_exit.tscn" id="3_fmwuw"]
 [ext_resource type="PackedScene" uid="uid://c4er506cy637w" path="res://scenes/levels/zones/kill_zone.tscn" id="5_k4bcp"]
 [ext_resource type="PackedScene" uid="uid://dvqrgi5mkvifa" path="res://assets/models/environments/tutorial_and_first_level/gate_complex.glb" id="6_gqcof"]
-[ext_resource type="Shader" uid="uid://ctto1apvv4vc4" path="res://assets/shaders/portal_effect.gdshader" id="7_7nfo1"]
 [ext_resource type="PackedScene" uid="uid://c1stu4jqgvuns" path="res://assets/models/environments/tutorial_and_first_level/hangar_smallA.glb" id="8_7nfo1"]
 [ext_resource type="PackedScene" uid="uid://dd6nr88d0c1yq" path="res://assets/models/environments/tutorial_and_first_level/machine_wireless.glb" id="9_3muyu"]
+[ext_resource type="PackedScene" uid="uid://dugi48yxe82ny" path="res://scenes/pickups/chest.tscn" id="9_gxwpe"]
 [ext_resource type="PackedScene" uid="uid://du4lnkverx2e8" path="res://assets/models/environments/tutorial_and_first_level/desk_computerCorner.glb" id="10_r5we7"]
+[ext_resource type="PackedScene" uid="uid://c1ba4apgy2p4p" path="res://scenes/levels/save_point.tscn" id="10_y7xut"]
 [ext_resource type="PackedScene" uid="uid://b2oxmnlr28vu" path="res://scenes/enemies/pet_dog.tscn" id="11_peei8"]
 [ext_resource type="PackedScene" uid="uid://chm01swb33150" path="res://scenes/ui/HUD.tscn" id="12_m2tf6"]
 [ext_resource type="PackedScene" uid="uid://pbrlw8kcrlq4" path="res://scenes/ui/game_over.tscn" id="13_gxwpe"]
@@ -69,24 +70,6 @@ size = Vector3(35.59986, 0.8432007, 40.5603)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_fmwuw"]
 size = Vector3(50, 17, 1)
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_3muyu"]
-render_priority = 0
-shader = ExtResource("7_7nfo1")
-shader_parameter/base_color = Color(0, 0.83, 1, 1)
-shader_parameter/speed = 1.0
-shader_parameter/distortion = 2.0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gxwpe"]
-albedo_color = Color(0.40545133, 1.4369954, 1.4369954, 0.42745098)
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_r5we7"]
-material = SubResource("StandardMaterial3D_gxwpe")
-size = Vector2(3, 3.3)
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_peei8"]
-material = SubResource("StandardMaterial3D_gxwpe")
-size = Vector2(3.5, 3.5)
 
 [node name="ArenaFirstLevel2" type="Node3D" unique_id=1950125623]
 script = ExtResource("1_723dc")
@@ -216,44 +199,10 @@ shape = SubResource("BoxShape3D_fmwuw")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.052204132, 17.766758, -0.051488876)
 shape = SubResource("BoxShape3D_pxi4t")
 
-[node name="Player" parent="." unique_id=222719199 instance=ExtResource("1_oyrup")]
-transform = Transform3D(0.009599137, 0, 0.9999539, 0, 1, 0, -0.9999539, 0, 0.009599137, 13.098409, 1.8962939, 3.1270933)
-
-[node name="Lantern" type="OmniLight3D" parent="Player" unique_id=1684608561]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0014309883, 1.5925252, -0.14918041)
-shadow_enabled = true
-
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1718334821]
-transform = Transform3D(1, 0, 0, 0, -0.90775555, 0.41949952, 0, -0.41949952, -0.90775555, 0, 14.605391, 0)
-light_color = Color(0.24477622, 0.24477643, 0.24477637, 1)
-
-[node name="KillZone" parent="." unique_id=1786468622 instance=ExtResource("5_k4bcp")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 68.235016, 0)
-
 [node name="Portal_1" type="Node3D" parent="." unique_id=1104459934]
 
 [node name="gate_complex2" parent="Portal_1" unique_id=1216506774 instance=ExtResource("6_gqcof")]
 transform = Transform3D(-0.015533164, 0, -4.9999757, 0, 5, 0, 4.9999757, 0, -0.015533164, 23.45942, 0.36948395, -7.2593036)
-
-[node name="Portal_2" type="Node3D" parent="." unique_id=1145282739]
-transform = Transform3D(-0.99992555, 0, -0.012199633, 0, 1, 0, 0.012199633, 0, -0.99992555, -0.026662827, 0, 4.248003)
-
-[node name="gate_complex2" parent="Portal_2" unique_id=1774182978 instance=ExtResource("6_gqcof")]
-transform = Transform3D(-0.015533164, 0, -4.9999757, 0, 5, 0, 4.9999757, 0, -0.015533164, 23.45942, 0.36948395, -7.2593036)
-
-[node name="MeshInstance3D2" type="MeshInstance3D" parent="Portal_2" unique_id=1215651588]
-transform = Transform3D(-0.08143174, -0.9965047, -0.018685132, -0.996567, 0.08112732, 0.01650718, -0.014933541, 0.019965224, -0.9996904, 15.822871, 3.3881333, 2.8826833)
-material_override = SubResource("ShaderMaterial_3muyu")
-mesh = SubResource("PlaneMesh_r5we7")
-
-[node name="MeshInstance3D3" type="MeshInstance3D" parent="Portal_2" unique_id=2014102294]
-transform = Transform3D(-0.0007384623, -0.99980485, -0.019862749, -0.9998881, 0.0004414017, 0.0149430735, -0.014931335, 0.019871593, -0.9996938, 15.992458, 3.1604984, 2.8209107)
-material_override = SubResource("ShaderMaterial_3muyu")
-mesh = SubResource("PlaneMesh_peei8")
-
-[node name="Instant_exit" parent="Portal_2" unique_id=1235627036 instance=ExtResource("3_fmwuw")]
-transform = Transform3D(0.00078533683, 0, -1.0000004, 0, 1, 0, 1.0000004, 0, 0.00078533683, 15.98688, 3.2646565, 2.6958294)
-next_scene_path = "uid://cjghekyt73em7"
 
 [node name="WorldObjects_container" type="Node3D" parent="." unique_id=506230548]
 
@@ -271,6 +220,35 @@ transform = Transform3D(3.7127235, 0, -1.4885174, 0, 4, 0, 1.4885174, 0, 3.71272
 
 [node name="machine_generator2" parent="WorldObjects_container" unique_id=707865282 instance=ExtResource("16_gxwpe")]
 transform = Transform3D(-1.5817976, 0, -3.6739511, 0, 4, 0, 3.6739511, 0, -1.5817976, 0.80420923, 0.34700775, 10.968506)
+
+[node name="Player" parent="." unique_id=222719199 instance=ExtResource("1_oyrup")]
+transform = Transform3D(0.009599137, 0, 0.9999539, 0, 1, 0, -0.9999539, 0, 0.009599137, 13.098409, 1.8962939, 3.1270933)
+
+[node name="Lantern" type="OmniLight3D" parent="Player" unique_id=1684608561]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0014309883, 1.5925252, -0.14918041)
+shadow_enabled = true
+
+[node name="Chest_container" type="Node3D" parent="." unique_id=627405433]
+
+[node name="Chest_1" parent="Chest_container" unique_id=1892450482 instance=ExtResource("9_gxwpe")]
+transform = Transform3D(0.7570293, 0, 0.653381, 0, 1, 0, -0.653381, 0, 0.7570293, 9.636823, 0.8703861, -18.051067)
+coin_count = 30
+
+[node name="SavePoint_container" type="Node3D" parent="." unique_id=1226735492]
+
+[node name="SavePoint_1" parent="SavePoint_container" unique_id=1095395053 instance=ExtResource("10_y7xut")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.164333, 0.53049564, 1.8590949)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1718334821]
+transform = Transform3D(1, 0, 0, 0, -0.90775555, 0.41949952, 0, -0.41949952, -0.90775555, 0, 14.605391, 0)
+light_color = Color(0.24477622, 0.24477643, 0.24477637, 1)
+
+[node name="KillZone" parent="." unique_id=1786468622 instance=ExtResource("5_k4bcp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 68.235016, 0)
+
+[node name="Instant_exit" parent="." unique_id=1235627036 instance=ExtResource("3_fmwuw")]
+transform = Transform3D(-0.012984916, 0, 0.9999163, 0, 1, 0, -0.9999163, 0, -0.012984916, -15.20209, 2.8917432, 1.7474084)
+next_scene_path = "uid://cjghekyt73em7"
 
 [node name="PetDog_1" parent="." unique_id=437757490 instance=ExtResource("11_peei8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.618425, 0.99999905, -8.181868)

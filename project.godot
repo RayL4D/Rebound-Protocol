@@ -24,6 +24,7 @@ MusicManager="*res://scripts/autoloads/music_manager.gd"
 AmbientManager="*res://scripts/autoloads/ambient_manager.gd"
 XpManager="*res://scripts/autoloads/xp_manager.gd"
 NetworkManager="*res://scripts/autoloads/network_manager.gd"
+ScoreManager="*res://scripts/autoloads/scoreManager.gd"
 
 [display]
 

@@ -82,7 +82,7 @@ func _build_detection_area() -> void:
 
 func _build_prompt() -> void:
 	_prompt              = Label3D.new()
-	_prompt.text         = "[F] Ouvrir"
+	_prompt.text         = tr("CHEST_OPEN")
 	_prompt.font_size    = 48
 	_prompt.modulate     = Color(1.0, 0.90, 0.3)
 	_prompt.billboard    = BaseMaterial3D.BILLBOARD_ENABLED

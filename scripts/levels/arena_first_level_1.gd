@@ -6,8 +6,12 @@ extends Node3D
 # --- RÉFÉRENCES AUX NŒUDS (Chemins mis à jour) ---
 @onready var wave_manager_zone1: WaveManager = $Wave_manager_container/WaveManager_Zone1
 @onready var wave_manager_zone2: WaveManager = $Wave_manager_container/WaveManager_Zone2
-@onready var level_exit: Node = $Zones/LevelExit
+@onready var level_exit: Node = $Zones/Instant_exit
 @onready var hud: Node = $HUD
+# Chemins des save point
+@onready var hidden_save_point_1 = $SavePoint_container/SavePoint_1
+@onready var hidden_save_point_2 = $SavePoint_container/SavePoint_3
+
 
 # Variables de contrôle
 var _zone1_triggered: bool = false
@@ -24,9 +28,12 @@ func _ready() -> void:
 	TranslationServer.set_locale(SceneManager.current_lang)
 		
 	CollisionManager.add_missing_collisions(self)
+	CollisionManager.add_missing_collisions(level_exit)
 	_setup_ui()
 	_setup_waves()
 	_connect_signals()
+	
+	ScoreManager.start_level()
 	
 	# === DÉSACTIVATION DES MURS AU LANCEMENT ===
 	if has_node(WALL_1_PATH):
@@ -40,9 +47,20 @@ func _ready() -> void:
 		wall2.get_node("CollisionShape3D").set_deferred("disabled", true)
 		if wall2.has_node("MeshInstance3D"):
 			wall2.get_node("MeshInstance3D").visible = false
+			
+	# === DÉSACTIVATION DES SAVE POINTS AU LANCEMENT ===
+	if hidden_save_point_1:
+		hidden_save_point_1.visible = false
+		hidden_save_point_1.process_mode = Node.PROCESS_MODE_DISABLED
+		
+	if hidden_save_point_2:
+		hidden_save_point_2.visible = false
+		hidden_save_point_2.process_mode = Node.PROCESS_MODE_DISABLED
 	
 	# Affiche le message par défaut
 	_set_permanent_message("LVL1_INTRO_MSG")
+	
+	
 
 	# Filet de sécurité : restaurer position + HP après TOUS les _ready() de la scène.
 	call_deferred("_deferred_restore_player")
@@ -149,6 +167,10 @@ func _on_zone_1_finished() -> void:
 		wall1.get_node("CollisionShape3D").set_deferred("disabled", true)
 		if wall1.has_node("MeshInstance3D"):
 			wall1.get_node("MeshInstance3D").visible = false
+			
+	if hidden_save_point_1:
+		hidden_save_point_1.visible = true
+		hidden_save_point_1.process_mode = Node.PROCESS_MODE_INHERIT
 
 func _on_zone_2_finished() -> void:
 	if has_node(WALL_2_PATH):
@@ -156,6 +178,10 @@ func _on_zone_2_finished() -> void:
 		wall2.get_node("CollisionShape3D").set_deferred("disabled", true)
 		if wall2.has_node("MeshInstance3D"):
 			wall2.get_node("MeshInstance3D").visible = false
+			
+	if hidden_save_point_2:
+		hidden_save_point_2.visible = true
+		hidden_save_point_2.process_mode = Node.PROCESS_MODE_INHERIT
 			
 	if level_exit and level_exit.has_method("activate"):
 		level_exit.activate()

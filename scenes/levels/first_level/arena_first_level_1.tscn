@@ -9,7 +9,6 @@
 [ext_resource type="PackedScene" uid="uid://b2oxmnlr28vu" path="res://scenes/enemies/pet_dog.tscn" id="4_r734y"]
 [ext_resource type="PackedScene" uid="uid://d0miflglqrbug" path="res://assets/models/environments/tutorial_and_first_level/hangar_smallB.glb" id="5_61jvx"]
 [ext_resource type="PackedScene" uid="uid://ubnnx67erpeq" path="res://scenes/enemies/pet_cow.tscn" id="5_260nm"]
-[ext_resource type="Shader" uid="uid://ctto1apvv4vc4" path="res://assets/shaders/portal_effect.gdshader" id="5_e3tnm"]
 [ext_resource type="PackedScene" uid="uid://dn3as1iq1s4i2" path="res://assets/models/environments/tutorial_and_first_level/meteor.glb" id="5_enpma"]
 [ext_resource type="PackedScene" uid="uid://c4er506cy637w" path="res://scenes/levels/zones/kill_zone.tscn" id="5_tbebd"]
 [ext_resource type="PackedScene" uid="uid://k3xwyj2an72" path="res://assets/models/environments/tutorial_and_first_level/hangar_largeB.glb" id="6_f2nsb"]
@@ -17,6 +16,7 @@
 [ext_resource type="PackedScene" uid="uid://dgaaan3vs5ujh" path="res://assets/models/environments/tutorial_and_first_level/machine_generator.glb" id="7_dppew"]
 [ext_resource type="PackedScene" uid="uid://dysysxe40a80g" path="res://assets/models/environments/tutorial_and_first_level/craft_speederB.glb" id="8_f2nsb"]
 [ext_resource type="PackedScene" uid="uid://mwlayrnfs41m" path="res://assets/models/environments/tutorial_and_first_level/platform_large.glb" id="9_74u5m"]
+[ext_resource type="PackedScene" uid="uid://bk14aw3kobgpm" path="res://scenes/levels/zones/instant_exit.tscn" id="9_qsnft"]
 [ext_resource type="PackedScene" uid="uid://cw87pir38gk1v" path="res://assets/models/environments/tutorial_and_first_level/machine_wirelessCable.glb" id="10_pxsce"]
 [ext_resource type="PackedScene" uid="uid://0knuqo2qton5" path="res://assets/models/environments/tutorial_and_first_level/desk_computerScreen.glb" id="11_pxsce"]
 [ext_resource type="PackedScene" uid="uid://1jmmybq2se2u" path="res://assets/models/environments/tutorial_and_first_level/bones.glb" id="12_5o6i8"]
@@ -28,7 +28,6 @@
 [ext_resource type="PackedScene" uid="uid://d2r5655th8tr0" path="res://assets/models/environments/tutorial_and_first_level/satelliteDish_large.glb" id="18_wfgd2"]
 [ext_resource type="PackedScene" uid="uid://0ero3rux6g5" path="res://assets/models/environments/tutorial_and_first_level/pipe_straight.glb" id="19_604h8"]
 [ext_resource type="PackedScene" uid="uid://b57x1blw0xa1i" path="res://assets/models/environments/tutorial_and_first_level/pipe_ringHigh.glb" id="20_wfgd2"]
-[ext_resource type="PackedScene" uid="uid://b2hehayj3ft7e" path="res://scenes/levels/zones/level_exit.tscn" id="21_0fow6"]
 [ext_resource type="PackedScene" uid="uid://cinres82bexi7" path="res://assets/models/environments/tutorial_and_first_level/machine_barrelLarge.glb" id="21_ib6yp"]
 [ext_resource type="PackedScene" uid="uid://qagbhcmna37w" path="res://assets/models/environments/tutorial_and_first_level/pipe_ring.glb" id="22_mvard"]
 [ext_resource type="PackedScene" uid="uid://bumx75jt682hh" path="res://assets/models/environments/tutorial_and_first_level/pipe_corner.glb" id="23_4wpjm"]
@@ -39,13 +38,11 @@
 [ext_resource type="Shader" uid="uid://cijt4ea4tokdl" path="res://assets/shaders/oil_effect.gdshader" id="26_8hb0y"]
 [ext_resource type="PackedScene" uid="uid://boeshgnwwpdgo" path="res://assets/models/environments/tutorial_and_first_level/pipe_split.glb" id="29_4wpjm"]
 [ext_resource type="PackedScene" uid="uid://ddcgflg8ddw7r" path="res://assets/models/environments/tutorial_and_first_level/barrels_rail.glb" id="30_mpkyn"]
-[ext_resource type="PackedScene" uid="uid://dvqrgi5mkvifa" path="res://assets/models/environments/tutorial_and_first_level/gate_complex.glb" id="33_lwkvo"]
-[ext_resource type="PackedScene" uid="uid://dbhdbhhp6hb6h" path="res://assets/models/environments/tutorial_and_first_level/platform_small.glb" id="34_u5hel"]
-[ext_resource type="PackedScene" uid="uid://bd823ofpus08f" path="res://assets/models/environments/tutorial_and_first_level/stairs_short.glb" id="35_jtgeh"]
-[ext_resource type="PackedScene" uid="uid://d2yvf13ndfbeu" path="res://assets/models/environments/tutorial_and_first_level/pipe_supportLow.glb" id="36_k1odj"]
 [ext_resource type="PackedScene" uid="uid://chm01swb33150" path="res://scenes/ui/HUD.tscn" id="42_ayx3v"]
 [ext_resource type="PackedScene" uid="uid://pbrlw8kcrlq4" path="res://scenes/ui/game_over.tscn" id="43_om3xt"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="44_ctbie"]
+[ext_resource type="PackedScene" uid="uid://dugi48yxe82ny" path="res://scenes/pickups/chest.tscn" id="44_om3xt"]
+[ext_resource type="PackedScene" uid="uid://c1ba4apgy2p4p" path="res://scenes/levels/save_point.tscn" id="45_ctbie"]
 [ext_resource type="PackedScene" uid="uid://bxss4q4q2p5dq" path="res://scenes/ui/mobile_controls.tscn" id="45_hrfqu"]
 [ext_resource type="PackedScene" uid="uid://c1stu4jqgvuns" path="res://assets/models/environments/tutorial_and_first_level/hangar_smallA.glb" id="50_260nm"]
 
@@ -147,24 +144,6 @@ glow_intensity = 0.8
 glow_bloom = 0.2
 fog_light_color = Color(1, 0.6156863, 0.42745098, 1)
 fog_light_energy = 0.34
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_ydtev"]
-render_priority = 0
-shader = ExtResource("5_e3tnm")
-shader_parameter/base_color = Color(0, 0.83, 1, 1)
-shader_parameter/speed = 1.0
-shader_parameter/distortion = 2.0
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hrfqu"]
-albedo_color = Color(0.40545133, 1.4369954, 1.4369954, 0.42745098)
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_e3tnm"]
-material = SubResource("StandardMaterial3D_hrfqu")
-size = Vector2(3, 3.3)
-
-[sub_resource type="PlaneMesh" id="PlaneMesh_ydtev"]
-material = SubResource("StandardMaterial3D_hrfqu")
-size = Vector2(3.5, 3.5)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_yfmpj"]
 transparency = 1
@@ -758,19 +737,9 @@ shadow_enabled = true
 [node name="KillZone" parent="Zones" unique_id=1786468622 instance=ExtResource("5_tbebd")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 94.67728, 114.01021, 9.754303)
 
-[node name="LevelExit" parent="Zones" unique_id=336532745 instance=ExtResource("21_0fow6")]
-transform = Transform3D(0.018446987, 0, -0.99982977, 0, 1, 0, 0.99982977, 0, 0.018446987, 254.10689, 24.65823, -34.82171)
-next_scene = "uid://cndnvc3c1yt7p"
-
-[node name="MeshInstance3D2" type="MeshInstance3D" parent="Zones/LevelExit" unique_id=774001037]
-transform = Transform3D(-0.015271548, 0.0015603844, -0.9998835, -0.99659026, 0.08106916, 0.015347825, 0.0810836, 0.9967084, 0.0003169868, 0.08444595, 0.04242325, 0.24749756)
-material_override = SubResource("ShaderMaterial_ydtev")
-mesh = SubResource("PlaneMesh_e3tnm")
-
-[node name="MeshInstance3D3" type="MeshInstance3D" parent="Zones/LevelExit" unique_id=782671484]
-transform = Transform3D(-0.013783017, 0.0014996734, -0.9999067, -0.99990493, 0.0003828965, 0.013783619, 0.00040378186, 1.0000012, 0.0014942158, 0.02773285, 0.0025730133, -0.025909424)
-material_override = SubResource("ShaderMaterial_ydtev")
-mesh = SubResource("PlaneMesh_ydtev")
+[node name="Instant_exit" parent="Zones" unique_id=882866086 instance=ExtResource("9_qsnft")]
+transform = Transform3D(-0.22103801, 0, -0.9752652, 0, 1, 0, 0.9752652, 0, -0.22103801, 254.30865, 24.696598, -34.648926)
+next_scene_path = "uid://cndnvc3c1yt7p"
 
 [node name="Blocking_wall_container" type="Node3D" parent="Zones" unique_id=1508938961]
 
@@ -988,9 +957,6 @@ transform = Transform3D(0.05715841, 0, -13.999085, 0, 5.000001, 0, 4.999674, 0, 
 [node name="pipe_split_1" parent="WorldObjects_container/outpost_large/pipe_container" unique_id=2052450887 instance=ExtResource("29_4wpjm")]
 transform = Transform3D(-3.4074934, 0, -4.938521, 0, 6, 0, 4.938521, 0, -3.4074934, 220.98662, 42.190685, -74.887436)
 
-[node name="pipe_supportLow_1" parent="WorldObjects_container/outpost_large/pipe_container" unique_id=1238186714 instance=ExtResource("36_k1odj")]
-transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, 244.12885, 19.5, -42.114094)
-
 [node name="machine_container" type="Node3D" parent="WorldObjects_container/outpost_large" unique_id=836857973]
 
 [node name="machine_barrel2" parent="WorldObjects_container/outpost_large/machine_container" unique_id=731881954 instance=ExtResource("25_mvard")]
@@ -1158,18 +1124,9 @@ transform = Transform3D(4.7587223, 0, -1.5344577, 0, 5, 0, 1.5344577, 0, 4.75872
 [node name="barrels_rail4" parent="WorldObjects_container/outpost_large/others_container" unique_id=1275339261 instance=ExtResource("30_mpkyn")]
 transform = Transform3D(4.7587223, 0, -1.5344577, 0, 5, 0, 1.5344577, 0, 4.7587223, 145.42802, 19.500002, -81.68904)
 
-[node name="platform_small_1" parent="WorldObjects_container/outpost_large" unique_id=128511162 instance=ExtResource("34_u5hel")]
-transform = Transform3D(7, 0, 0, 0, 7, 0, 0, 0, 7, 239.95998, 21.525341, -45.23063)
-
-[node name="gate_complex_1" parent="WorldObjects_container/outpost_large/platform_small_1" unique_id=1216506774 instance=ExtResource("33_lwkvo")]
-transform = Transform3D(-0.002219064, 0, -0.7142823, 0, 0.7142857, 0, 0.7142823, 0, -0.002219064, 3.0709915, 0.04685068, 0.07218552)
-
-[node name="stairs_short_1" parent="WorldObjects_container/outpost_large" unique_id=1913800888 instance=ExtResource("35_jtgeh")]
-transform = Transform3D(-0.4447377, 0, 9.990108, 0, 10.000001, 0, -9.990108, 0, -0.4447377, 234.84935, 18.967346, -13.937523)
-
 [node name="Player" parent="." unique_id=222719199 instance=ExtResource("1_ha378")]
 transform = Transform3D(-0.9873115, 0, -0.15879565, 0, 1, 0, 0.15879565, 0, -0.9873115, -3.5227365, 0.43636608, -22.382069)
-move_speed = 20.0
+move_speed = 30.0
 max_hp = 10000
 
 [node name="Pet_Cow_1" parent="." unique_id=1156179715 instance=ExtResource("5_260nm")]
@@ -1188,6 +1145,35 @@ transform = Transform3D(0.7381964, 0, -0.6745859, 0, 1, 0, 0.6745859, 0, 0.73819
 [node name="PauseMenu" parent="." unique_id=1927269659 instance=ExtResource("44_ctbie")]
 
 [node name="MobileControls" parent="." unique_id=1449797109 instance=ExtResource("45_hrfqu")]
+
+[node name="Checkpoints_container" type="Node3D" parent="." unique_id=905400962]
+
+[node name="Chest_01" parent="Checkpoints_container" unique_id=1892450482 instance=ExtResource("44_om3xt")]
+transform = Transform3D(-0.9965626, 0, -0.082843006, 0, 1, 0, 0.082843006, 0, -0.9965626, 92.55415, 0.07699275, 70.739685)
+coin_count = 30
+
+[node name="Chest_02" parent="Checkpoints_container" unique_id=1638025450 instance=ExtResource("44_om3xt")]
+transform = Transform3D(0.6628815, 0, -0.74872434, 0, 1, 0, 0.74872434, 0, 0.6628815, 27.067623, 13.331487, 199.80609)
+coin_count = 30
+
+[node name="Chest_03" parent="Checkpoints_container" unique_id=1405561061 instance=ExtResource("44_om3xt")]
+transform = Transform3D(-0.04930298, 0, 0.9987839, 0, 1, 0, -0.9987839, 0, -0.04930298, 131.1032, 19.99145, -74.07633)
+coin_count = 30
+
+[node name="Chest_04" parent="Checkpoints_container" unique_id=316311473 instance=ExtResource("44_om3xt")]
+transform = Transform3D(-0.9987614, 0, -0.049756177, 0, 1, 0, 0.049756177, 0, -0.9987614, 248.86227, 19.99145, -86.46505)
+coin_count = 30
+
+[node name="SavePoint_container" type="Node3D" parent="." unique_id=1406053600]
+
+[node name="SavePoint_1" parent="SavePoint_container" unique_id=1095395053 instance=ExtResource("45_ctbie")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.666991, 13.002875, 175.01176)
+
+[node name="SavePoint_2" parent="SavePoint_container" unique_id=237861613 instance=ExtResource("45_ctbie")]
+transform = Transform3D(1, 0, 0, 0, 0.9784226, -0.20661405, 0, 0.20661405, 0.9784226, 172.06082, 18.74612, 45.999573)
+
+[node name="SavePoint_3" parent="SavePoint_container" unique_id=1766967230 instance=ExtResource("45_ctbie")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 245.08685, 19.556004, -36.59371)
 
 [connection signal="body_entered" from="Wave_manager_container/Trigger_Zone1" to="." method="_on_trigger_zone_1_body_entered"]
 [connection signal="body_entered" from="Wave_manager_container/Trigger_Zone2" to="." method="_on_trigger_zone_2_body_entered"]
