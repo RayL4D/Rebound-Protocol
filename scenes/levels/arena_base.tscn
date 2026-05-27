@@ -19,7 +19,8 @@
 [ext_resource type="PackedScene" uid="uid://pbrlw8kcrlq4" path="res://scenes/ui/game_over.tscn" id="15_tm1id"]
 [ext_resource type="Script" uid="uid://c8iuwrbemhmo6" path="res://scripts/levels/wave_manager.gd" id="16_wvmgr"]
 [ext_resource type="PackedScene" uid="uid://b2hehayj3ft7e" path="res://scenes/levels/zones/level_exit.tscn" id="17_djr2x"]
-[ext_resource type="PackedScene" uid="uid://cnm5imuwr82km" path="res://scenes/ui/mobile_controls.tscn" id="22_dyu6h"]
+[ext_resource type="PackedScene" uid="uid://dtifgbtbsqu6s" path="res://scenes/levels/zones/hangar_exit.tscn" id="17_dyu6h"]
+[ext_resource type="PackedScene" uid="uid://bxss4q4q2p5dq" path="res://scenes/ui/mobile_controls.tscn" id="22_dyu6h"]
 [ext_resource type="PackedScene" uid="uid://b2oxmnlr28vu" path="res://scenes/enemies/pet_dog.tscn" id="24_lj50e"]
 [ext_resource type="PackedScene" uid="uid://dugi48yxe82ny" path="res://scenes/pickups/chest.tscn" id="25_3ojju"]
 [ext_resource type="PackedScene" uid="uid://7wauf7cfba3u" path="res://scenes/enemies/pet_monkey.tscn" id="25_cugfp"]
@@ -1409,6 +1410,9 @@ shadow_enabled = true
 
 [node name="LevelExit" parent="." unique_id=336532745 instance=ExtResource("17_djr2x")]
 transform = Transform3D(0.3659166, 0, 0.9306477, 0, 1, 0, -0.9306477, 0, 0.3659166, -32.634777, 0.66487944, -28.275557)
+[node name="Hangar_exit" parent="." unique_id=1812608498 instance=ExtResource("17_dyu6h")]
+transform = Transform3D(0.3624055, 0, 0.93202055, 0, 1, 0, -0.93202055, 0, 0.3624055, -32.66562, 0.68978024, -28.268465)
+next_scene_path = "uid://dpcguux7a3rqn"
 
 [node name="HUD" parent="." unique_id=1994348935 instance=ExtResource("14_srw3s")]
 

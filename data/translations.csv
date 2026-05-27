@@ -213,23 +213,30 @@ UI_SKILL_CHOOSE_HINT,Press [1] or [2] to choose,Appuie sur [1] ou [2] pour chois
 UI_BTN_SKILL,SKILLS,COMPÉTENCES,COMPETENCIAS
 SKILL_VIEW,No skills acquired yet.,Aucune compétence acquise pour l'instant.,Aún no se han adquirido habilidades.
 Score,,,
-UI_SCORE_TITLE,RAPPORT DE MISSION,MISSION REPORT,INFORME DE MISIÓN
-UI_SCORE_STATUS,▸ MISSION TERMINÉE,▸ MISSION CLEARED,▸ MISIÓN COMPLETADA
+UI_SCORE_TITLE,MISSION REPORT,RAPPORT DE MISSION,INFORME DE MISIÓN
+UI_SCORE_STATUS,▸ MISSION CLEARED,▸ MISSION TERMINÉE,▸ MISIÓN COMPLETADA
 UI_SCORE_SECTION_COMBAT,▸ COMBAT,▸ COMBAT,▸ COMBATE
 UI_SCORE_SECTION_PROGRESS,▸ PROGRESSION,▸ PROGRESSION,▸ PROGRESO
 UI_SCORE_SECTION_PERF,▸ PERFORMANCE,▸ PERFORMANCE,▸ RENDIMIENTO
-UI_SCORE_TOTAL,SCORE TOTAL : %d,TOTAL SCORE: %d,PUNTUACIÓN TOTAL: %d
-UI_SCORE_RANK,RANG : %s,RANK: %s,RANGO: %s
-UI_SCORE_BTN_RETRY,◄ REJOUER,◄ REPLAY,◄ VOLVER A JUGAR
-UI_SCORE_BTN_MENU,MENU PRINCIPAL ►,MAIN MENU ►,MENÚ PRINCIPAL ►
-UI_SCORE_ANALYSIS_DONE,▸ ANALYSE TERMINÉE,▸ ANALYSIS COMPLETE,▸ ANÁLISIS COMPLETADO
-UI_SCORE_DATA_SIGNAL,DONNÉES %s,DATA %s,DATOS %s
-UI_STAT_ENEMIES_KILLED,Ennemis éliminés,Enemies Killed,Enemigos Eliminados
-UI_STAT_KILLS_PER_WAVE,Kills / Vague,Kills / Wave,Bajas / Oleada
+UI_SCORE_TOTAL,TOTAL SCORE: %d,SCORE TOTAL : %d,PUNTUACIÓN TOTAL: %d
+UI_SCORE_RANK,RANK: %s,RANG : %s,RANGO: %s
+UI_SCORE_BTN_RETRY,◄ REPLAY,◄ REJOUER,◄ VOLVER A JUGAR
+UI_SCORE_BTN_MENU,MAIN MENU ►,MENU PRINCIPAL ►,MENÚ PRINCIPAL ►
+UI_SCORE_ANALYSIS_DONE,▸ ANALYSIS COMPLETE,▸ ANALYSE TERMINÉE,▸ ANÁLISIS COMPLETADO
+UI_SCORE_DATA_SIGNAL,DATA %s,DONNÉES %s,DATOS %s
+UI_STAT_ENEMIES_KILLED,Enemies Killed,Ennemis éliminés,Enemigos Eliminados
+UI_STAT_KILLS_PER_WAVE,Kills / Wave,Kills / Vague,Bajas / Oleada
 UI_STAT_KILLS_PER_MIN,Kills / Minute,Kills / Minute,Bajas / Minuto
-UI_STAT_WAVES_CLEARED,Vagues complétées,Waves Cleared,Oleadas Completadas
-UI_STAT_TIME_PER_WAVE,Temps par vague,Time per Wave,Tiempo por Oleada
-UI_STAT_SURVIVAL_TIME,Temps de survie,Survival Time,Tiempo de Supervivencia
-UI_STAT_EFFICIENCY,Efficacité,Efficiency,Eficiencia
-UI_STAT_WAVES_PER_MIN,Vagues / Minute,Waves / Minute,Oleadas / Minuto
-UI_STAT_AVG_DURATION,Durée moyenne,Durée moyenne,Duración Media
+UI_STAT_WAVES_CLEARED,Waves Cleared,Vagues complétées,Oleadas Completadas
+UI_STAT_TIME_PER_WAVE,Time per Wave,Temps par vague,Tiempo por Oleada
+UI_STAT_SURVIVAL_TIME,Survival Time,Temps de survie,Tiempo de Supervivencia
+UI_STAT_EFFICIENCY,Efficiency,Efficacité,Eficiencia
+UI_STAT_WAVES_PER_MIN,Waves / Minute,Vagues / Minute,Oleadas / Minuto
+UI_STAT_AVG_DURATION,Average Duration,Durée moyenne,Duración Media
+LOADING,,,
+ARENA_BASE_TITLE,The Depot [tutorial],Le Dépôt [tutoriel],El Depósito [tutorial]
+ARENA_BASE_DESC,A spark. A white eye lights up. RP-01 awakens among the containers of a cryogenic storage room. Reactivate your circuits and test your parries on the patrolling Dogs.,Une étincelle. Un œil blanc qui s'allume. RP-01 s'éveille parmi les conteneurs d'une salle de stockage cryogénique. Réactivez vos circuits et testez vos parades sur les Chiens en patrouille.,Una chispa. Un ojo blanco se enciende. RP-01 despierta entre los contenedores de una sala de almacenamiento criogénico. Reactiva tus circuitos y prueba tus paradas con los Perros patrulla.
+ARENA_FIRST_LEVEL_1_TITLE,Desert Garrison,Garnison Désertique,Guarnición del Desierto
+ARENA_FIRST_LEVEL_1_DESC,The Protocol's regional logistics center. Ships unload troops in a loop. Fight your way through the canine infantry and the bursts of the scout Cats.,Centre logistique régional du Protocole. Les vaisseaux débarquent des troupes en boucle. Frayez-vous un chemin à travers l'infanterie canine et les rafales des Chats éclaireurs.,Centro logístico regional del Protocolo. Las naves desembarcan tropas en bucle. Ábrete paso a través de la infantería canina y las ráfagas de los Gatos exploradores.
+LOADING_DEFAULT_TITLE,Loading protocols...,Chargement des protocoles...,Cargando protocolos...
+LOADING_DEFAULT_DESC,Please wait while combat data is synchronizing.,Veuillez patienter pendant la synchronisation des données de combat.,"Por favor, espera mientras se sincronizan los datos de combate."

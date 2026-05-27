@@ -3,6 +3,7 @@
 [ext_resource type="FontFile" uid="uid://ci0o36dhvuhqf" path="res://ui_theme/fonts/Xolonium-Regular.ttf" id="1_font"]
 [ext_resource type="Script" uid="uid://byqp1cr1rmjqa" path="res://scripts/ui/credits.gd" id="2_script"]
 [ext_resource type="Texture2D" uid="uid://p0slbvwsry7t" path="res://assets/ui/github_icon.png" id="3_pqmjv"]
+[ext_resource type="Texture2D" uid="uid://cwja7b68h261k" path="res://l-trois_studio_logo.png" id="4_e5ls7"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_title"]
 font = ExtResource("1_font")
@@ -55,7 +56,7 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_bottom = -1.0
+offset_bottom = -3.0
 grow_horizontal = 2
 grow_vertical = 2
 horizontal_scroll_mode = 0
@@ -276,7 +277,36 @@ theme_override_font_sizes/font_size = 16
 text = "CREDITS_COPYRIGHT"
 horizontal_alignment = 1
 
+[node name="Spacer10" type="Control" parent="ScrollContainer/CreditsVBox" unique_id=1610084634]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+
 [node name="Spacer8" type="Control" parent="ScrollContainer/CreditsVBox" unique_id=1433043473]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ScrollContainer/CreditsVBox/Spacer8" unique_id=1423622127]
+custom_minimum_size = Vector2(300, 300)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -334.5
+offset_top = -186.5
+offset_right = 334.5
+offset_bottom = 186.5
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="ScrollContainer/CreditsVBox/Spacer8/HBoxContainer" unique_id=549089033]
+custom_minimum_size = Vector2(600, 100)
+layout_mode = 2
+texture = ExtResource("4_e5ls7")
+
+[node name="Spacer9" type="Control" parent="ScrollContainer/CreditsVBox" unique_id=1176854178]
 custom_minimum_size = Vector2(0, 100)
 layout_mode = 2
 
