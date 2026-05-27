@@ -126,10 +126,38 @@ func _on_trigger_zone_2_body_entered(body: Node3D) -> void:
 # =============================================================
 
 func _on_zone_2_finished() -> void:
-	"""Victoire : Ouverture du portail et message final"""
+	"""Boss tué : afficher le message 'ramasse la clé' — le portail s'ouvre à la collecte"""
+	var message_label = hud.get_node_or_null("%MessageLabel")
+	var panel = hud.get_node_or_null("%PanelContainer")
+	if message_label:
+		message_label.text = tr("ARENA_LVL3_PICK_KEY")
+	if panel:
+		panel.visible = true
+		await get_tree().create_timer(4.0).timeout
+		panel.visible = false
+
+
+func _on_scene_node_added(node: Node) -> void:
+	"""Détecte le BossLion spawné dynamiquement et connecte key_spawned"""
+	if not (node is BossLion):
+		return
+	get_tree().node_added.disconnect(_on_scene_node_added)
+	if not _boss_key_connected:
+		_boss_key_connected = true
+		(node as BossLion).key_spawned.connect(_on_boss_key_spawned)
+
+
+func _on_boss_key_spawned(key: Node3D) -> void:
+	"""Reçoit la clé droppée par le boss et attend sa collecte"""
+	if key.has_signal("key_collected"):
+		key.key_collected.connect(_on_key_collected)
+
+
+func _on_key_collected() -> void:
+	"""Clé ramassée : ouvrir le portail et afficher le message de victoire"""
 	if level_exit and level_exit.has_method("activate"):
 		level_exit.activate()
-	
+
 	var message_label = hud.get_node_or_null("%MessageLabel")
 	var panel = hud.get_node_or_null("%PanelContainer")
 	if message_label:
@@ -141,6 +169,8 @@ func _on_zone_2_finished() -> void:
 
 
 func _deferred_restore_player() -> void:
+	if SaveData.active_slot < 0:
+		return  # Mode co-op ou aucun slot chargé — pas de restauration checkpoint
 	var player: Player = get_tree().get_first_node_in_group("player") as Player
 	if player == null:
 		return

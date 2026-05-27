@@ -16,6 +16,7 @@
 #   │   ├── [Modèle blaster-d.glb]
 #   │   └── WeaponBullet (Node3D) ← script WeaponBullet.gd
 # =============================================================
+@tool
 class_name PetBunny
 extends Enemy
 

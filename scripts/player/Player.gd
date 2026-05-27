@@ -2,6 +2,7 @@
 # Player.gd — Contrôleur principal du joueur
 # Rebound Protocol · Conventions : snake_case vars, PascalCase class
 # =============================================================
+@tool
 class_name Player
 extends CharacterBody3D
 
@@ -199,10 +200,21 @@ signal parried         # Émis à chaque appui parade (clavier ET mobile)
 # =============================================================
 
 func _ready() -> void:
-	print("[Player] _ready() — SaveData.active_slot=", SaveData.active_slot,
-		"  checkpoint='", SaveData.get_checkpoint(), "'",
-		"  saved_pos=", SaveData.get_player_position(),
-		"  saved_hp=", SaveData.get_player_hp())
+	# En mode éditeur : uniquement le visuel (texture slot 0)
+	if Engine.is_editor_hint():
+		robot_model     = get_node_or_null("RobotModel") as Node3D
+		_player_texture = load(_TEXTURE_PATHS[0]) as Texture2D
+		if robot_model and _player_texture:
+			_apply_texture_recursive(robot_model)
+		return
+
+	if SaveData.active_slot >= 0:
+		print("[Player] _ready() — SaveData.active_slot=", SaveData.active_slot,
+			"  checkpoint='", SaveData.get_checkpoint(), "'",
+			"  saved_pos=", SaveData.get_player_position(),
+			"  saved_hp=", SaveData.get_player_hp())
+	else:
+		print("[Player] _ready() — active_slot=-1 (co-op, pas de slot de sauvegarde)")
 
 	# ── Modèle + texture selon le slot co-op ─────────────────────────────────
 	# Doit être fait EN PREMIER : robot_model n'est pas @onready, on le capture
@@ -537,14 +549,19 @@ func _restore_from_save() -> void:
 # bras, jambes) en un seul appel.
 func _apply_texture_recursive(node: Node) -> void:
 	if node is MeshInstance3D:
+		var mi := node as MeshInstance3D
 		var mat := StandardMaterial3D.new()
 		mat.albedo_texture = _player_texture
-		node.set_surface_override_material(0, mat)
+		var count := mi.mesh.get_surface_count() if mi.mesh else 1
+		for i in count:
+			mi.set_surface_override_material(i, mat)
 	for child in node.get_children():
 		_apply_texture_recursive(child)
 
 
 func _physics_process(delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
 	# ── Restauration checkpoint (premier frame uniquement) ─────────────────────
 	if _restore_pending:
 		_restore_pending = false
@@ -654,6 +671,8 @@ func _physics_process(delta: float) -> void:
 # =============================================================
 
 func _input(event: InputEvent) -> void:
+	if Engine.is_editor_hint():
+		return
 	if not is_multiplayer_authority():
 		return   # Multijoueur : ignorer les inputs pour les joueurs distants
 	if is_dead:

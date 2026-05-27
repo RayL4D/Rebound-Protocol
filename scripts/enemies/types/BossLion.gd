@@ -19,6 +19,7 @@
 #   │   └── WeaponShotgun          ← phase 2
 #   └── SummonTimer (Timer)
 # =============================================================
+@tool
 class_name BossLion
 extends Enemy
 
@@ -425,15 +426,21 @@ func _enter_phase2() -> void:
 
 func _apply_phase2_shader(node: Node) -> void:
 	if node is MeshInstance3D:
+		var mi := node as MeshInstance3D
 		var shader := Shader.new()
 		shader.code = BOSS_SHADER_CODE
 		var mat := ShaderMaterial.new()
 		mat.shader = shader
 		mat.set_shader_parameter("albedo_tex", _enemy_texture)
-		(node as MeshInstance3D).set_surface_override_material(0, mat)
-		# Mettre à jour _orig_mats pour que _flash_hit restaure le shader
+		var count := mi.mesh.get_surface_count() if mi.mesh else 1
+		for i in count:
+			mi.set_surface_override_material(i, mat)
+		# Mettre à jour _orig_mats (Array) pour que _flash_hit restaure le shader
 		# de phase 2 (et non le colormap d'origine enregistré au démarrage).
-		_orig_mats[node] = mat
+		var mats: Array = []
+		for i in count:
+			mats.append(mat)
+		_orig_mats[node] = mats
 	for child in node.get_children():
 		_apply_phase2_shader(child)
 

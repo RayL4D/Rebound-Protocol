@@ -28,14 +28,27 @@ var _player_nodes: Dictionary = {}
 var _returning_to_menu:    bool = false
 var _was_fully_connected:  bool = false  # true dès qu'on a vu CONNECTION_CONNECTED
 
+## Overlay "hôte parti" — créé au chargement de la scène, masqué par défaut.
+## On le montre au bon moment plutôt que de le créer en pleine déconnexion WebRTC.
+var _host_left_overlay: CanvasLayer = null
+
 
 # ── Cycle de vie ───────────────────────────────────────────────────────────────
 
 func _ready() -> void:
 	# ── Supprime le joueur statique placé dans la scène (test/prévisualisation)
 	# Il entrerait en conflit avec les joueurs spawnés dynamiquement.
+	# On le cache d'abord pour éviter la race condition renderer (material null)
+	# entre queue_free() et le rendu du frame courant.
 	if has_node("Player"):
+		$Player.hide()
+		$Player.set_process(false)
+		$Player.set_physics_process(false)
 		$Player.queue_free()
+
+	# ── Corrige les MeshInstance3D sans matériau (évite les erreurs C++ renderer)
+	# La coop arena a des meshes de décor (PrismMesh, etc.) sans matériau assigné.
+	_fix_null_materials(self)
 
 	# ── Nœud racine des joueurs (requis par MultiplayerSpawner) ──────────────
 	var players_root := Node3D.new()
@@ -53,8 +66,15 @@ func _ready() -> void:
 	# ── Signaux NetworkManager ────────────────────────────────────────────────
 	NetworkManager.player_left.connect(_on_player_left)
 
-	# ── Client : 3 voies de détection du départ de l'hôte ────────────────────
+	# ── Client : pré-construction de l'overlay + détection du départ de l'hôte ──
 	if not multiplayer.is_server():
+		# Si on est dans l'arène c'est qu'on était connecté → ne pas attendre _process
+		_was_fully_connected = true
+
+		# Construire l'overlay MAINTENANT pendant que la scène est stable,
+		# plutôt qu'au moment de la déconnexion (moment instable pour créer des nœuds).
+		_host_left_overlay = _build_host_left_overlay()
+
 		# Voie 1 – peer_disconnected filtré sur id==1 (le plus fiable avec WebRTC ;
 		# server_disconnected n'est pas toujours émis selon l'implémentation WebRTC).
 		multiplayer.peer_disconnected.connect(func(id: int):
@@ -113,7 +133,30 @@ func _spawn_player_from_data(data: Dictionary) -> Node:
 	player.position = SPAWN_POSITIONS[min(slot, SPAWN_POSITIONS.size() - 1)]
 	_player_nodes[peer_id] = player
 
+	# ── Label de nom au-dessus de la tête ─────────────────────────────────────
+	_add_name_label(player, peer_id)
+
 	return player
+
+
+## Ajoute un Label3D simple au-dessus de la tête du joueur avec son nom réseau.
+func _add_name_label(player: Node, peer_id: int) -> void:
+	var info: Dictionary    = NetworkManager.players.get(peer_id, {})
+	var player_name: String = info.get("name", "Joueur %d" % peer_id)
+	var is_local: bool      = (peer_id == multiplayer.get_unique_id())
+
+	var label := Label3D.new()
+	label.name             = "NameLabel"
+	label.text             = player_name
+	label.position         = Vector3(0.0, 1.9, 0.0)
+	label.billboard        = BaseMaterial3D.BILLBOARD_ENABLED
+	label.no_depth_test    = true
+	label.font_size        = 48
+	label.pixel_size       = 0.006
+	label.outline_size     = 8
+	label.outline_modulate = Color(0.0, 0.0, 0.0, 1.0)
+	label.modulate         = Color(0.4, 1.0, 0.85, 1.0) if is_local else Color(1.0, 1.0, 1.0, 0.9)
+	player.add_child(label)
 
 
 # ── Départ de l'hôte ──────────────────────────────────────────────────────────
@@ -124,33 +167,40 @@ func _trigger_host_left() -> void:
 	if _returning_to_menu:
 		return
 	_returning_to_menu = true
-	_show_host_left_overlay()
-	await get_tree().create_timer(2.0).timeout
+
+	# Afficher l'overlay pré-construit (créé au chargement, donc toujours valide)
+	if is_instance_valid(_host_left_overlay):
+		_host_left_overlay.visible = true
+
+	# Attendre 2,5s pour laisser le joueur lire le message
+	await get_tree().create_timer(2.5).timeout
+
+	if is_instance_valid(_host_left_overlay):
+		_host_left_overlay.queue_free()
 	NetworkManager.disconnect_from_game()
 	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
 
 
-## Overlay "connexion perdue" amélioré : fond, panneau cyberpunk, barre de
-## compte à rebours et animation d'entrée (slide-down + fade-in).
-func _show_host_left_overlay() -> void:
+## Construit l'overlay "connexion perdue" et l'ajoute à root (masqué).
+## Appelé au chargement de la scène — contexte stable, pas à la déconnexion.
+func _build_host_left_overlay() -> CanvasLayer:
 	var font: FontFile = null
 	if ResourceLoader.exists("res://ui_theme/fonts/Xolonium-Regular.ttf"):
 		font = load("res://ui_theme/fonts/Xolonium-Regular.ttf") as FontFile
 
-	# ── CanvasLayer ──────────────────────────────────────────────────────────
+	# ── CanvasLayer ajouté sur root (pas sur self) ────────────────────────────
+	# Masqué par défaut — on l'affiche via _trigger_host_left().
 	var layer := CanvasLayer.new()
-	layer.layer = 128
-	add_child(layer)
+	layer.layer   = 128
+	layer.visible = false
+	get_tree().root.add_child(layer)
 
-	# root_ctrl : plein écran, gère le fade-in et le slide-down global.
-	# add_child d'abord → puis set_anchors_and_offsets_preset → puis size explicite.
 	var root_ctrl := Control.new()
 	root_ctrl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(root_ctrl)
 	root_ctrl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root_ctrl.size    = get_viewport().get_visible_rect().size
-	root_ctrl.modulate.a = 0.0
-	root_ctrl.position.y = -14.0   # décalage initial pour l'animation slide-down
+	root_ctrl.size       = get_viewport().get_visible_rect().size
+	root_ctrl.modulate.a = 1.0
 
 	# Fond sombre bleu nuit
 	var bg := ColorRect.new()
@@ -297,17 +347,7 @@ func _show_host_left_overlay() -> void:
 	bot_bar.custom_minimum_size = Vector2(0, 2)
 	outer_vb.add_child(bot_bar)
 
-	# ── Animations ───────────────────────────────────────────────────────────
-	var tw := root_ctrl.create_tween()
-	tw.set_parallel(true)
-	# Fond : fade-in rapide
-	tw.tween_property(root_ctrl, "modulate:a", 1.0, 0.22)
-	# Panneau : slide-down (position Y -14 → 0, ease out cubic)
-	tw.tween_property(root_ctrl, "position:y", 0.0, 0.32) \
-		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	# Barre de compte à rebours : se vide en 2s (délai 0.1s pour laisser le fade finir)
-	tw.tween_property(bar_fill, "anchor_right", 0.0, 2.0) \
-		.set_delay(0.1).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_LINEAR)
+	return layer
 
 
 # ── Départ d'un joueur ────────────────────────────────────────────────────────
@@ -337,6 +377,27 @@ func _rpc_return_to_menu() -> void:
 	await get_tree().create_timer(2.5).timeout
 	NetworkManager.disconnect_from_game()
 	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
+
+
+# ── Correction matériaux nuls ─────────────────────────────────────────────────
+
+## Parcourt tous les MeshInstance3D de la scène et assigne un matériau gris
+## neutre sur les surfaces qui n'ont ni override ni matériau dans le mesh.
+## Évite les erreurs C++ "Parameter 'material' is null" du renderer Godot.
+func _fix_null_materials(node: Node) -> void:
+	if node is MeshInstance3D:
+		var mi := node as MeshInstance3D
+		if mi.mesh:
+			var count := mi.mesh.get_surface_count()
+			for i in count:
+				var has_override := mi.get_surface_override_material(i) != null
+				var has_mesh_mat := mi.mesh.surface_get_material(i) != null
+				if not has_override and not has_mesh_mat:
+					var fallback := StandardMaterial3D.new()
+					fallback.albedo_color = Color(0.45, 0.42, 0.38)
+					mi.set_surface_override_material(i, fallback)
+	for child in node.get_children():
+		_fix_null_materials(child)
 
 
 # ── Accesseur pour le WaveManager ─────────────────────────────────────────────

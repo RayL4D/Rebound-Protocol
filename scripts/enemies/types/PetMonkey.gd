@@ -16,6 +16,7 @@
 #   │   ├── [Modèle blaster-h.glb]
 #   │   └── WeaponMortar (Node3D) ← script WeaponMortar.gd
 # =============================================================
+@tool
 class_name PetMonkey
 extends Enemy
 
