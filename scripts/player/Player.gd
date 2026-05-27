@@ -1499,4 +1499,7 @@ func _spawn_fire_zone() -> void:
 		)
 
 	# Disparition après FIRE_DURATION secondes
-	var fade_tw :=
+	var fade_tw := zone_node.create_tween()
+	fade_tw.tween_interval(FIRE_DURATION - 0.5)
+	fade_tw.tween_property(mat, "albedo_color:a", 0.0, 0.5)
+	fade_tw.tween_callback(zone_node.queue_free)
