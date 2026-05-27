@@ -13,21 +13,20 @@
 #   coin_count  : nombre de pièces spawnées (défaut : 5)
 # =============================================================
 
+@tool
 class_name Chest
 extends Node3D
 
 @export var coin_value: int  = 1   # valeur par pièce
 @export var coin_count: int  = 5   # nombre de pièces spawnées
 
-const CHEST_MODEL   := preload("res://assets/models/platformerkit/chest.glb")
 const CHEST_TEXTURE := preload("res://assets/textures/platformerkit/colormap.png")
 
-const INTERACT_RADIUS := 2.0   # rayon de détection du joueur
+@onready var _model:  Node3D  = $ChestModel
+@onready var _area:   Area3D  = $InteractArea
+@onready var _prompt: Label3D = $Prompt
 
-var _area:         Area3D         = null
-var _model:        Node3D         = null
 var _anim_player:  AnimationPlayer = null
-var _prompt:       Label3D        = null
 var _opened:       bool           = false
 var _player_near:  bool           = false
 
@@ -37,12 +36,16 @@ var _player_near:  bool           = false
 # =============================================================
 
 func _ready() -> void:
-	_build_model()
-	_build_detection_area()
-	_build_prompt()
+	_apply_texture(_model)
+	_anim_player = _model.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	_area.body_entered.connect(_on_body_entered)
+	_area.body_exited.connect(_on_body_exited)
+	_prompt.text = tr("CHEST_OPEN")
 
 
 func _process(_delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
 	if _opened or not _player_near:
 		return
 	if Input.is_action_just_pressed("interact"):
@@ -53,50 +56,14 @@ func _process(_delta: float) -> void:
 # CONSTRUCTION
 # =============================================================
 
-func _build_model() -> void:
-	_model = CHEST_MODEL.instantiate()
-	_model.scale    = Vector3(1.5, 1.5, 1.5)  # augmente la taille
-	_model.position = Vector3(0, -0.4, 0)      # ajuste jusqu'au sol
-	add_child(_model)
-	_apply_texture(_model)
-
-	# Chercher l'AnimationPlayer dans le GLB
-	_anim_player = _model.find_child("AnimationPlayer", true, false) as AnimationPlayer
-
-
-func _build_detection_area() -> void:
-	_area = Area3D.new()
-	_area.collision_layer = 0
-	_area.collision_mask  = 1   # layer player
-
-	var shape        := CollisionShape3D.new()
-	var sphere       := SphereShape3D.new()
-	sphere.radius     = INTERACT_RADIUS
-	shape.shape       = sphere
-	_area.add_child(shape)
-	add_child(_area)
-
-	_area.body_entered.connect(_on_body_entered)
-	_area.body_exited.connect(_on_body_exited)
-
-
-func _build_prompt() -> void:
-	_prompt              = Label3D.new()
-	_prompt.text         = tr("CHEST_OPEN")
-	_prompt.font_size    = 48
-	_prompt.modulate     = Color(1.0, 0.90, 0.3)
-	_prompt.billboard    = BaseMaterial3D.BILLBOARD_ENABLED
-	_prompt.no_depth_test = true
-	_prompt.position     = Vector3(0, 1.4, 0)
-	_prompt.visible      = false
-	add_child(_prompt)
-
-
 func _apply_texture(node: Node) -> void:
 	if node is MeshInstance3D:
+		var mi := node as MeshInstance3D
 		var mat := StandardMaterial3D.new()
 		mat.albedo_texture = CHEST_TEXTURE
-		(node as MeshInstance3D).set_surface_override_material(0, mat)
+		var count := mi.mesh.get_surface_count() if mi.mesh else 1
+		for i in count:
+			mi.set_surface_override_material(i, mat)
 	for child in node.get_children():
 		_apply_texture(child)
 

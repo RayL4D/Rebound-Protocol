@@ -206,6 +206,8 @@ func _set_permanent_message(translation_key: String) -> void:
 
 
 func _deferred_restore_player() -> void:
+	if SaveData.active_slot < 0:
+		return  # Mode co-op ou aucun slot chargé — pas de restauration checkpoint
 	var player: Player = get_tree().get_first_node_in_group("player")
 	if player == null:
 		return

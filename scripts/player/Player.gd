@@ -2,6 +2,7 @@
 # Player.gd — Contrôleur principal du joueur
 # Rebound Protocol · Conventions : snake_case vars, PascalCase class
 # =============================================================
+@tool
 class_name Player
 extends CharacterBody3D
 
@@ -199,10 +200,21 @@ signal parried         # Émis à chaque appui parade (clavier ET mobile)
 # =============================================================
 
 func _ready() -> void:
-	print("[Player] _ready() — SaveData.active_slot=", SaveData.active_slot,
-		"  checkpoint='", SaveData.get_checkpoint(), "'",
-		"  saved_pos=", SaveData.get_player_position(),
-		"  saved_hp=", SaveData.get_player_hp())
+	# En mode éditeur : uniquement le visuel (texture slot 0)
+	if Engine.is_editor_hint():
+		robot_model     = get_node_or_null("RobotModel") as Node3D
+		_player_texture = load(_TEXTURE_PATHS[0]) as Texture2D
+		if robot_model and _player_texture:
+			_apply_texture_recursive(robot_model)
+		return
+
+	if SaveData.active_slot >= 0:
+		print("[Player] _ready() — SaveData.active_slot=", SaveData.active_slot,
+			"  checkpoint='", SaveData.get_checkpoint(), "'",
+			"  saved_pos=", SaveData.get_player_position(),
+			"  saved_hp=", SaveData.get_player_hp())
+	else:
+		print("[Player] _ready() — active_slot=-1 (co-op, pas de slot de sauvegarde)")
 
 	# ── Modèle + texture selon le slot co-op ─────────────────────────────────
 	# Doit être fait EN PREMIER : robot_model n'est pas @onready, on le capture
@@ -266,6 +278,17 @@ func _ready() -> void:
 		set_process_input(false)
 	else:
 		camera.current = true
+
+		# ── Co-op : la caméra traverse les autres joueurs sans zoomer ──────────
+		# On exclut du SpringArm tous les CharacterBody3D du groupe "player"
+		# (coéquipiers déjà présents) et on connecte node_added pour les futurs.
+		for node in get_tree().get_nodes_in_group("player"):
+			if node != self and node is CharacterBody3D:
+				spring_arm.add_excluded_object((node as CharacterBody3D).get_rid())
+		get_tree().node_added.connect(func(node: Node) -> void:
+			if node != self and node is Player:
+				spring_arm.add_excluded_object((node as CharacterBody3D).get_rid())
+		)
 
 	# Stoppe l'AnimationPlayer brut du GLB — c'est l'AnimationTree qui prend
 	# le relais pour piloter les états (idle/sprint/parry/die).
@@ -537,14 +560,19 @@ func _restore_from_save() -> void:
 # bras, jambes) en un seul appel.
 func _apply_texture_recursive(node: Node) -> void:
 	if node is MeshInstance3D:
+		var mi := node as MeshInstance3D
 		var mat := StandardMaterial3D.new()
 		mat.albedo_texture = _player_texture
-		node.set_surface_override_material(0, mat)
+		var count := mi.mesh.get_surface_count() if mi.mesh else 1
+		for i in count:
+			mi.set_surface_override_material(i, mat)
 	for child in node.get_children():
 		_apply_texture_recursive(child)
 
 
 func _physics_process(delta: float) -> void:
+	if Engine.is_editor_hint():
+		return
 	# ── Restauration checkpoint (premier frame uniquement) ─────────────────────
 	if _restore_pending:
 		_restore_pending = false
@@ -654,6 +682,8 @@ func _physics_process(delta: float) -> void:
 # =============================================================
 
 func _input(event: InputEvent) -> void:
+	if Engine.is_editor_hint():
+		return
 	if not is_multiplayer_authority():
 		return   # Multijoueur : ignorer les inputs pour les joueurs distants
 	if is_dead:
@@ -1377,6 +1407,11 @@ func _do_stomp_shockwave() -> void:
 func _spawn_shockwave_ring() -> void:
 	if not is_inside_tree():
 		return
+	# Capturer la position pendant que le joueur est dans l'arbre —
+	# global_position sur un nœud orphelin (.new() non encore add_child)
+	# génère "!is_inside_tree()" dans get_global_transform().
+	var spawn_pos := global_position + Vector3.DOWN * 0.05
+
 	# Anneau expansif simple (torus aplati)
 	var ring := MeshInstance3D.new()
 	var mesh := TorusMesh.new()
@@ -1386,7 +1421,6 @@ func _spawn_shockwave_ring() -> void:
 	mesh.ring_segments = 16
 	ring.mesh         = mesh
 	ring.rotation.x   = PI * 0.5
-	ring.global_position = global_position + Vector3.DOWN * 0.05
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color              = Color(0.0, 0.7, 1.0, 0.9)
 	mat.emission_enabled          = true
@@ -1394,7 +1428,8 @@ func _spawn_shockwave_ring() -> void:
 	mat.emission_energy_multiplier = 3.0
 	mat.transparency              = BaseMaterial3D.TRANSPARENCY_ALPHA
 	ring.set_surface_override_material(0, mat)
-	get_tree().current_scene.add_child(ring)
+	get_tree().current_scene.add_child(ring)  # ← dans l'arbre d'abord
+	ring.global_position = spawn_pos           # ← puis positionner
 
 	var tw := ring.create_tween().set_parallel(true)
 	tw.tween_property(ring, "scale", Vector3(12, 1, 12), 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)

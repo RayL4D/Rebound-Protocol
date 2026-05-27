@@ -48,20 +48,24 @@ func _ready() -> void:
 	_area.body_entered.connect(_on_body_entered)
 
 	# ── Mémorise la hauteur de base pour le bob ───────────────
+	# global_position est déjà positionné par BossLion AVANT add_child,
+	# donc on calcule _base_y depuis la vraie position de spawn.
 	_base_y = global_position.y + 0.6   # légèrement au-dessus du sol
-	global_position.y = _base_y
 
 	# ── Apparition : monte depuis le sol ──────────────────────
-	global_position.y = _base_y - 0.6
+	global_position.y = _base_y - 0.6   # part légèrement sous le point de spawn
 	var tw := create_tween()
-	tw.tween_property(self, "position:y", _base_y, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(self, "global_position:y", _base_y, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _apply_texture(node: Node) -> void:
 	if node is MeshInstance3D:
+		var mi := node as MeshInstance3D
 		var mat := StandardMaterial3D.new()
 		mat.albedo_texture = KEY_TEXTURE
-		(node as MeshInstance3D).set_surface_override_material(0, mat)
+		var count := mi.mesh.get_surface_count() if mi.mesh else 1
+		for i in count:
+			mi.set_surface_override_material(i, mat)
 	for child in node.get_children():
 		_apply_texture(child)
 
@@ -70,7 +74,9 @@ func _process(delta: float) -> void:
 	if _collected:
 		return
 	_bob_t += delta
-	position.y = _base_y + sin(_bob_t * 1.8) * 0.12
+	# Bob et rotation — utilise global_position.y pour rester cohérent
+	# quel que soit la position de spawn (boss manuel ou via WaveManager).
+	global_position.y = _base_y + sin(_bob_t * 1.8) * 0.12
 	rotation.y += delta * 1.2   # rotation lente
 
 

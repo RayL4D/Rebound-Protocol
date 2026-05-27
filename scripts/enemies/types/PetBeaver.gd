@@ -15,6 +15,7 @@
 #   ├── [Modèle animal-beaver.glb]
 #   └── WeaponTrap (Node3D) ← script WeaponTrap.gd (pas de visuel d'arme)
 # =============================================================
+@tool
 class_name PetBeaver
 extends Enemy
 

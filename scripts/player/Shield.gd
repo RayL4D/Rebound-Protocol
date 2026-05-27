@@ -405,17 +405,24 @@ func _apply_parry_regen(has_xp: bool) -> void:
 func _do_shield_nova() -> void:
 	const NOVA_RANGE  := 9.0
 	const NOVA_DAMAGE := 15
+
+	# Capturer la position MAINTENANT pendant que le shield est dans l'arbre.
+	# global_position sur un nœud hors arbre génère une erreur Godot.
+	var nova_origin := global_position
+
 	var enemies := get_tree().get_nodes_in_group("enemies")
-	
 	for node: Node in enemies:
-		if not is_instance_valid(node) or not node.is_inside_tree() or not node.has_method("take_damage"):			
+		if not is_instance_valid(node) or not node.is_inside_tree() or not node.has_method("take_damage"):
 			continue
-			
-		var dist := (node as Node3D).global_position.distance_to(global_position)
+		var dist := (node as Node3D).global_position.distance_to(nova_origin)
 		if dist <= NOVA_RANGE:
 			(node as Enemy).take_damage(NOVA_DAMAGE, true)
 
 	# Visuel : anneau d'onde
+	# IMPORTANT : add_child() AVANT global_position.
+	# Un MeshInstance3D créé avec .new() n'est pas dans l'arbre ;
+	# accéder à global_position hors arbre lève l'erreur
+	# "!is_inside_tree()" dans get_global_transform().
 	var ring := MeshInstance3D.new()
 	var mesh := TorusMesh.new()
 	mesh.inner_radius  = 0.1
@@ -424,15 +431,15 @@ func _do_shield_nova() -> void:
 	mesh.ring_segments = 24
 	ring.mesh          = mesh
 	ring.rotation.x    = PI * 0.5
-	ring.global_position = global_position
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color              = Color(1.0, 0.80, 0.0, 0.9)
-	mat.emission_enabled          = true
-	mat.emission                  = Color(1.0, 0.70, 0.0)
+	mat.albedo_color               = Color(1.0, 0.80, 0.0, 0.9)
+	mat.emission_enabled           = true
+	mat.emission                   = Color(1.0, 0.70, 0.0)
 	mat.emission_energy_multiplier = 5.0
-	mat.transparency              = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.transparency               = BaseMaterial3D.TRANSPARENCY_ALPHA
 	ring.set_surface_override_material(0, mat)
-	get_tree().current_scene.add_child(ring)
+	get_tree().current_scene.add_child(ring)   # ← dans l'arbre d'abord
+	ring.global_position = nova_origin          # ← puis positionner
 	var tw := ring.create_tween().set_parallel(true)
 	tw.tween_property(ring, "scale", Vector3(NOVA_RANGE * 2.0, 1, NOVA_RANGE * 2.0), 0.40)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
