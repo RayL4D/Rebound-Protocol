@@ -15,7 +15,7 @@ var _boss_key_connected: bool = false   # garde-fou anti-double connexion
 
 
 func _ready() -> void:
-	
+	_prewarm_bullet_shaders()
 	MusicManager.play("gameplay")
 	AmbientManager.play("arena")
 	TranslationServer.set_locale(SceneManager.current_lang)
@@ -36,6 +36,16 @@ func _ready() -> void:
 # =============================================================
 # CONFIGURATION
 # =============================================================
+
+func _prewarm_bullet_shaders() -> void:
+	const SCENE = preload("res://scenes/projectiles/bullet_enemy.tscn")
+	var dummy: Node3D = SCENE.instantiate() as Node3D
+	dummy.position = Vector3(0.0, -500.0, 0.0)
+	add_child(dummy)
+	await get_tree().process_frame
+	if is_instance_valid(dummy):
+		dummy.queue_free()
+
 
 func _setup_ui() -> void:
 	"""Configure l'interface utilisateur via le HUD"""

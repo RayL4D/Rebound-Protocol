@@ -22,11 +22,11 @@ const WALL_1_PATH = "Zones/Blocking_wall_container/Blocking_wall_1"
 const WALL_2_PATH = "Zones/Blocking_wall_container/Blocking_wall_2"
 
 func _ready() -> void:
-	
+	_prewarm_bullet_shaders()
 	MusicManager.play("gameplay")
 	AmbientManager.play("arena")
 	TranslationServer.set_locale(SceneManager.current_lang)
-		
+
 	CollisionManager.add_missing_collisions(self)
 	CollisionManager.add_missing_collisions(level_exit)
 	_setup_ui()
@@ -135,6 +135,16 @@ func _on_trigger_zone_1_body_entered(body: Node3D) -> void:
 			if wall1.has_node("MeshInstance3D"):
 				wall1.get_node("MeshInstance3D").visible = true
 				
+
+func _prewarm_bullet_shaders() -> void:
+	const SCENE = preload("res://scenes/projectiles/bullet_enemy.tscn")
+	var dummy: Node3D = SCENE.instantiate() as Node3D
+	dummy.position = Vector3(0.0, -500.0, 0.0)
+	add_child(dummy)
+	await get_tree().process_frame
+	if is_instance_valid(dummy):
+		dummy.queue_free()
+
 
 func _on_trigger_zone_2_body_entered(body: Node3D) -> void:
 	if body.is_in_group("player") and not _zone2_triggered:

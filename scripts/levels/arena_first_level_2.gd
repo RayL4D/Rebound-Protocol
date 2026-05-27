@@ -7,10 +7,11 @@ extends Node3D
 @onready var level_exit: Node = $Instant_exit
 
 func _ready() -> void:
+	_prewarm_bullet_shaders()
 	MusicManager.play("gameplay")
 	AmbientManager.play("arena")
 	TranslationServer.set_locale(SceneManager.current_lang)
-		
+
 	CollisionManager.add_missing_collisions(self)
 	_setup_ui()
 	_set_permanent_message("LVL2_CAVE_ENTRY")
@@ -54,6 +55,16 @@ func _set_permanent_message(translation_key: String) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_TRANSLATION_CHANGED:
 		_set_permanent_message("LVL2_CAVE_ENTRY")
+
+
+func _prewarm_bullet_shaders() -> void:
+	const SCENE = preload("res://scenes/projectiles/bullet_enemy.tscn")
+	var dummy: Node3D = SCENE.instantiate() as Node3D
+	dummy.position = Vector3(0.0, -500.0, 0.0)
+	add_child(dummy)
+	await get_tree().process_frame
+	if is_instance_valid(dummy):
+		dummy.queue_free()
 
 
 func _deferred_restore_player() -> void:
