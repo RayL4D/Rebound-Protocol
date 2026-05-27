@@ -7,23 +7,13 @@ extends Node
 @onready var wave_manager: Node = $WaveManager
 @onready var tutorial_manager: TutorialManager = $TutorialManager
 @onready var hud: Node = $HUD
-
-# --- Boss ---
-const BOSS_SCENE := preload("res://scenes/enemies/boss_lion.tscn")
-var _boss: BossLion = null
+@onready var hidden_save_point_1 = $SavePoint
 
 
 func _ready() -> void:
 	MusicManager.play("gameplay")
 	AmbientManager.play("arena")
-
 	TranslationServer.set_locale(SceneManager.current_lang)
-
-	#TranslationServer.set_locale("es") # Espagnol pour le test
-	# Générer les collisions manquantes pour la géométrie de cette scène.
-	# Sans await : _ready() des enfants s'exécute avant celui du parent,
-	# donc cet appel se termine AVANT celui du script racine du niveau.
-	# Le CollisionManager détecte ensuite les StaticBody3D déjà créés → pas de doublon.
 	CollisionManager.add_missing_collisions(self)
 
 	# --- Labels HUD ---
@@ -32,15 +22,19 @@ func _ready() -> void:
 	var enemies_label: Label   = hud.get_node_or_null("%EnemiesLabel")
 	var step_label:    Label   = hud.get_node_or_null("%StepLabel")
 	var panel:         Control = hud.get_node_or_null("%PanelContainer")
+	
 
 	wave_manager.setup_ui(wave_label, message_label, enemies_label, panel)
+	
+	if hidden_save_point_1:
+		hidden_save_point_1.visible = false
+		hidden_save_point_1.process_mode = Node.PROCESS_MODE_DISABLED
 
 	# --- Vagues ---
 	var waves: Array[WaveManager.WaveData] = [
-		WaveManager.WaveData.new(1, 1, ""),   # Ennemi test post-tuto
-		#WaveManager.WaveData.new(1, 1, tr("WAVE_MSG_1")),
-		#WaveManager.WaveData.new(2, 1, tr("WAVE_MSG_2")),
-		#WaveManager.WaveData.new(3, 2, tr("WAVE_MSG_FINAL")),
+		WaveManager.WaveData.new(1, 1, tr("TUTO_STEP_5")),
+		WaveManager.WaveData.new(2, 1, tr("WAVE_MSG_1")),
+		WaveManager.WaveData.new(3, 2, tr("WAVE_MSG_FINAL")),
 	]
 	wave_manager.setup_waves(waves)
 
@@ -49,15 +43,16 @@ func _ready() -> void:
 	tutorial_manager.setup(player, panel, message_label, step_label)
 	tutorial_manager.tutorial_completed.connect(_on_tutorial_completed)
 	tutorial_manager.start()
-
-	# Pas de boss dans le tutoriel — la sortie s'active directement après les vagues.
+		
 	wave_manager.all_waves_finished.connect(func():
+		message_label.text = tr("MISSION_ACCOMPLISHED")
 		var exit_zone = $Hangar_exit
+		if hidden_save_point_1:
+			hidden_save_point_1.visible = true
+			hidden_save_point_1.process_mode = Node.PROCESS_MODE_INHERIT
 		exit_zone.activate()
 	)
 
-	# Filet de sécurité : restaurer position + HP après TOUS les _ready() de la scène.
-	# Fonctionne même si Player._restore_pending n'a pas pu s'exécuter.
 	call_deferred("_deferred_restore_player")
 
 
@@ -68,66 +63,9 @@ func _on_tutorial_completed() -> void:
 # =============================================================
 # RESTAURATION CHECKPOINT (filet de sécurité)
 # =============================================================
-# Appelée en deferred depuis _ready() — s'exécute donc APRÈS tous les _ready()
-# de la scène (CollisionManager, tutorial_manager, wave_manager…).
-# Si Player._restore_from_save() a déjà été déclenché via _restore_pending
-# dans _physics_process, cet appel est idempotent (il repose les mêmes valeurs).
 func _deferred_restore_player() -> void:
 	var player: Player = get_tree().get_first_node_in_group("player")
 	if player == null:
 		return
 	print("[ArenaBase] _deferred_restore_player — appel restore_from_checkpoint()")
 	player.restore_from_checkpoint()
-
-
-# =============================================================
-# BOSS
-# =============================================================
-
-func _on_waves_finished() -> void:
-	# Les vagues normales sont terminées — spawner le boss
-	_spawn_boss()
-
-
-func _spawn_boss() -> void:
-	MusicManager.play("boss")
-	_boss = BOSS_SCENE.instantiate() as BossLion
-	add_child(_boss)
-
-	# Placer le boss en face du centre de l'arène (à 12 unités du joueur)
-	var player: Player = get_tree().get_first_node_in_group("player")
-	if player:
-		var spawn_dir := Vector3(0.0, 0.0, -1.0)   # Côté opposé (ajuste si besoin)
-		_boss.global_position = player.global_position + spawn_dir * 12.0
-	else:
-		_boss.global_position = Vector3(0.0, 0.0, -12.0)
-
-	# Connexion des signaux
-	_boss.boss_hp_changed.connect(_on_boss_hp_changed)
-	_boss.boss_died.connect(_on_boss_died)
-
-	# Afficher un message d'annonce
-	var message_label: Label = hud.get_node_or_null("%MessageLabel")
-	var panel: Control       = hud.get_node_or_null("%PanelContainer")
-	if panel:
-		panel.visible = true
-	if message_label:
-		message_label.text = tr("BOSS_LION_ANNOUNCE")
-	await get_tree().create_timer(2.5).timeout
-	if panel:
-		panel.visible = false
-
-
-func _on_boss_hp_changed(_current_hp: int, _max_hp: int) -> void:
-	pass
-
-
-func _on_boss_died() -> void:
-	MusicManager.play("gameplay")
-	# Activer la sortie et afficher le message de fin
-	var exit_zone = $LevelExit
-	exit_zone.activate()
-
-	var message_label: Label = hud.get_node_or_null("%MessageLabel")
-	if message_label:
-		message_label.text = tr("MISSION_ACCOMPLISHED")
