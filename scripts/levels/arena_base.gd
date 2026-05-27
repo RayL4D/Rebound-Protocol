@@ -73,6 +73,8 @@ func _on_tutorial_completed() -> void:
 # Si Player._restore_from_save() a déjà été déclenché via _restore_pending
 # dans _physics_process, cet appel est idempotent (il repose les mêmes valeurs).
 func _deferred_restore_player() -> void:
+	if SaveData.active_slot < 0:
+		return  # Mode co-op ou aucun slot chargé — pas de restauration checkpoint
 	var player: Player = get_tree().get_first_node_in_group("player")
 	if player == null:
 		return

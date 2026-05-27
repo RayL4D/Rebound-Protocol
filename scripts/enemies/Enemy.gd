@@ -9,6 +9,7 @@
 # Composition : chaque ennemi a un nœud WeaponComponent enfant
 #               qui gère la logique de tir indépendamment.
 # =============================================================
+@tool
 class_name Enemy
 extends CharacterBody3D
 
@@ -71,6 +72,11 @@ var _last_position: Vector3 = Vector3.ZERO
 # =============================================================
 
 func _ready() -> void:
+	# En mode éditeur : uniquement le visuel (texture + scale)
+	if Engine.is_editor_hint():
+		_setup_model()
+		return
+
 	current_hp = max_hp
 	add_to_group("enemies")
 	collision_layer = 16
@@ -129,10 +135,15 @@ func _setup_model() -> void:
 	# Mémoriser les matériaux originaux APRÈS leur application,
 	# pour pouvoir les restaurer correctement même si plusieurs flash
 	# se chevauchent (race condition).
+	# On stocke un Array de matériaux par mesh (une entrée par surface).
 	var meshes: Array[MeshInstance3D] = []
 	_collect_meshes(_model, meshes)
 	for mesh in meshes:
-		_orig_mats[mesh] = mesh.get_surface_override_material(0)
+		var surface_count := mesh.mesh.get_surface_count() if mesh.mesh else 1
+		var mats: Array = []
+		for i in surface_count:
+			mats.append(mesh.get_surface_override_material(i))
+		_orig_mats[mesh] = mats
 
 	# Trouver l'AnimationPlayer dans le GLB importé (recherche récursive)
 	_anim_player = _find_anim_player(_model)
@@ -154,11 +165,16 @@ func _find_anim_player(node: Node) -> AnimationPlayer:
 
 # Même logique que Player.gd : parcourt tous les MeshInstance3D
 # de façon récursive et applique la texture sur chacun.
+# On itère sur toutes les surfaces pour éviter les erreurs "material is null"
+# sur les meshes multi-surfaces (Kenney GLB en ont souvent plusieurs).
 func _apply_texture_recursive(node: Node, texture: Texture2D) -> void:
 	if node is MeshInstance3D:
+		var mi := node as MeshInstance3D
 		var mat := StandardMaterial3D.new()
 		mat.albedo_texture = texture
-		node.set_surface_override_material(0, mat)
+		var count := mi.mesh.get_surface_count() if mi.mesh else 1
+		for i in count:
+			mi.set_surface_override_material(i, mat)
 	for child in node.get_children():
 		_apply_texture_recursive(child, texture)
 
@@ -171,7 +187,7 @@ func _on_ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if player == null:
+	if Engine.is_editor_hint() or player == null:
 		return
 
 	_apply_gravity(delta)
@@ -535,18 +551,23 @@ func _flash_hit(color: Color, duration: float) -> void:
 	var meshes: Array[MeshInstance3D] = []
 	_collect_meshes(_model, meshes)
 	for mesh in meshes:
-		# Toujours restaurer vers le matériau original mémorisé à l'init,
-		# pas vers le matériau courant (qui peut déjà être un flash précédent).
-		var orig_mat: Material = _orig_mats.get(mesh, null)
+		# Toujours restaurer vers les matériaux originaux mémorisés à l'init,
+		# pas vers les matériaux courants (qui peuvent déjà être un flash précédent).
+		var orig_mats: Array = _orig_mats.get(mesh, [])
 		var flash    := StandardMaterial3D.new()
 		flash.albedo_color               = color
 		flash.emission_enabled           = true
 		flash.emission                   = color
 		flash.emission_energy_multiplier = 1.5
-		mesh.set_surface_override_material(0, flash)
+		var surface_count := mesh.mesh.get_surface_count() if mesh.mesh else 1
+		for i in surface_count:
+			mesh.set_surface_override_material(i, flash)
 		var tw := create_tween()
 		tw.tween_interval(duration)
-		tw.tween_callback(func(): mesh.set_surface_override_material(0, orig_mat))
+		tw.tween_callback(func():
+			for i in orig_mats.size():
+				mesh.set_surface_override_material(i, orig_mats[i])
+		)
 
 
 # Jolt de scale : micro-impulsion qui donne de l'impact au hit.

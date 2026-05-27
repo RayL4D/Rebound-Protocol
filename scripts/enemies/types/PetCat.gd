@@ -17,6 +17,7 @@
 #   │   └── WeaponBurst (Node3D) ← script WeaponBurst.gd
 #   └── (pas de ShootTimer — géré par WeaponComponent)
 # =============================================================
+@tool
 class_name PetCat
 extends Enemy
 
