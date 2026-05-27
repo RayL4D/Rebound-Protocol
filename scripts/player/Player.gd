@@ -279,6 +279,17 @@ func _ready() -> void:
 	else:
 		camera.current = true
 
+		# ── Co-op : la caméra traverse les autres joueurs sans zoomer ──────────
+		# On exclut du SpringArm tous les CharacterBody3D du groupe "player"
+		# (coéquipiers déjà présents) et on connecte node_added pour les futurs.
+		for node in get_tree().get_nodes_in_group("player"):
+			if node != self and node is CharacterBody3D:
+				spring_arm.add_excluded_object((node as CharacterBody3D).get_rid())
+		get_tree().node_added.connect(func(node: Node) -> void:
+			if node != self and node is Player:
+				spring_arm.add_excluded_object((node as CharacterBody3D).get_rid())
+		)
+
 	# Stoppe l'AnimationPlayer brut du GLB — c'est l'AnimationTree qui prend
 	# le relais pour piloter les états (idle/sprint/parry/die).
 	var anim_player := robot_model.find_child("AnimationPlayer", true, false) as AnimationPlayer
