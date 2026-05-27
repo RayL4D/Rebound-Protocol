@@ -14,6 +14,7 @@ var _boss: BossLion = null
 
 
 func _ready() -> void:
+	_prewarm_bullet_shaders()
 	MusicManager.play("gameplay")
 	AmbientManager.play("arena")
 
@@ -59,6 +60,20 @@ func _ready() -> void:
 	# Filet de sécurité : restaurer position + HP après TOUS les _ready() de la scène.
 	# Fonctionne même si Player._restore_pending n'a pas pu s'exécuter.
 	call_deferred("_deferred_restore_player")
+
+
+## Force la compilation des shaders de balles dès le chargement de l'arène.
+## Sans ça, la 1ère balle tirée provoque un freeze sur les PC moins puissants
+## (Godot compile le shader StandardMaterial3D → émission + transparence à la volée).
+## Un dummy bullet est ajouté hors-champ (Y=-500), rendu un frame, puis supprimé.
+func _prewarm_bullet_shaders() -> void:
+	const SCENE = preload("res://scenes/projectiles/bullet_enemy.tscn")
+	var dummy: Node3D = SCENE.instantiate() as Node3D
+	dummy.position = Vector3(0.0, -500.0, 0.0)
+	add_child(dummy)
+	await get_tree().process_frame
+	if is_instance_valid(dummy):
+		dummy.queue_free()
 
 
 func _on_tutorial_completed() -> void:

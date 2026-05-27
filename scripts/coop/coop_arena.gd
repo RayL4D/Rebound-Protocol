@@ -36,6 +36,7 @@ var _host_left_overlay: CanvasLayer = null
 # ── Cycle de vie ───────────────────────────────────────────────────────────────
 
 func _ready() -> void:
+	_prewarm_bullet_shaders()
 	# ── Supprime le joueur statique placé dans la scène (test/prévisualisation)
 	# Il entrerait en conflit avec les joueurs spawnés dynamiquement.
 	# On le cache d'abord pour éviter la race condition renderer (material null)
@@ -90,6 +91,16 @@ func _ready() -> void:
 	if multiplayer.is_server():
 		await get_tree().create_timer(0.3).timeout
 		_spawn_all_players()
+
+
+func _prewarm_bullet_shaders() -> void:
+	const SCENE = preload("res://scenes/projectiles/bullet_enemy.tscn")
+	var dummy: Node3D = SCENE.instantiate() as Node3D
+	dummy.position = Vector3(0.0, -500.0, 0.0)
+	add_child(dummy)
+	await get_tree().process_frame
+	if is_instance_valid(dummy):
+		dummy.queue_free()
 
 
 func _process(_delta: float) -> void:
