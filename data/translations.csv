@@ -1,239 +1,242 @@
-id,en,fr,es,
-TUTORIAL,,,,
-TUTO_STEP_1,Calibration protocol initiated.\nTest of directional thrusters required.,Protocole de calibrage initié.\nTest des propulseurs directionnels requis.,Protocolo de calibración iniciado.\nSe requiere probar los propulsores direccionales.,
-TUTO_PERFECT,Perfect!,Parfait !,¡Perfecto!,
-TUTO_STEP_2,Optical sensor calibration.\nAdjust your viewing angle.,Calibrage des capteurs optiques.\nAjustez l'angle de vision.,Calibración de sensores ópticos.\nAjuste el ángulo de visión.,
-TUTO_STEP_3,Vertical elevation system test.\nJump initialization required.,Test du système d'élévation.\nInitialisation du saut requise.,Prueba del sistema de elevación vertical.\nSe requiere iniciar el salto.,
-TUTO_GOOD_JOB,Well done!,Bien joué !,¡Bien hecho!,
-TUTO_STEP_4,Calibration complete!\nAn enemy ship is approaching...,Calibrage terminé !\nUn vaisseau ennemi approche...,¡Calibración completada!\nUna nave enemiga se aproxima...,
-TUTO_STEP_5,Your movements have attracted the attention of an enemy patrol. Prepare to fend off their attacks!,Vos mouvements ont attiré l'attention d'une patrouille ennemie. Préparez-vous à parer leurs attaques !,Tus movimientos han llamado la atención de una patrulla enemiga. ¡Prepárate para repeler sus ataques!,
-WAVES / HUD,,,,
-HUD_WAVE_COUNT,Wave %d / %d,Vague %d / %d,Oleada %d / %d,
-HUD_ENEMIES_LEFT,Remaining enemies: %d,Ennemis restants : %d,Enemigos restantes: %d,
-WAVE_MSG_1,"Armed dogs? Really? Another patrol is approaching, get ready!","Des chiens armés ? Vraiment ? Une autre patrouille est en approche, préparez-vous !","¿Perros armados? ¿En serio? ¡Se acerca otra patrulla, prepárense!",
-WAVE_MSG_FINAL,"Reinforcements are on their way, the situation is going to get more complicated.","Des renforts sont en route, la situation va se compliquer.","Los refuerzos están en camino, la situación se va a complicar aún más.",
-WAVE_CLEARED,Wave %d cleared!,Vague %d terminée !,¡Oleada %d completada!,
-WAVE_HUD,Wave 0 / 0,Vague 0 / 0,Oleada 0 / 0,
-ENEMIES_HUD,Remaining enemies: 0,Ennemis restants : 0,Enemigos restantes: 0,
-MISSION_ACCOMPLISHED,Threat averted! A door has just opened. \n Save your progress by walking to the save point.,Menace écartée ! Une porte vient de s'ouvrir.  \n Sauvegardez votre progression en marchant sur le point de sauvegarde.,¡Amenaza evitada! Se acaba de abrir una puerta. \nGuarda tu progreso caminando hasta el punto de guardado.,
-GAME OVER / UI,,,,
-UI_DEATH_MSG,You are dead.\nReturning to wave 1...,Tu es mort.\nRetour à la vague 1...,Has muerto.\nVolviendo a la oleada 1...,
-UI_GAME_OVER,GAME OVER,GAME OVER,FIN DE LA PARTIDA,
-UI_SYS_NEUTRALIZED,— system neutralized —,— system neutralized —,— sistema neutralizado —,
-UI_VICTORY,VICTORY,VICTOIRE,VICTORIA,
-UI_THREAT_CLEARED,— threat neutralized —,— threat neutralized —,— amenaza neutralizada —,
-UI_RETRY,[ RETRY ],[ RETRY ],[ REINTENTAR ],
-UI_PLAY_AGAIN,[ PLAY AGAIN ],[ PLAY AGAIN ],[ JUGAR DE NUEVO ],
-UI_QUIT,QUIT,QUITTER,SALIR,
-MAIN MENU / UI,,,,
-UI_MAIN_MENU,MAIN MENU,MENU PRINCIPAL,MENÚ PRINCIPAL,
-UI_NEW_GAME,NEW GAME,NOUVELLE PARTIE,NUEVA PARTIDA,
-UI_CONTINUE,CONTINUE,CONTINUER,CONTINUAR,
-UI_OPTIONS,OPTIONS,OPTIONS,OPCIONES,
-UI_CHANGE_LANGUAGE,CHANGE LANGUAGE,CHANGER DE LANGUE,CAMBIAR IDIOMA,
-UI_LANGUAGE,LANGUAGE,LANGUE,IDIOMA,
-UI_LEAVE,LEAVE,QUITTER,PARA IRSE,
-UI_CREDITS,CREDITS,CRÉDITS,CRÉDITOS,
-BOSS,,,,
-BOSS_LION_NAME,⚔ LION COMMANDER ⚔,⚔ COMMANDANT LION ⚔,⚔ COMANDANTE LEÓN ⚔,
-BOSS_LION_ANNOUNCE,BOSS — LION COMMANDER,BOSS — COMMANDANT LION,JEFE — COMANDANTE LEÓN,
-PAUSE,,,,
-PAUSE_TITLE,PAUSE,PAUSE,PAUSA,
-PAUSE_RESUME,RESUME,REPRENDRE,CONTINUAR,
-PAUSE_SETTINGS,SETTINGS,PARAMÈTRES,AJUSTES,
-PAUSE_QUIT_MENU,QUIT TO MENU,MENU PRINCIPAL,MENÚ PRINCIPAL,
-SETTINGS,,,,
-SETTINGS_TITLE,OPTIONS,OPTIONS,OPCIONES,
-SETTINGS_SECTION_AUDIO,AUDIO,AUDIO,AUDIO,
-SETTINGS_MASTER_VOLUME,Master volume,Volume général,Volumen general,
-SETTINGS_MUSIC,Music,Musique,Música,
-SETTINGS_SFX,Sound effects,Effets sonores,Efectos de sonido,
-SETTINGS_SECTION_DISPLAY,DISPLAY,AFFICHAGE,PANTALLA,
-SETTINGS_FULLSCREEN,Fullscreen,Plein écran,Pantalla completa,
-SETTINGS_SECTION_LANGUAGE,LANGUAGE,LANGUE,IDIOMA,
-SETTINGS_BACK,BACK,RETOUR,VOLVER,
-STORY / NARRATIVE,,,,
-LVL1_INTRO_MSG,Directive: Investigate origins.\nI must search the Depot.,Directive : Enquêter sur mes origines.\nJe dois fouiller le Dépôt.,Directiva: Investigar orígenes.\nDebo buscar en el Depósito.,
-LVL1_EXIT_OPENED_MSG,Threat neutralized. Transit portal active.\nI will find Vauclair.,Menace neutralisée. Portail de transit actif.\nJe retrouverai Vauclair.,Amenaza neutralizada. Portal de tránsito activo.\nEncontraré a Vauclair.,
-WAVE NAMES,,,,
-WAVE_NAME_OUTPOST,DESERT OUTPOST,AVANT-POSTE DÉSERTIQUE,PUESTO AVANZADO DEL DESIERTO,
-WAVE_NAME_SQUAD,INFANTRY SQUAD,ESCOUADE D'INFANTERIE,ESCUADRÓN DE INFANTERÍA,
-WAVE_NAME_REINFORCEMENTS,REINFORCEMENTS CALLED,RENFORTS APPELÉS,REFUERZOS LLAMADOS,
-WAVE_NAME_MAX_ALERT,MAXIMUM ALERT,ALERTE MAXIMALE,ALERTA MÁXIMA,
-WAVE_NAME_BOSS_LION,⚠️ LION COMMANDER,⚠️ COMMANDANT LION,⚠️ COMANDANTE LEÓN,
-STORY / CAVE,,,,
-LVL2_CAVE_ENTRY,A secondary base... The signal is getting stronger.,Une base secondaire... Le signal s'intensifie.,Una base secundaria... La señal se intensifica.,
-STORY / LVL3,,,,
-ARENA_LVL3_INTRO,Look at this structure... There must be high-tech remnants inside. I need to see what's left.,Regarde cette structure... Il doit rester des vestiges technologiques là-dedans. Je dois voir ce qu'il reste.,Mira esta estructura... Debe haber restos tecnológicos dentro. Tengo que ver qué queda.,
-ARENA_LVL3_WAVE_DOGS,Movement detected... Dogs are closing in!,Mouvement détecté... Des chiens approchent !,Movimiento detectado... ¡Se acercan Perros!,
-ARENA_LVL3_WAVE_COWS,"Watch out, larger signatures incoming.","Attention, des signatures plus imposantes arrivent.","Cuidado, llegan firmas más grandes.",
-ARENA_LVL3_WAVE_CATS,They're fast! Cats on the radar.,Ils sont rapides ! Des chats sur le radar.,¡Son rápidos! Cats en el radar.,
-ARENA_LVL3_WAVE_MIX,Multiple hostiles from all sides!,Plusieurs hostiles arrivent de tous les côtés !,¡Múltiples hostiles por todos lados!,
-ARENA_LVL3_WAVE_BOSS,⚠️ CRITICAL ALERT - BOSS LION DETECTED,⚠️ ALERTE CRITIQUE - BOSS LION DÉTECTÉ,⚠️ ALERTA CRÍTICA - JEFE LEÓN DETECTADO,
-ARENA_LVL3_WIN,🎉 AREA SECURED - LEVEL 3 COMPLETED,🎉 ZONE SÉCURISÉE - NIVEAU 3 ACCOMPLI,🎉 ZONA SEGURA - NIVEL 3 COMPLETADO,
-ARENA_LVL3_PICK_KEY,⚠️ Pick up the boss key to open the portal!,⚠️ Récupère la clé du boss pour ouvrir le portail !,,⚠️ ¡Recoge la llave del jefe para abrir el portal!
-Crédits,,,,
-CREDITS_DEV,DEVELOPMENT,DÉVELOPPEMENT,DESARROLLO,
-CREDITS_DEV_ROLE,Developer & Game Designer,Développeur & Game Designer,Desarrollador y Diseñador,
-CREDITS_DESIGN,GAME DESIGN,GAME DESIGN,DISEÑO DE JUEGOS,
-CREDITS_DESIGN_ROLE,Game Designer,Game Designer,Diseñador de juegos,
-CREDITS_MGMT,PROJECT MANAGEMENT,GESTION DE PROJET,GESTIÓN DE PROYECTOS,
-CREDITS_MGMT_ROLE,Producer,Producteur,Productor,
-CREDITS_FORMATION,FORMATION,FORMATION,FORMACIÓN,
-CREDITS_FORMATION_DESC,Project developed during a L3 CDA internship at UBO Brest,Projet réalisé dans le cadre d'un stage de L3 CDA à l'UBO de Brest,Proyecto realizado durante una pasantía de L3 CDA en la UBO de Brest,
-CREDITS_THANKS,SPECIAL THANKS,REMERCIEMENTS SPÉCIAUX,AGRADECIMIENTOS ESPECIALES,
-CREDITS_THANKS_MSG,Thanks to everyone who contributed to this project,Merci à tous ceux qui ont contribué au développement de ce jeu,Gracias a todos los que contribuyeron al desarrollo de este juego,
-CREDITS_ENGINE,CREATED WITH,CRÉÉ AVEC,CREADO CON,
-CREDITS_COPYRIGHT,© 2026 - All rights reserved,© 2026 - Tous droits réservés,© 2026 - Todos los derechos reservados,
-Chest,,,,
-CHEST_OPEN,Open [F] ,Ouvrir [F] ,Abierto [F] ,
-Shop,,,,
-UI_SHOP_TITLE,SHOP [B],BOUTIQUE [B],TIENDA [B],
-UI_SHOP_TAB_PLAYER,PLAYER,JOUEUR,JUGADOR,
-UI_SHOP_TAB_SHIELD,SHIELD,BOUCLIER,ESCUDO,
-UI_SHOP_TAB_PASSIVES,PASSIVES,PASSIFS,PASIVAS,
-UI_SHOP_CLOSE,CLOSE,FERMER,CERRAR,
-UI_SHOP_BUY,BUY,ACHETER,COMPRAR,
-UI_SHOP_MAX,MAX,MAX,MÁX,
-SHOP_NAME_hp_max,Max HP,HP Maximum,HP Máximo,
-SHOP_DESC_hp_max,+5 HP per tier,+5 HP max par palier,+5 HP máx por nivel,
-SHOP_NAME_move_speed,Speed,Vitesse,Velocidad,
-SHOP_DESC_move_speed,+5% movement speed,+5% vitesse de déplacement,+5% Velocidad de mov.,
-SHOP_NAME_damage_reduction,Damage reduction,Réduction dégâts,Reducción de daño,
-SHOP_DESC_damage_reduction,-5% damage taken per tier,-5% dégâts reçus par palier,-5% Daño recibido por nivel,
-SHOP_NAME_pickup_radius,Pickup radius,Rayon collecte,Rango de recogida,
-SHOP_DESC_pickup_radius,+15% coin range,+15% portée des pièces,+15% Alcance de monedas,
-SHOP_NAME_shield_size,Shield size,Taille bouclier,Tamaño del escudo,
-SHOP_DESC_shield_size,+8% shield radius,+8% rayon du bouclier,+8% Radio del escudo,
-SHOP_NAME_shield_duration,Shield duration,Durée activation,Duración de activación,
-SHOP_DESC_shield_duration,+10% active parry duration,+10% durée de parade active,+10% Duración de parada activa,
-SHOP_NAME_parry_damage,Parry damage,Dégâts renvoi,Daño de parada,
-SHOP_DESC_parry_damage,+10% reflected bullet damage,+10% dégâts balles renvoyées,+10% Daño bala reflejada,
-SHOP_NAME_parry_window,Parry window,Fenêtre critique,Ventana crítica,
-SHOP_DESC_parry_window,+1 frame critical window,+1 frame de fenêtre critique,+1 frame ventana crítica,
-SHOP_NAME_hp_regen,HP Regen,Régén. HP,Regén. de HP,
-SHOP_DESC_hp_regen,"Tier 1: 30s, 2: 20s, 3: 12s","Palier 1: 30s, 2: 20s, 3: 12s","Nivel 1: 30s, 2: 20s, 3: 12s",
-SHOP_NAME_xp_bonus,XP Bonus,Bonus XP,Bonus XP,
-SHOP_DESC_xp_bonus,+10% XP per enemy killed,+10% XP par ennemi tué,+10% XP por enemigo derrotado,
-SHOP_NAME_dash_cooldown,Dash cooldown,Cooldown Dash,Enfriamiento Dash,
-SHOP_DESC_dash_cooldown,-10% dash recharge per tier,-10% rechargement du dash/palier,-10% recarga de dash/nivel,
-SHOP_NAME_stomp_damage,Stomp damage,Dégâts Stomp,Daño de pisotón,
-SHOP_DESC_stomp_damage,+15% stomp damage per tier,+15% dégâts saut écrasant/palier,+15% Daño pisotón/nivel,
-SHOP_NAME_parry_heal,Parry heal,Soin Parade,Curación de parada,
-SHOP_DESC_parry_heal,+1 HP per critical parry,+1 HP soigné par parade critique,+1 HP curado por parada crítica,
-SHOP_NAME_reflect_speed,Reflect speed,Vitesse Renvoi,Velocidad reflejo,
-SHOP_DESC_reflect_speed,+20% reflected bullet speed,+20% vitesse balles renvoyées,+20% Velocidad bala reflejada,
-SHOP_NAME_coin_bonus,Coin bonus,Bonus Pièces,Bonus Monedas,
-SHOP_DESC_coin_bonus,+1 coin per enemy defeated,+1 pièce par ennemi vaincu,+1 moneda por enemigo derrotado,
-SHOP_NAME_dash_armor,Dash armor,Armure Dash,Armadura Dash,
-SHOP_DESC_dash_armor,"1: Invincible during dash, 2-3: +duration","1: invinc. pendant dash, 2-3: +durée","1: Invinc. durante dash, 2-3: +durac.",
-Sauvegardes/select,,,,
-UI_SLOT_TITLE_NEW,▶ NEW GAME,▶ NOUVELLE PARTIE,▶ NUEVA PARTIDA,
-UI_SLOT_SUB_NEW,Choose a slot for your adventure,Choisissez un emplacement pour votre aventure,Elige un slot para tu aventura,
-UI_SLOT_TITLE_LOAD,LOAD GAME,CHARGER UNE PARTIE,CARGAR PARTIDA,
-UI_SLOT_SUB_LOAD,Select a save to resume,Sélectionnez une sauvegarde pour reprendre,Selecciona una partida para reanudar,
-UI_SLOT_BACK,← BACK,← RETOUR,← VOLVER,
-UI_SLOT_OVERWRITE,⚠ OVERWRITE,⚠ ÉCRASER,⚠ SOBREESCRIBIR,
-UI_SLOT_CHOOSE,▶ CHOOSE,▶ CHOISIR,▶ ELEGIR,
-UI_SLOT_USED,EXISTING SAVE,SAUVEGARDE EXISTANTE,PARTIDA EXISTENTE,
-UI_SLOT_LEVEL_UNKNOWN,Unknown level,Niveau inconnu,Nivel desconocido,
-UI_SLOT_EMPTY,Empty slot,Emplacement vide,Slot vacío,
-UI_SLOT_EMPTY_DESC,Start a new adventure here,Démarrer une nouvelle aventure ici,Iniciar nueva aventura aquí,
-UI_SLOT_LOAD_BTN,▶ LOAD,▶ CHARGER,▶ CARGAR,
-UI_SLOT_EMPTY_SHORT,EMPTY,VIDE,VACÍO,
-UI_SLOT_NONE,No save data,Aucune sauvegarde,Sin datos de guardado,
-UI_SLOT_STATS,🪙 %d coins   ❤ %d HP,🪙 %d pièces   ❤ %d HP,🪙 %d monedas   ❤ %d HP,
-UI_DIALOG_TUTO_TITLE,◈ TUTORIAL,◈ TUTORIEL,◈ TUTORIAL,
-UI_DIALOG_TUTO_MSG,Do you want to play the tutorial?,Souhaitez-vous jouer le tutoriel ?,¿Quieres jugar el tutorial?,
-UI_DIALOG_TUTO_DESC,It will teach you the basics.,Il vous apprendra les bases.,Te enseñará los conceptos básicos.,
-UI_DIALOG_TUTO_PLAY,▶ TUTORIAL,▶ TUTORIEL,▶ TUTORIAL,
-UI_DIALOG_TUTO_SKIP,⏭ SKIP,⏭ PASSER,⏭ OMITIR,
-UI_DIALOG_WARN,⚠ WARNING,⚠ ATTENTION,⚠ ATENCIÓN,
-UI_DIALOG_CONFIRM_MSG,Overwrite this save?,Écraser cette sauvegarde ?,¿Sobreescribir esta partida?,
-UI_DIALOG_CONFIRM_DESC,This action is irreversible.,Cette action est irréversible.,Esta acción es irreversible.,
-UI_DIALOG_CANCEL,CANCEL,ANNULER,CANCELAR,
-Skill,,,,
-RARITY_COMMON,Common,Commun,Común,
-RARITY_UNCOMMON,Uncommon,Peu Commun,Poco Común,
-RARITY_RARE,Rare,Rare,Raro,
-RARITY_EPIC,Epic,Épique,Épico,
-RARITY_LEGENDARY,Legendary,Légendaire,Legendario,
-SKILL_NAME_return_speed_boost,Boosted Reflexes,Réflexes boostés,Reflejos potenciados,
-SKILL_DESC_return_speed_boost,Returned bullets +15% speed.,Tes balles renvoyées gagnent +15 % de vitesse.,Tus balas reflejadas ganan +15% de velocidad.,
-SKILL_NAME_shield_size_boost,Expanded Shield,Bouclier élargi,Escudo ampliado,
-SKILL_DESC_shield_size_boost,Shield radius +10%.,Le rayon de ton bouclier augmente de +10 %.,El radio de tu escudo aumenta un +10%.,
-SKILL_NAME_parry_hp_regen,Healing Parry,Parade curative,Parada curativa,
-SKILL_DESC_parry_hp_regen,Each parry restores 1 HP.,Chaque parade te régénère 1 HP.,Cada parada te regenera 1 HP.,
-SKILL_NAME_return_damage_boost,Reinforced Strike,Frappe renforcée,Golpe reforzado,
-SKILL_DESC_return_damage_boost,Reflected bullets deal +10% dmg.,Tes balles renvoyées infligent +10 % de dégâts.,Tus balas reflejadas hacen +10% de daño.,
-SKILL_NAME_shield_duration_boost,Shield Endurance,Endurance du bouclier,Resistencia del escudo,
-SKILL_DESC_shield_duration_boost,Active shield duration +20%.,La durée d'activation du bouclier augmente de +20 %.,La duración del escudo activo aumenta un +20%.,
-SKILL_NAME_piercing_bullet,Piercing Bullet,Balle perçante,Bala perforante,
-SKILL_DESC_piercing_bullet,Pierces one additional enemy.,Ta balle renvoyée traverse un ennemi supplémentaire.,Tu bala reflejada atraviesa un enemigo extra.,
-SKILL_NAME_parry_window_boost,Master Timing,Timing de maître,Timing de maestro,
-SKILL_DESC_parry_window_boost,Critical parry window +20%.,La fenêtre de parade critique s'agrandit de +20 %.,La ventana de parada crítica aumenta un +20%.,
-SKILL_NAME_stomp_damage_boost,Brutal Stomp,Écrasement brutal,Pisotón brutal,
-SKILL_DESC_stomp_damage_boost,Stomp deals 2x damage.,Le saut écrasant inflige 2× plus de dégâts.,El pisotón hace el doble de daño.,
-SKILL_NAME_dash_unlock,Shield Dash,Dash bouclier,Dash con escudo,
-SKILL_DESC_dash_unlock,Unlock: Shield + Dash.,Débloque le dash bouclier.,Desbloquea: Escudo + Dash.,
-SKILL_NAME_enemy_slowdown,Slowdown Wave,Onde de ralentissement,Onda de ralentización,
-SKILL_DESC_enemy_slowdown,Enemies move 15% slower.,Les balles ennemies se déplacent 15 % moins vite.,Los proyectiles enemigos son un 15% más lentos.,
-SKILL_NAME_poison_bullet,Poison Bullet,Balle empoisonnée,Bala envenenada,
-SKILL_DESC_poison_bullet,Inflicts poison over 3s.,Ta balle renvoyée empoisonne l'ennemi.,Tu bala reflejada envenena al enemigo.,
-SKILL_NAME_double_bullet,Double Parry,Double renvoi,Doble parada,
-SKILL_DESC_double_bullet,Each parry sends 2 bullets.,Chaque parade envoie 2 balles divergentes.,Cada parada dispara 2 balas divergentes.,
-SKILL_NAME_critical_parry_heal,Parry Heal,Parade critique + soin,Parada crítica + curación,
-SKILL_DESC_critical_parry_heal,Critical parry heals 3 HP.,Une parade critique te soigne de 3 HP.,Una parada crítica te cura 3 HP.,
-SKILL_NAME_stomp_shockwave,Seismic Stomp,Stomp sismique,Pisotón sísmico,
-SKILL_DESC_stomp_shockwave,Stomp releases a shockwave.,Le saut écrasant libère une onde de choc.,El pisotón libera una onda de choque.,
-SKILL_NAME_wall_bounce,Wall Bounce,Rebond mural,Rebote en pared,
-SKILL_DESC_wall_bounce,Bullets bounce off walls once.,Ta balle renvoyée rebondit une fois sur les murs.,Tu bala reflejada rebota una vez en las paredes.,
-SKILL_NAME_chain_lightning,Chain Lightning,Chaîne éclair,Cadena de rayos,
-SKILL_DESC_chain_lightning,Bullets chain between enemies.,"Quand ta balle tue, elle rebondit vers le proche.","Cuando tu bala mata, rebota al enemigo cercano.",
-SKILL_NAME_mirror_shield,Mirror Shield,Bouclier miroir,Escudo espejo,
-SKILL_DESC_mirror_shield,Auto-reflects nearby bullets.,Toutes les balles proches sont auto-renvoyées.,Refleja automáticamente balas cercanas.,
-SKILL_NAME_fire_stomp,Flame Strike,Frappe enflammée,Golpe de fuego,
-SKILL_DESC_fire_stomp,Stomp leaves fire zone.,Le saut écrasant laisse une zone de feu au sol.,El pisotón deja una zona de fuego.,
-SKILL_NAME_phantom_bullet,Phantom Bullet,Balle fantôme,Bala fantasma,
-SKILL_DESC_phantom_bullet,Bullets cannot be avoided.,Les ennemis ne peuvent pas éviter cette balle.,Los enemigos no pueden evitar esta bala.,
-SKILL_NAME_shield_nova,Shield Nova,Nova du bouclier,Nova de escudo,
-SKILL_DESC_shield_nova,Parries damage all visible.,Chaque parade libère une onde blessante.,Cada parada libera una onda de daño.,
-SKILL_NAME_omni_bullet,Omni-Bullet,Balle omnidirectionnelle,Bala omnidireccional,
-SKILL_DESC_omni_bullet,Automatic second shot.,Une seconde balle part dans la direction opposée.,Dispara automáticamente una segunda bala.,
-SKILL_NAME_invuln_flash,Invulnerability Flash,Invulnérabilité éclair,Invulnerabilidad relámpago,
-SKILL_DESC_invuln_flash,0.5s invulnerability after parry.,"0,5s d'invulnérabilité après parade réussie.",0.5s de invulnerabilidad tras la parada.,
-SKILL_NAME_clone_bullet,Bullet Clone,Clone de balle,Clon de bala,
-SKILL_DESC_clone_bullet,Creates a random copy.,Ta balle crée une copie qui repart aléatoirement.,Tu bala crea una copia en dirección aleatoria.,
-UI_SKILL_LEVEL_TITLE,⚡ LEVEL %d ⚡,⚡ NIVEAU %d ⚡,⚡ NIVEL %d ⚡,
-UI_SKILL_DRAWING,Drawing skill...,Tirage de compétence...,Eligiendo habilidad...,
-UI_SKILL_CHOOSE_HINT,Press [1] or [2] to choose,Appuie sur [1] ou [2] pour choisir,Presiona [1] o [2] para elegir,
-UI_BTN_SKILL,SKILLS,COMPÉTENCES,COMPETENCIAS,
-SKILL_VIEW,No skills acquired yet.,Aucune compétence acquise pour l'instant.,Aún no se han adquirido habilidades.,
-Score,,,,
-UI_SCORE_TITLE,MISSION REPORT,RAPPORT DE MISSION,INFORME DE MISIÓN,
-UI_SCORE_STATUS,▸ MISSION CLEARED,▸ MISSION TERMINÉE,▸ MISIÓN COMPLETADA,
-UI_SCORE_SECTION_COMBAT,▸ COMBAT,▸ COMBAT,▸ COMBATE,
-UI_SCORE_SECTION_PROGRESS,▸ PROGRESSION,▸ PROGRESSION,▸ PROGRESO,
-UI_SCORE_SECTION_PERF,▸ PERFORMANCE,▸ PERFORMANCE,▸ RENDIMIENTO,
-UI_SCORE_TOTAL,TOTAL SCORE: %d,SCORE TOTAL : %d,PUNTUACIÓN TOTAL: %d,
-UI_SCORE_RANK,RANK: %s,RANG : %s,RANGO: %s,
-UI_SCORE_BTN_RETRY,◄ REPLAY,◄ REJOUER,◄ VOLVER A JUGAR,
-UI_SCORE_BTN_MENU,MAIN MENU ►,MENU PRINCIPAL ►,MENÚ PRINCIPAL ►,
-UI_SCORE_ANALYSIS_DONE,▸ ANALYSIS COMPLETE,▸ ANALYSE TERMINÉE,▸ ANÁLISIS COMPLETADO,
-UI_SCORE_DATA_SIGNAL,DATA %s,DONNÉES %s,DATOS %s,
-UI_STAT_ENEMIES_KILLED,Enemies Killed,Ennemis éliminés,Enemigos Eliminados,
-UI_STAT_KILLS_PER_WAVE,Kills / Wave,Kills / Vague,Bajas / Oleada,
-UI_STAT_KILLS_PER_MIN,Kills / Minute,Kills / Minute,Bajas / Minuto,
-UI_STAT_WAVES_CLEARED,Waves Cleared,Vagues complétées,Oleadas Completadas,
-UI_STAT_TIME_PER_WAVE,Time per Wave,Temps par vague,Tiempo por Oleada,
-UI_STAT_SURVIVAL_TIME,Survival Time,Temps de survie,Tiempo de Supervivencia,
-UI_STAT_EFFICIENCY,Efficiency,Efficacité,Eficiencia,
-UI_STAT_WAVES_PER_MIN,Waves / Minute,Vagues / Minute,Oleadas / Minuto,
-UI_STAT_AVG_DURATION,Average Duration,Durée moyenne,Duración Media,
-LOADING,,,,
-ARENA_BASE_TITLE,The Depot [tutorial],Le Dépôt [tutoriel],El Depósito [tutorial],
-ARENA_BASE_DESC,"Your central processing unit is slowly recovering. RP-01, you are now a relic of the old world, a protective robot designed for a bygone era. You awaken in the middle of a deserted military hangar, surrounded by shipping containers and storage boxes. Reactivate your defense functions and explore the new world around you.","Le système de votre processeur central se rétablit lentement. RP-01, vous n'êtes plus qu'un vestige de l'ancien monde, un robot protecteur conçu pour une époque révolue. Vous vous réveillez au milieu d'un hangar militaire désertique, entouré de conteneurs et de cartons de stockage. Réactivez vos fonctions de défense et découvrez le nouveau monde qui vous entoure.","Tu unidad central de procesamiento se está recuperando lentamente. RP-01, ahora eres una reliquia del viejo mundo, un robot protector diseñado para una era pasada. Despiertas en medio de un hangar militar abandonado, rodeado de contenedores y cajas de almacenamiento. Reactiva tus funciones de defensa y explora el nuevo mundo que te rodea.",
-ARENA_FIRST_LEVEL_1_TITLE,Desert Garrison,Garnison Désertique,Guarnición del Desierto,
-ARENA_FIRST_LEVEL_1_DESC,The Protocol's regional logistics center. Ships unload troops in a loop. Fight your way through the canine infantry and the bursts of the scout Cats.,Centre logistique régional du Protocole. Les vaisseaux débarquent des troupes en boucle. Frayez-vous un chemin à travers l'infanterie canine et les rafales des Chats éclaireurs.,Centro logístico regional del Protocolo. Las naves desembarcan tropas en bucle. Ábrete paso a través de la infantería canina y las ráfagas de los Gatos exploradores.,
-LOADING_DEFAULT_TITLE,Loading protocols...,Chargement des protocoles...,Cargando protocolos...,
-LOADING_DEFAULT_DESC,Please wait while combat data is synchronizing.,Veuillez patienter pendant la synchronisation des données de combat.,"Por favor, espera mientras se sincronizan los datos de combate.",
+id,en,fr,es
+TUTORIAL,,,
+TUTO_STEP_1,Calibration protocol initiated.\nTest of directional thrusters required.,Protocole de calibrage initié.\nTest des propulseurs directionnels requis.,Protocolo de calibración iniciado.\nSe requiere probar los propulsores direccionales.
+TUTO_PERFECT,Perfect!,Parfait !,¡Perfecto!
+TUTO_STEP_2,Optical sensor calibration.\nAdjust your viewing angle.,Calibrage des capteurs optiques.\nAjustez l'angle de vision.,Calibración de sensores ópticos.\nAjuste el ángulo de visión.
+TUTO_STEP_3,Vertical elevation system test.\nJump initialization required.,Test du système d'élévation.\nInitialisation du saut requise.,Prueba del sistema de elevación vertical.\nSe requiere iniciar el salto.
+TUTO_GOOD_JOB,Well done!,Bien joué !,¡Bien hecho!
+TUTO_STEP_4,Kinetic shield calibration.\nIntercept the test projectile.,Calibrage du bouclier cinétique.\nInterceptez le projectile.,Calibración del escudo cinético.\nIntercepte el proyectil de prueba.
+TUTO_EXCELLENT,Excellent!,Excellent !,¡Excelente!
+TUTO_STEP_5,Calibration complete!\nAn enemy ship is approaching...,Calibrage terminé !\nUn vaisseau ennemi approche...,¡Calibración completada!\nUna nave enemiga se aproxima...
+WAVES / HUD,,,
+HUD_WAVE_COUNT,Wave %d / %d,Vague %d / %d,Oleada %d / %d
+HUD_ENEMIES_LEFT,Remaining enemies: %d,Ennemis restants : %d,Enemigos restantes: %d
+WAVE_MSG_1,Wave 1 — Parry and counter-attack!,Vague 1 — Pare et contre-attaque !,Oleada 1 — ¡Bloquea y contraataca!
+WAVE_MSG_2,"Wave 2 — Two enemies, stay mobile!","Vague 2 — Deux ennemis, reste mobile !","Oleada 2 — ¡Dos enemigos, mantente móvil!"
+WAVE_MSG_FINAL,"Final Wave — Three enemies, two ships!","Vague finale — trois ennemis, deux vaisseaux !","Oleada final — ¡Tres enemigos, dos naves!"
+WAVE_CLEARED,Wave %d cleared!,Vague %d terminée !,¡Oleada %d completada!
+ALL_WAVES_CLEARED,Arena complete!\nWell done!,Arène terminée !\nBravo !,¡Arena completada!\n¡Bravo!
+WAVE_HUD,Wave 0 / 0,Vague 0 / 0,Oleada 0 / 0
+ENEMIES_HUD,Remaining enemies: 0,Ennemis restants : 0,Enemigos restantes: 0
+MISSION_ACCOMPLISHED,Mission accomplished!\nA door just opened...,Mission accomplie !\nUne porte vient de s'ouvrir...,¡Misión cumplida!\nSe acaba de abrir una puerta...
+GAME OVER / UI,,,
+UI_DEATH_MSG,You are dead.\nReturning to wave 1...,Tu es mort.\nRetour à la vague 1...,Has muerto.\nVolviendo a la oleada 1...
+UI_GAME_OVER,GAME OVER,GAME OVER,FIN DE LA PARTIDA
+UI_SYS_NEUTRALIZED,— system neutralized —,— system neutralized —,— sistema neutralizado —
+UI_VICTORY,VICTORY,VICTOIRE,VICTORIA
+UI_THREAT_CLEARED,— threat neutralized —,— threat neutralized —,— amenaza neutralizada —
+UI_RETRY,[ RETRY ],[ RETRY ],[ REINTENTAR ]
+UI_PLAY_AGAIN,[ PLAY AGAIN ],[ PLAY AGAIN ],[ JUGAR DE NUEVO ]
+UI_QUIT,QUIT,QUITTER,SALIR
+MAIN MENU / UI,,,
+UI_MAIN_MENU,MAIN MENU,MENU PRINCIPAL,MENÚ PRINCIPAL
+UI_NEW_GAME,NEW GAME,NOUVELLE PARTIE,NUEVA PARTIDA
+UI_CONTINUE,CONTINUE,CONTINUER,CONTINUAR
+UI_OPTIONS,OPTIONS,OPTIONS,OPCIONES
+UI_CHANGE_LANGUAGE,CHANGE LANGUAGE,CHANGER DE LANGUE,CAMBIAR IDIOMA
+UI_LANGUAGE,LANGUAGE,LANGUE,IDIOMA
+UI_LEAVE,LEAVE,QUITTER,PARA IRSE
+UI_CREDITS,CREDITS,CRÉDITS,CRÉDITOS
+BOSS,,,
+BOSS_LION_NAME,⚔ LION COMMANDER ⚔,⚔ COMMANDANT LION ⚔,⚔ COMANDANTE LEÓN ⚔
+BOSS_LION_ANNOUNCE,BOSS — LION COMMANDER,BOSS — COMMANDANT LION,JEFE — COMANDANTE LEÓN
+PAUSE,,,
+PAUSE_TITLE,PAUSE,PAUSE,PAUSA
+PAUSE_RESUME,RESUME,REPRENDRE,CONTINUAR
+PAUSE_SETTINGS,SETTINGS,PARAMÈTRES,AJUSTES
+PAUSE_QUIT_MENU,QUIT TO MENU,MENU PRINCIPAL,MENÚ PRINCIPAL
+SETTINGS,,,
+SETTINGS_TITLE,OPTIONS,OPTIONS,OPCIONES
+SETTINGS_SECTION_AUDIO,AUDIO,AUDIO,AUDIO
+SETTINGS_MASTER_VOLUME,Master volume,Volume général,Volumen general
+SETTINGS_MUSIC,Music,Musique,Música
+SETTINGS_SFX,Sound effects,Effets sonores,Efectos de sonido
+SETTINGS_SECTION_DISPLAY,DISPLAY,AFFICHAGE,PANTALLA
+SETTINGS_FULLSCREEN,Fullscreen,Plein écran,Pantalla completa
+SETTINGS_SECTION_LANGUAGE,LANGUAGE,LANGUE,IDIOMA
+SETTINGS_BACK,BACK,RETOUR,VOLVER
+STORY / NARRATIVE,,,
+LVL1_INTRO_MSG,Directive: Investigate origins.\nI must search the Depot.,Directive : Enquêter sur mes origines.\nJe dois fouiller le Dépôt.,Directiva: Investigar orígenes.\nDebo buscar en el Depósito.
+LVL1_EXIT_OPENED_MSG,Threat neutralized. Transit portal active.\nI will find Vauclair.,Menace neutralisée. Portail de transit actif.\nJe retrouverai Vauclair.,Amenaza neutralizada. Portal de tránsito activo.\nEncontraré a Vauclair.
+WAVE NAMES,,,
+WAVE_NAME_OUTPOST,DESERT OUTPOST,AVANT-POSTE DÉSERTIQUE,PUESTO AVANZADO DEL DESIERTO
+WAVE_NAME_SQUAD,INFANTRY SQUAD,ESCOUADE D'INFANTERIE,ESCUADRÓN DE INFANTERÍA
+WAVE_NAME_REINFORCEMENTS,REINFORCEMENTS CALLED,RENFORTS APPELÉS,REFUERZOS LLAMADOS
+WAVE_NAME_MAX_ALERT,MAXIMUM ALERT,ALERTE MAXIMALE,ALERTA MÁXIMA
+WAVE_NAME_BOSS_LION,⚠️ LION COMMANDER,⚠️ COMMANDANT LION,⚠️ COMANDANTE LEÓN
+STORY / CAVE,,,
+LVL2_CAVE_ENTRY,A secondary base... The signal is getting stronger.,Une base secondaire... Le signal s'intensifie.,Una base secundaria... La señal se intensifica.
+STORY / LVL3,,,
+ARENA_LVL3_INTRO,Look at this structure... There must be high-tech remnants inside. I need to see what's left.,Regarde cette structure... Il doit rester des vestiges technologiques là-dedans. Je dois voir ce qu'il reste.,Mira esta estructura... Debe haber restos tecnológicos dentro. Tengo que ver qué queda.
+ARENA_LVL3_WAVE_DOGS,Movement detected... Dogs are closing in!,Mouvement détecté... Des chiens approchent !,Movimiento detectado... ¡Se acercan Perros!
+ARENA_LVL3_WAVE_COWS,"Watch out, larger signatures incoming.","Attention, des signatures plus imposantes arrivent.","Cuidado, llegan firmas más grandes."
+ARENA_LVL3_WAVE_CATS,They're fast! Cats on the radar.,Ils sont rapides ! Des chats sur le radar.,¡Son rápidos! Cats en el radar.
+ARENA_LVL3_WAVE_MIX,Multiple hostiles from all sides!,Plusieurs hostiles arrivent de tous les côtés !,¡Múltiples hostiles por todos lados!
+ARENA_LVL3_WAVE_BOSS,⚠️ CRITICAL ALERT - BOSS LION DETECTED,⚠️ ALERTE CRITIQUE - BOSS LION DÉTECTÉ,⚠️ ALERTA CRÍTICA - JEFE LEÓN DETECTADO
+ARENA_LVL3_WIN,🎉 AREA SECURED - LEVEL 3 COMPLETED,🎉 ZONE SÉCURISÉE - NIVEAU 3 ACCOMPLI,🎉 ZONA SEGURA - NIVEL 3 COMPLETADO
+ARENA_LVL3_PICK_KEY,⚠️ Pick up the boss key to open the portal!,⚠️ Récupère la clé du boss pour ouvrir le portail !,⚠️ ¡Recoge la llave del jefe para abrir el portal!
+Crédits,,,
+CREDITS_DEV,DEVELOPMENT,DÉVELOPPEMENT,DESARROLLO
+CREDITS_DEV_ROLE,Developer & Game Designer,Développeur & Game Designer,Desarrollador y Diseñador
+CREDITS_DESIGN,GAME DESIGN,GAME DESIGN,DISEÑO DE JUEGOS
+CREDITS_DESIGN_ROLE,Game Designer,Game Designer,Diseñador de juegos
+CREDITS_MGMT,PROJECT MANAGEMENT,GESTION DE PROJET,GESTIÓN DE PROYECTOS
+CREDITS_MGMT_ROLE,Producer,Producteur,Productor
+CREDITS_FORMATION,FORMATION,FORMATION,FORMACIÓN
+CREDITS_FORMATION_DESC,Project developed during a L3 CDA internship at UBO Brest,Projet réalisé dans le cadre d'un stage de L3 CDA à l'UBO de Brest,Proyecto realizado durante una pasantía de L3 CDA en la UBO de Brest
+CREDITS_THANKS,SPECIAL THANKS,REMERCIEMENTS SPÉCIAUX,AGRADECIMIENTOS ESPECIALES
+CREDITS_THANKS_MSG,Thanks to everyone who contributed to this project,Merci à tous ceux qui ont contribué au développement de ce jeu,Gracias a todos los que contribuyeron al desarrollo de este juego
+CREDITS_ENGINE,CREATED WITH,CRÉÉ AVEC,CREADO CON
+CREDITS_COPYRIGHT,© 2025 - All rights reserved,© 2025 - Tous droits réservés,© 2025 - Todos los derechos reservados
+Chest,,,
+CHEST_OPEN,Open [F] ,Ouvrir [F] ,Abierto [F] 
+Shop,,,
+UI_SHOP_TITLE,SHOP [B],BOUTIQUE [B],TIENDA [B]
+UI_SHOP_TAB_PLAYER,PLAYER,JOUEUR,JUGADOR
+UI_SHOP_TAB_SHIELD,SHIELD,BOUCLIER,ESCUDO
+UI_SHOP_TAB_PASSIVES,PASSIVES,PASSIFS,PASIVAS
+UI_SHOP_CLOSE,CLOSE,FERMER,CERRAR
+UI_SHOP_BUY,BUY,ACHETER,COMPRAR
+UI_SHOP_MAX,MAX,MAX,MÁX
+SHOP_NAME_hp_max,Max HP,HP Maximum,HP Máximo
+SHOP_DESC_hp_max,+5 HP per tier,+5 HP max par palier,+5 HP máx por nivel
+SHOP_NAME_move_speed,Speed,Vitesse,Velocidad
+SHOP_DESC_move_speed,+5% movement speed,+5% vitesse de déplacement,+5% Velocidad de mov.
+SHOP_NAME_damage_reduction,Damage reduction,Réduction dégâts,Reducción de daño
+SHOP_DESC_damage_reduction,-5% damage taken per tier,-5% dégâts reçus par palier,-5% Daño recibido por nivel
+SHOP_NAME_pickup_radius,Pickup radius,Rayon collecte,Rango de recogida
+SHOP_DESC_pickup_radius,+15% coin range,+15% portée des pièces,+15% Alcance de monedas
+SHOP_NAME_shield_size,Shield size,Taille bouclier,Tamaño del escudo
+SHOP_DESC_shield_size,+8% shield radius,+8% rayon du bouclier,+8% Radio del escudo
+SHOP_NAME_shield_duration,Shield duration,Durée activation,Duración de activación
+SHOP_DESC_shield_duration,+10% active parry duration,+10% durée de parade active,+10% Duración de parada activa
+SHOP_NAME_parry_damage,Parry damage,Dégâts renvoi,Daño de parada
+SHOP_DESC_parry_damage,+10% reflected bullet damage,+10% dégâts balles renvoyées,+10% Daño bala reflejada
+SHOP_NAME_parry_window,Parry window,Fenêtre critique,Ventana crítica
+SHOP_DESC_parry_window,+1 frame critical window,+1 frame de fenêtre critique,+1 frame ventana crítica
+SHOP_NAME_hp_regen,HP Regen,Régén. HP,Regén. de HP
+SHOP_DESC_hp_regen,"Tier 1: 30s, 2: 20s, 3: 12s","Palier 1: 30s, 2: 20s, 3: 12s","Nivel 1: 30s, 2: 20s, 3: 12s"
+SHOP_NAME_xp_bonus,XP Bonus,Bonus XP,Bonus XP
+SHOP_DESC_xp_bonus,+10% XP per enemy killed,+10% XP par ennemi tué,+10% XP por enemigo derrotado
+SHOP_NAME_dash_cooldown,Dash cooldown,Cooldown Dash,Enfriamiento Dash
+SHOP_DESC_dash_cooldown,-10% dash recharge per tier,-10% rechargement du dash/palier,-10% recarga de dash/nivel
+SHOP_NAME_stomp_damage,Stomp damage,Dégâts Stomp,Daño de pisotón
+SHOP_DESC_stomp_damage,+15% stomp damage per tier,+15% dégâts saut écrasant/palier,+15% Daño pisotón/nivel
+SHOP_NAME_parry_heal,Parry heal,Soin Parade,Curación de parada
+SHOP_DESC_parry_heal,+1 HP per critical parry,+1 HP soigné par parade critique,+1 HP curado por parada crítica
+SHOP_NAME_reflect_speed,Reflect speed,Vitesse Renvoi,Velocidad reflejo
+SHOP_DESC_reflect_speed,+20% reflected bullet speed,+20% vitesse balles renvoyées,+20% Velocidad bala reflejada
+SHOP_NAME_coin_bonus,Coin bonus,Bonus Pièces,Bonus Monedas
+SHOP_DESC_coin_bonus,+1 coin per enemy defeated,+1 pièce par ennemi vaincu,+1 moneda por enemigo derrotado
+SHOP_NAME_dash_armor,Dash armor,Armure Dash,Armadura Dash
+SHOP_DESC_dash_armor,"1: Invincible during dash, 2-3: +duration","1: invinc. pendant dash, 2-3: +durée","1: Invinc. durante dash, 2-3: +durac."
+Sauvegardes/select,,,
+UI_SLOT_TITLE_NEW,▶ NEW GAME,▶ NOUVELLE PARTIE,▶ NUEVA PARTIDA
+UI_SLOT_SUB_NEW,Choose a slot for your adventure,Choisissez un emplacement pour votre aventure,Elige un slot para tu aventura
+UI_SLOT_TITLE_LOAD,LOAD GAME,CHARGER UNE PARTIE,CARGAR PARTIDA
+UI_SLOT_SUB_LOAD,Select a save to resume,Sélectionnez une sauvegarde pour reprendre,Selecciona una partida para reanudar
+UI_SLOT_BACK,← BACK,← RETOUR,← VOLVER
+UI_SLOT_OVERWRITE,⚠ OVERWRITE,⚠ ÉCRASER,⚠ SOBREESCRIBIR
+UI_SLOT_CHOOSE,▶ CHOOSE,▶ CHOISIR,▶ ELEGIR
+UI_SLOT_USED,EXISTING SAVE,SAUVEGARDE EXISTANTE,PARTIDA EXISTENTE
+UI_SLOT_LEVEL_UNKNOWN,Unknown level,Niveau inconnu,Nivel desconocido
+UI_SLOT_EMPTY,Empty slot,Emplacement vide,Slot vacío
+UI_SLOT_EMPTY_DESC,Start a new adventure here,Démarrer une nouvelle aventure ici,Iniciar nueva aventura aquí
+UI_SLOT_LOAD_BTN,▶ LOAD,▶ CHARGER,▶ CARGAR
+UI_SLOT_EMPTY_SHORT,EMPTY,VIDE,VACÍO
+UI_SLOT_NONE,No save data,Aucune sauvegarde,Sin datos de guardado
+UI_SLOT_STATS,🪙 %d coins   ❤ %d HP,🪙 %d pièces   ❤ %d HP,🪙 %d monedas   ❤ %d HP
+UI_DIALOG_TUTO_TITLE,◈ TUTORIAL,◈ TUTORIEL,◈ TUTORIAL
+UI_DIALOG_TUTO_MSG,Do you want to play the tutorial?,Souhaitez-vous jouer le tutoriel ?,¿Quieres jugar el tutorial?
+UI_DIALOG_TUTO_DESC,It will teach you the basics.,Il vous apprendra les bases.,Te enseñará los conceptos básicos.
+UI_DIALOG_TUTO_PLAY,▶ TUTORIAL,▶ TUTORIEL,▶ TUTORIAL
+UI_DIALOG_TUTO_SKIP,⏭ SKIP,⏭ PASSER,⏭ OMITIR
+UI_DIALOG_WARN,⚠ WARNING,⚠ ATTENTION,⚠ ATENCIÓN
+UI_DIALOG_CONFIRM_MSG,Overwrite this save?,Écraser cette sauvegarde ?,¿Sobreescribir esta partida?
+UI_DIALOG_CONFIRM_DESC,This action is irreversible.,Cette action est irréversible.,Esta acción es irreversible.
+UI_DIALOG_CANCEL,CANCEL,ANNULER,CANCELAR
+Skill,,,
+RARITY_COMMON,Common,Commun,Común
+RARITY_UNCOMMON,Uncommon,Peu Commun,Poco Común
+RARITY_RARE,Rare,Rare,Raro
+RARITY_EPIC,Epic,Épique,Épico
+RARITY_LEGENDARY,Legendary,Légendaire,Legendario
+SKILL_NAME_return_speed_boost,Boosted Reflexes,Réflexes boostés,Reflejos potenciados
+SKILL_DESC_return_speed_boost,Returned bullets +15% speed.,Tes balles renvoyées gagnent +15 % de vitesse.,Tus balas reflejadas ganan +15% de velocidad.
+SKILL_NAME_shield_size_boost,Expanded Shield,Bouclier élargi,Escudo ampliado
+SKILL_DESC_shield_size_boost,Shield radius +10%.,Le rayon de ton bouclier augmente de +10 %.,El radio de tu escudo aumenta un +10%.
+SKILL_NAME_parry_hp_regen,Healing Parry,Parade curative,Parada curativa
+SKILL_DESC_parry_hp_regen,Each parry restores 1 HP.,Chaque parade te régénère 1 HP.,Cada parada te regenera 1 HP.
+SKILL_NAME_return_damage_boost,Reinforced Strike,Frappe renforcée,Golpe reforzado
+SKILL_DESC_return_damage_boost,Reflected bullets deal +10% dmg.,Tes balles renvoyées infligent +10 % de dégâts.,Tus balas reflejadas hacen +10% de daño.
+SKILL_NAME_shield_duration_boost,Shield Endurance,Endurance du bouclier,Resistencia del escudo
+SKILL_DESC_shield_duration_boost,Active shield duration +20%.,La durée d'activation du bouclier augmente de +20 %.,La duración del escudo activo aumenta un +20%.
+SKILL_NAME_piercing_bullet,Piercing Bullet,Balle perçante,Bala perforante
+SKILL_DESC_piercing_bullet,Pierces one additional enemy.,Ta balle renvoyée traverse un ennemi supplémentaire.,Tu bala reflejada atraviesa un enemigo extra.
+SKILL_NAME_parry_window_boost,Master Timing,Timing de maître,Timing de maestro
+SKILL_DESC_parry_window_boost,Critical parry window +20%.,La fenêtre de parade critique s'agrandit de +20 %.,La ventana de parada crítica aumenta un +20%.
+SKILL_NAME_stomp_damage_boost,Brutal Stomp,Écrasement brutal,Pisotón brutal
+SKILL_DESC_stomp_damage_boost,Stomp deals 2x damage.,Le saut écrasant inflige 2× plus de dégâts.,El pisotón hace el doble de daño.
+SKILL_NAME_dash_unlock,Shield Dash,Dash bouclier,Dash con escudo
+SKILL_DESC_dash_unlock,Unlock: Shield + Dash.,Débloque le dash bouclier.,Desbloquea: Escudo + Dash.
+SKILL_NAME_enemy_slowdown,Slowdown Wave,Onde de ralentissement,Onda de ralentización
+SKILL_DESC_enemy_slowdown,Enemies move 15% slower.,Les balles ennemies se déplacent 15 % moins vite.,Los proyectiles enemigos son un 15% más lentos.
+SKILL_NAME_poison_bullet,Poison Bullet,Balle empoisonnée,Bala envenenada
+SKILL_DESC_poison_bullet,Inflicts poison over 3s.,Ta balle renvoyée empoisonne l'ennemi.,Tu bala reflejada envenena al enemigo.
+SKILL_NAME_double_bullet,Double Parry,Double renvoi,Doble parada
+SKILL_DESC_double_bullet,Each parry sends 2 bullets.,Chaque parade envoie 2 balles divergentes.,Cada parada dispara 2 balas divergentes.
+SKILL_NAME_critical_parry_heal,Parry Heal,Parade critique + soin,Parada crítica + curación
+SKILL_DESC_critical_parry_heal,Critical parry heals 3 HP.,Une parade critique te soigne de 3 HP.,Una parada crítica te cura 3 HP.
+SKILL_NAME_stomp_shockwave,Seismic Stomp,Stomp sismique,Pisotón sísmico
+SKILL_DESC_stomp_shockwave,Stomp releases a shockwave.,Le saut écrasant libère une onde de choc.,El pisotón libera una onda de choque.
+SKILL_NAME_wall_bounce,Wall Bounce,Rebond mural,Rebote en pared
+SKILL_DESC_wall_bounce,Bullets bounce off walls once.,Ta balle renvoyée rebondit une fois sur les murs.,Tu bala reflejada rebota una vez en las paredes.
+SKILL_NAME_chain_lightning,Chain Lightning,Chaîne éclair,Cadena de rayos
+SKILL_DESC_chain_lightning,Bullets chain between enemies.,"Quand ta balle tue, elle rebondit vers le proche.","Cuando tu bala mata, rebota al enemigo cercano."
+SKILL_NAME_mirror_shield,Mirror Shield,Bouclier miroir,Escudo espejo
+SKILL_DESC_mirror_shield,Auto-reflects nearby bullets.,Toutes les balles proches sont auto-renvoyées.,Refleja automáticamente balas cercanas.
+SKILL_NAME_fire_stomp,Flame Strike,Frappe enflammée,Golpe de fuego
+SKILL_DESC_fire_stomp,Stomp leaves fire zone.,Le saut écrasant laisse une zone de feu au sol.,El pisotón deja una zona de fuego.
+SKILL_NAME_phantom_bullet,Phantom Bullet,Balle fantôme,Bala fantasma
+SKILL_DESC_phantom_bullet,Bullets cannot be avoided.,Les ennemis ne peuvent pas éviter cette balle.,Los enemigos no pueden evitar esta bala.
+SKILL_NAME_shield_nova,Shield Nova,Nova du bouclier,Nova de escudo
+SKILL_DESC_shield_nova,Parries damage all visible.,Chaque parade libère une onde blessante.,Cada parada libera una onda de daño.
+SKILL_NAME_omni_bullet,Omni-Bullet,Balle omnidirectionnelle,Bala omnidireccional
+SKILL_DESC_omni_bullet,Automatic second shot.,Une seconde balle part dans la direction opposée.,Dispara automáticamente una segunda bala.
+SKILL_NAME_invuln_flash,Invulnerability Flash,Invulnérabilité éclair,Invulnerabilidad relámpago
+SKILL_DESC_invuln_flash,0.5s invulnerability after parry.,"0,5s d'invulnérabilité après parade réussie.",0.5s de invulnerabilidad tras la parada.
+SKILL_NAME_clone_bullet,Bullet Clone,Clone de balle,Clon de bala
+SKILL_DESC_clone_bullet,Creates a random copy.,Ta balle crée une copie qui repart aléatoirement.,Tu bala crea una copia en dirección aleatoria.
+UI_SKILL_LEVEL_TITLE,⚡ LEVEL %d ⚡,⚡ NIVEAU %d ⚡,⚡ NIVEL %d ⚡
+UI_SKILL_DRAWING,Drawing skill...,Tirage de compétence...,Eligiendo habilidad...
+UI_SKILL_CHOOSE_HINT,Press [1] or [2] to choose,Appuie sur [1] ou [2] pour choisir,Presiona [1] o [2] para elegir
+UI_BTN_SKILL,SKILLS,COMPÉTENCES,COMPETENCIAS
+SKILL_VIEW,No skills acquired yet.,Aucune compétence acquise pour l'instant.,Aún no se han adquirido habilidades.
+Score,,,
+UI_SCORE_TITLE,MISSION REPORT,RAPPORT DE MISSION,INFORME DE MISIÓN
+UI_SCORE_STATUS,▸ MISSION CLEARED,▸ MISSION TERMINÉE,▸ MISIÓN COMPLETADA
+UI_SCORE_SECTION_COMBAT,▸ COMBAT,▸ COMBAT,▸ COMBATE
+UI_SCORE_SECTION_PROGRESS,▸ PROGRESSION,▸ PROGRESSION,▸ PROGRESO
+UI_SCORE_SECTION_PERF,▸ PERFORMANCE,▸ PERFORMANCE,▸ RENDIMIENTO
+UI_SCORE_TOTAL,TOTAL SCORE: %d,SCORE TOTAL : %d,PUNTUACIÓN TOTAL: %d
+UI_SCORE_RANK,RANK: %s,RANG : %s,RANGO: %s
+UI_SCORE_BTN_RETRY,◄ REPLAY,◄ REJOUER,◄ VOLVER A JUGAR
+UI_SCORE_BTN_MENU,MAIN MENU ►,MENU PRINCIPAL ►,MENÚ PRINCIPAL ►
+UI_SCORE_ANALYSIS_DONE,▸ ANALYSIS COMPLETE,▸ ANALYSE TERMINÉE,▸ ANÁLISIS COMPLETADO
+UI_SCORE_DATA_SIGNAL,DATA %s,DONNÉES %s,DATOS %s
+UI_STAT_ENEMIES_KILLED,Enemies Killed,Ennemis éliminés,Enemigos Eliminados
+UI_STAT_KILLS_PER_WAVE,Kills / Wave,Kills / Vague,Bajas / Oleada
+UI_STAT_KILLS_PER_MIN,Kills / Minute,Kills / Minute,Bajas / Minuto
+UI_STAT_WAVES_CLEARED,Waves Cleared,Vagues complétées,Oleadas Completadas
+UI_STAT_TIME_PER_WAVE,Time per Wave,Temps par vague,Tiempo por Oleada
+UI_STAT_SURVIVAL_TIME,Survival Time,Temps de survie,Tiempo de Supervivencia
+UI_STAT_EFFICIENCY,Efficiency,Efficacité,Eficiencia
+UI_STAT_WAVES_PER_MIN,Waves / Minute,Vagues / Minute,Oleadas / Minuto
+UI_STAT_AVG_DURATION,Average Duration,Durée moyenne,Duración Media
+LOADING,,,
+ARENA_BASE_TITLE,The Depot [tutorial],Le Dépôt [tutoriel],El Depósito [tutorial]
+ARENA_BASE_DESC,A spark. A white eye lights up. RP-01 awakens among the containers of a cryogenic storage room. Reactivate your circuits and test your parries on the patrolling Dogs.,Une étincelle. Un œil blanc qui s'allume. RP-01 s'éveille parmi les conteneurs d'une salle de stockage cryogénique. Réactivez vos circuits et testez vos parades sur les Chiens en patrouille.,Una chispa. Un ojo blanco se enciende. RP-01 despierta entre los contenedores de una sala de almacenamiento criogénico. Reactiva tus circuitos y prueba tus paradas con los Perros patrulla.
+ARENA_FIRST_LEVEL_1_TITLE,Desert Garrison,Garnison Désertique,Guarnición del Desierto
+ARENA_FIRST_LEVEL_1_DESC,The Protocol's regional logistics center. Ships unload troops in a loop. Fight your way through the canine infantry and the bursts of the scout Cats.,Centre logistique régional du Protocole. Les vaisseaux débarquent des troupes en boucle. Frayez-vous un chemin à travers l'infanterie canine et les rafales des Chats éclaireurs.,Centro logístico regional del Protocolo. Las naves desembarcan tropas en bucle. Ábrete paso a través de la infantería canina y las ráfagas de los Gatos exploradores.
+LOADING_DEFAULT_TITLE,Loading protocols...,Chargement des protocoles...,Cargando protocolos...
+LOADING_DEFAULT_DESC,Please wait while combat data is synchronizing.,Veuillez patienter pendant la synchronisation des données de combat.,"Por favor, espera mientras se sincronizan los datos de combate."

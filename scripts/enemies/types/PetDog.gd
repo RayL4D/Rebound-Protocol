@@ -15,6 +15,7 @@
 #   │   ├── [Modèle blaster-a.glb]
 #   │   └── WeaponBullet (Node3D) ← script WeaponBullet.gd
 # =============================================================
+@tool
 class_name PetDog
 extends Enemy
 

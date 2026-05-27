@@ -19,6 +19,7 @@
 #   │   ├── [Modèle blaster-e.glb]
 #   │   └── WeaponShotgun (Node3D) ← script WeaponShotgun.gd
 # =============================================================
+@tool
 class_name PetCow
 extends Enemy
 

@@ -11,9 +11,9 @@ size = Vector3(1.2, 1.2, 0.5)
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_0owmy"]
 render_priority = 0
 shader = ExtResource("4_cua4h")
-shader_parameter/shield_color = Color(0, 0.85430586, 1, 0.85)
-shader_parameter/border_color = Color(1, 0.8, 0.1, 1)
-shader_parameter/intensity = 1.5
+shader_parameter/shield_color = Color(0, 0.2, 0.8, 0.85)
+shader_parameter/border_color = Color(0, 0.8, 1, 1)
+shader_parameter/intensity = 3.0
 shader_parameter/hex_scale = 6.0
 shader_parameter/curvature = 0.6
 

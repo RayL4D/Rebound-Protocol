@@ -20,6 +20,7 @@
 #   │   ├── [Modèle blaster-f.glb]
 #   │   └── WeaponBullet (Node3D) ← tir lent, fort, courte portée
 # =============================================================
+@tool
 class_name PetCrab
 extends Enemy
 
