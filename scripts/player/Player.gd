@@ -1359,22 +1359,29 @@ func grant_invincibility(duration: float) -> void:
 
 ## Onde de choc au sol — repousse tous les ennemis dans un rayon de 4 m.
 func _do_stomp_shockwave() -> void:
+	if not is_inside_tree():
+		return
+	# Capturer la position ICI (nœud garanti dans l'arbre) et la passer en paramètre
+	# pour éviter que _spawn_shockwave_ring() appelle global_position sur un nœud
+	# potentiellement en cours de libération (race condition C++ en co-op).
+	var stomp_pos := global_position
+
 	var enemies := get_tree().get_nodes_in_group("enemies")
 	for node: Node in enemies:
 		if not (node is CharacterBody3D) or not is_instance_valid(node):
 			continue
 		var enemy_body := node as CharacterBody3D
-		var diff := enemy_body.global_position - global_position
+		var diff := enemy_body.global_position - stomp_pos
 		diff.y = 0.0
 		var dist := diff.length()
 		if dist > 0.05 and dist < 4.0:
 			enemy_body.velocity += diff.normalized() * 9.0 * (1.0 - dist / 4.0)
 
 	# Effet visuel : anneau d'onde au sol
-	_spawn_shockwave_ring()
+	_spawn_shockwave_ring(stomp_pos)
 
 
-func _spawn_shockwave_ring() -> void:
+func _spawn_shockwave_ring(stomp_pos: Vector3) -> void:
 	if not is_inside_tree():
 		return
 	# Anneau expansif simple (torus aplati)
@@ -1386,7 +1393,6 @@ func _spawn_shockwave_ring() -> void:
 	mesh.ring_segments = 16
 	ring.mesh         = mesh
 	ring.rotation.x   = PI * 0.5
-	ring.global_position = global_position + Vector3.DOWN * 0.05
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color              = Color(0.0, 0.7, 1.0, 0.9)
 	mat.emission_enabled          = true
@@ -1394,7 +1400,11 @@ func _spawn_shockwave_ring() -> void:
 	mat.emission_energy_multiplier = 3.0
 	mat.transparency              = BaseMaterial3D.TRANSPARENCY_ALPHA
 	ring.set_surface_override_material(0, mat)
+	# IMPORTANT : add_child d'abord, global_position ensuite.
+	# Avant ce fix, ring.global_position était assigné AVANT que le nœud
+	# soit dans l'arbre → crash C++ "!is_inside_tree()" sur get_global_transform().
 	get_tree().current_scene.add_child(ring)
+	ring.global_position = stomp_pos + Vector3.DOWN * 0.05
 
 	var tw := ring.create_tween().set_parallel(true)
 	tw.tween_property(ring, "scale", Vector3(12, 1, 12), 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -1466,3 +1476,4 @@ func _spawn_fire_zone() -> void:
 	fade_tw.tween_interval(FIRE_DURATION - 0.5)
 	fade_tw.tween_property(mat, "albedo_color:a", 0.0, 0.5)
 	fade_tw.tween_callback(zone_node.queue_free)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
