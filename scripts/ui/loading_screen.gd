@@ -16,22 +16,22 @@ const LEVEL_INFOS = {
 	"arena_base": {
 		"title_key": "ARENA_BASE_TITLE",
 		"desc_key": "ARENA_BASE_DESC",
-		"image": "res://assets/ui/loading_screen_background/arena_base.JPG"
+		"image": "res://assets/ui/loading_screen_background/arena_base.png"
 	},
 	"arena_first_level_1": {
 		"title_key": "ARENA_FIRST_LEVEL_1_TITLE",
 		"desc_key": "ARENA_FIRST_LEVEL_1_DESC",
-		"image": "res://assets/ui/loading_screen_background/arena_first_level_1.JPG"
+		"image": "res://assets/ui/loading_screen_background/arena_first_level/arena_first_level_1.png"
 	},
 		"arena_first_level_2": {
 		"title_key": "ARENA_FIRST_LEVEL_1_TITLE",
-		"desc_key": "ARENA_FIRST_LEVEL_1_DESC",
-		"image": "res://assets/ui/loading_screen_background/arena_first_level_1.JPG"
+		"desc_key": "ARENA_FIRST_LEVEL_2_DESC",
+		"image": "res://assets/ui/loading_screen_background/arena_first_level/arena_first_level_2.png"
 	},
 		"arena_first_level_3": {
 		"title_key": "ARENA_FIRST_LEVEL_1_TITLE",
-		"desc_key": "ARENA_FIRST_LEVEL_1_DESC",
-		"image": "res://assets/ui/loading_screen_background/arena_first_level_1.JPG"
+		"desc_key": "ARENA_FIRST_LEVEL_3_DESC",
+		"image": "res://assets/ui/loading_screen_background/arena_first_level/arena_first_level_3.png"
 	}
 }
 
