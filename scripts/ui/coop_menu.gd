@@ -503,7 +503,7 @@ func _ready() -> void:
 	NetworkManager.game_started.connect(_on_game_started)
 	NetworkManager.relay_awake.connect(_on_relay_awake)
 	# Réveille le relay dès l'ouverture (Render free tier peut dormir)
-	_set_status("Connexion au serveur relay…", false)
+	_set_status(tr("UI_COOP_SERVER_RELAY"), false)
 	NetworkManager.ping_relay()
 
 
@@ -560,7 +560,7 @@ func _build_ui() -> void:
 	_add_spacer(root, 6)
 
 	var title := Label.new()
-	title.text = "CO-OP EN LIGNE"
+	title.text = tr("UI_COOP")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 32)
 	title.add_theme_color_override("font_color", C_CYAN)
@@ -568,7 +568,7 @@ func _build_ui() -> void:
 	root.add_child(title)
 
 	var subtitle := Label.new()
-	subtitle.text = "MODE SURVIE — VAGUES INFINIES"
+	subtitle.text = tr("UI_COOP_SURVIVAL_MODE")
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	subtitle.add_theme_font_size_override("font_size", 12)
 	subtitle.add_theme_color_override("font_color", Color(C_CYAN, 0.5))
@@ -594,7 +594,7 @@ func _build_ui() -> void:
 
 	# ── Bouton retour ─────────────────────────────────────────────────────────
 	_add_spacer(root, 18)
-	var btn_back := _make_menu_button("← RETOUR AU MENU")
+	var btn_back := _make_menu_button(tr("UI_COOP_BACK_MENU"))
 	btn_back.pressed.connect(_on_back_pressed)
 	root.add_child(btn_back)
 
@@ -615,22 +615,22 @@ func _build_main_panel() -> void:
 
 	# ── Section RÉSEAU ───────────────────────────────────────────────────────
 	# ── Section CRÉER ────────────────────────────────────────────────────────
-	_add_section_header(vb, "▸ CRÉER UN SALON")
+	_add_section_header(vb, tr("UI_CREATE_SALON"))
 	_add_spacer(vb, 10)
 
-	_add_field_label(vb, "TON NOM DE JOUEUR")
+	_add_field_label(vb, tr("UI_YOUR_NAME"))
 	_add_spacer(vb, 5)
 	_entry_name = _make_line_edit("John Doe", 20)
 	vb.add_child(_entry_name)
 	_add_spacer(vb, 12)
 
-	var btn_host := _make_action_button("CRÉER EN LIGNE  ◆", C_CYAN)
+	var btn_host := _make_action_button(tr("UI_COOP_CREATE_ONLINE"), C_CYAN)
 	btn_host.pressed.connect(_on_host_pressed)
 	vb.add_child(btn_host)
 
 	_add_spacer(vb, 6)
 
-	var btn_host_lan := _make_action_button("CRÉER EN LAN (même réseau)  ◈", Color(0.18, 0.78, 0.58))
+	var btn_host_lan := _make_action_button(tr("UI_COOP_CREATE_LAN"), Color(0.18, 0.78, 0.58))
 	btn_host_lan.pressed.connect(_on_host_lan_pressed)
 	vb.add_child(btn_host_lan)
 
@@ -642,7 +642,7 @@ func _build_main_panel() -> void:
 	sep_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sep_l.add_theme_color_override("color", Color(C_CYAN, 0.20))
 	var sep_lbl := Label.new()
-	sep_lbl.text = "OU"
+	sep_lbl.text = tr("UI_OR")
 	sep_lbl.add_theme_font_size_override("font_size", 11)
 	sep_lbl.add_theme_color_override("font_color", Color(C_CYAN, 0.45))
 	if _font: sep_lbl.add_theme_font_override("font", _font)
@@ -656,7 +656,7 @@ func _build_main_panel() -> void:
 	_add_spacer(vb, 20)
 
 	# ── Section REJOINDRE ────────────────────────────────────────────────────
-	_add_section_header(vb, "▸ REJOINDRE UN SALON")
+	_add_section_header(vb, tr("UI_JOIN_SALON"))
 	_add_spacer(vb, 12)
 
 	# Sélecteur CODE / IP
@@ -664,8 +664,8 @@ func _build_main_panel() -> void:
 	join_row.add_theme_constant_override("separation", 6)
 	vb.add_child(join_row)
 
-	var btn_by_code := _make_action_button("PAR CODE", C_CYAN)
-	var btn_by_ip   := _make_action_button("PAR IP DIRECTE", Color(0.18, 0.78, 0.58))
+	var btn_by_code := _make_action_button(tr("UI_BY_CODE"), C_CYAN)
+	var btn_by_ip   := _make_action_button(tr("UI_BY_IP"), Color(0.18, 0.78, 0.58))
 	btn_by_code.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	btn_by_ip.size_flags_horizontal   = Control.SIZE_EXPAND_FILL
 	btn_by_ip.modulate.a = 0.55
@@ -680,14 +680,14 @@ func _build_main_panel() -> void:
 	_panel_code.add_theme_constant_override("separation", 0)
 	vb.add_child(_panel_code)
 
-	_add_field_label(_panel_code, "CODE DU SALON  (6 CARACTÈRES)")
+	_add_field_label(_panel_code, tr("UI_CODE_LABEL"))
 	_add_spacer(_panel_code, 5)
 	_entry_code = _make_line_edit("ABC123", 6)
 	_entry_code.text = ""
 	_panel_code.add_child(_entry_code)
 	_add_spacer(_panel_code, 10)
 
-	var btn_join_code := _make_action_button("REJOINDRE  →", Color(0.0, 0.55, 0.22))
+	var btn_join_code := _make_action_button(tr("UI_JOIN"), Color(0.0, 0.55, 0.22))
 	btn_join_code.pressed.connect(_on_join_pressed)
 	_panel_code.add_child(btn_join_code)
 
@@ -697,13 +697,13 @@ func _build_main_panel() -> void:
 	_panel_ip.visible = false
 	vb.add_child(_panel_ip)
 
-	_add_field_label(_panel_ip, "IP DE L'HÔTE  (ex : 192.168.1.89)")
+	_add_field_label(_panel_ip, tr("UI_HOST_IP"))
 	_add_spacer(_panel_ip, 5)
 	_entry_ip = _make_line_edit("192.168.1.x", 64)
 	_entry_ip.text = ""
 	_panel_ip.add_child(_entry_ip)
 	_add_spacer(_panel_ip, 10)
-	var btn_join_ip := _make_action_button("REJOINDRE  →", Color(0.0, 0.55, 0.22))
+	var btn_join_ip := _make_action_button(tr("UI_JOIN"), Color(0.0, 0.55, 0.22))
 	btn_join_ip.pressed.connect(_on_join_lan_pressed)
 	_panel_ip.add_child(btn_join_ip)
 
@@ -712,7 +712,7 @@ func _build_lobby_panel() -> void:
 	var vb: VBoxContainer = _panel_lobby.get_child(0)
 
 	# ── Code du salon ────────────────────────────────────────────────────────
-	_add_section_header(vb, "▸ CODE DU SALON")
+	_add_section_header(vb, tr("UI_CODE_LABEL_BIS"))
 	_add_spacer(vb, 12)
 
 	var code_box := PanelContainer.new()
@@ -738,7 +738,7 @@ func _build_lobby_panel() -> void:
 	code_inner.add_child(_lbl_code)
 
 	var lbl_hint := Label.new()
-	lbl_hint.text = "Partage ce code avec tes amis (2 à 4 joueurs)"
+	lbl_hint.text = tr("UI_SHARE_CODE")
 	lbl_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl_hint.add_theme_color_override("font_color", Color(C_CYAN, 0.40))
 	lbl_hint.add_theme_font_size_override("font_size", 11)
@@ -754,7 +754,7 @@ func _build_lobby_panel() -> void:
 	code_inner.add_child(lbl_lan_row)
 
 	var lbl_ip_prefix := Label.new()
-	lbl_ip_prefix.text = "IP LAN :"
+	lbl_ip_prefix.text = tr("UI_IP_LAN")
 	lbl_ip_prefix.add_theme_font_size_override("font_size", 12)
 	lbl_ip_prefix.add_theme_color_override("font_color", Color(C_CYAN, 0.35))
 	if _font: lbl_ip_prefix.add_theme_font_override("font", _font)
@@ -769,14 +769,14 @@ func _build_lobby_panel() -> void:
 
 	# ── Bouton Copier le code ─────────────────────────────────────────────────
 	_add_spacer(vb, 8)
-	_btn_copy = _make_action_button("⎘  COPIER LE CODE", C_CYAN)
+	_btn_copy = _make_action_button(tr("UI_COPY_CODE"), C_CYAN)
 	_btn_copy.pressed.connect(_on_copy_pressed)
 	vb.add_child(_btn_copy)
 
 	_add_spacer(vb, 22)
 
 	# ── Joueurs connectés ────────────────────────────────────────────────────
-	_add_section_header(vb, "▸ JOUEURS CONNECTÉS")
+	_add_section_header(vb, tr("UI_PLAYERS_CONNECTED"))
 	_add_spacer(vb, 10)
 
 	_lbl_players = VBoxContainer.new()
@@ -789,13 +789,13 @@ func _build_lobby_panel() -> void:
 	_add_spacer(vb, 22)
 
 	# ── Actions ──────────────────────────────────────────────────────────────
-	_btn_start = _make_action_button("LANCER LA PARTIE  ▶", C_CYAN)
+	_btn_start = _make_action_button(tr("UI_START_GAME"), C_CYAN)
 	_btn_start.visible = false
 	_btn_start.pressed.connect(_on_start_pressed)
 	vb.add_child(_btn_start)
 
 	_lbl_wait = Label.new()
-	_lbl_wait.text = "En attente que l'hôte lance la partie…"
+	_lbl_wait.text = tr("UI_WAITING_HOST")
 	_lbl_wait.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_lbl_wait.add_theme_color_override("font_color", Color(C_CYAN, 0.50))
 	_lbl_wait.add_theme_font_size_override("font_size", 13)
@@ -824,7 +824,7 @@ func _show_lobby() -> void:
 	# Adapte le label du bouton copier : IP directe ou code relay
 	if _btn_copy != null:
 		var is_ip: bool = "." in NetworkManager.room_code
-		_btn_copy.text = "⎘  COPIER L'IP" if is_ip else "⎘  COPIER LE CODE"
+		_btn_copy.text = tr("UI_COPY_IP") if is_ip else tr("UI_CODE_LABEL_BIS")
 
 
 # ── Handlers boutons ──────────────────────────────────────────────────────────
@@ -841,9 +841,9 @@ func _set_join_mode(mode: JoinMode, btn_code: Button, btn_ip: Button) -> void:
 func _on_host_lan_pressed() -> void:
 	var n := _entry_name.text.strip_edges()
 	if n.is_empty():
-		_set_status("Entre ton nom d'abord.", true)
+		_set_status(tr("UI_ERROR_NAME"), true)
 		return
-	_set_status("Démarrage du serveur…", false)
+	_set_status(tr("UI_ERROR_NAME"), false)
 	NetworkManager.host_lan(n)
 
 
@@ -851,21 +851,21 @@ func _on_join_lan_pressed() -> void:
 	var n := _entry_name.text.strip_edges()
 	var ip := _entry_ip.text.strip_edges()
 	if n.is_empty():
-		_set_status("Entre ton nom d'abord.", true)
+		_set_status(tr("UI_ERROR_NAME"), true)
 		return
 	if ip.is_empty():
-		_set_status("Entre l'IP de l'hôte.", true)
+		_set_status(tr("UI_ENTER_IP"), true)
 		return
-	_set_status("Connexion à %s…" % ip, false)
+	_set_status(tr("UI_CONNEXION_AT") % ip, false)
 	NetworkManager.join_lan(ip, n)
 
 
 func _on_host_pressed() -> void:
 	var n := _entry_name.text.strip_edges()
 	if n.is_empty():
-		_set_status("Entre ton nom d'abord.", true)
+		_set_status(tr("UI_ERROR_NAME"), true)
 		return
-	_set_status("Création du salon…", false)
+	_set_status(tr("UI_SALON_CREATION"), false)
 	NetworkManager.host_game(n)
 
 
@@ -873,18 +873,18 @@ func _on_join_pressed() -> void:
 	var n := _entry_name.text.strip_edges()
 	var c := _entry_code.text.strip_edges().to_upper()
 	if n.is_empty():
-		_set_status("Entre ton nom d'abord.", true)
+		_set_status(tr("UI_ERROR_NAME"), true)
 		return
 	if c.length() != 6:
-		_set_status("Le code doit faire 6 caractères.", true)
+		_set_status(tr("UI_ERROR_CODE"), true)
 		return
-	_set_status("Connexion en cours…", false)
+	_set_status(tr("UI_CONNEXION_LOADING"), false)
 	NetworkManager.join_game(c, n)
 
 
 func _on_start_pressed() -> void:
 	if NetworkManager.players.size() < 2:
-		_set_status("En attente d'un 2ème joueur…", false)
+		_set_status(tr("UI_OTHER_PLAYER"), false)
 		return
 	NetworkManager.start_game()
 
@@ -904,7 +904,7 @@ func _on_copy_pressed() -> void:
 		return
 	DisplayServer.clipboard_set(code)
 	var original_label: String = _btn_copy.text
-	_btn_copy.text = "✓  COPIÉ !"
+	_btn_copy.text = tr("UI_COPIED")
 	var tw := _btn_copy.create_tween()
 	tw.tween_interval(1.8)
 	tw.tween_callback(func(): _btn_copy.text = original_label)
@@ -937,7 +937,7 @@ func _on_relay_awake(ok: bool) -> void:
 	if ok:
 		_set_status("", false)
 	else:
-		_set_status("Serveur relay hors ligne. Mode LAN uniquement.", true)
+		_set_status(tr("UI_ERROR_RELAY"), true)
 
 
 func _on_game_started() -> void:
@@ -987,10 +987,10 @@ func _rebuild_player_slots(updated: Dictionary) -> void:
 			var pinfo: Dictionary = updated[pid]
 			lbl_name.text = pinfo.get("name", "Joueur")
 			if pid == 1:
-				lbl_name.text += "  ◆ hôte"
+				lbl_name.text += tr("UI_LABEL_HOST")
 			lbl_name.add_theme_color_override("font_color", C_TEXT)
 		else:
-			lbl_name.text = "En attente…"
+			lbl_name.text = tr("UI_WAITING")
 			lbl_name.add_theme_color_override("font_color", Color(C_CYAN, 0.25))
 		lbl_name.add_theme_font_size_override("font_size", 14)
 		if _font: lbl_name.add_theme_font_override("font", _font)
@@ -1132,4 +1132,3 @@ func _add_spacer(parent: Control, height: int) -> void:
 	var s := Control.new()
 	s.custom_minimum_size = Vector2(0, height)
 	parent.add_child(s)
-  

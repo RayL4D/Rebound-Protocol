@@ -119,7 +119,7 @@ theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("1_fe2o3")
 theme_override_styles/normal = SubResource("StyleBoxFlat_fe2o3")
 theme_override_styles/hover = SubResource("StyleBoxFlat_uhagc")
-text = "CO-OP EN LIGNE"
+text = "UI_COOP"
 
 [node name="BtnOptions" type="Button" parent="CenterContainer/MainVBox/ButtonsVBox" unique_id=354562449]
 layout_mode = 2
