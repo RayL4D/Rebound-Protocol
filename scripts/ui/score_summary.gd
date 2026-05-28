@@ -29,138 +29,6 @@ var _signal_timer: float = 0.0
 var _signal_level: int = 4
 
 # =============================================================
-# CLASSE FOND ANIMÉ (version simplifiée du main_menu)
-# =============================================================
-
-class _BgFX extends Control:
-	const C_CYAN := Color(0.0, 0.851, 1.0)
-	const C_DARK := Color(0.025, 0.045, 0.075)
-	const C_PINK := Color(1.0, 0.15, 0.65)
-
-	var _t: float = 0.0
-	var _stars: Array = []
-	var _pts: Array = []
-	var _streaks: Array = []
-	var _streak_timer: float = 0.2
-	var _rings: Array = []
-	var _ring_timer: float = 2.5
-	var _mouse_px: float = 0.5
-	var _mouse_py: float = 0.5
-
-	func _ready() -> void:
-		process_mode = Node.PROCESS_MODE_ALWAYS 
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-		get_tree().paused = true
-		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		mouse_filter = Control.MOUSE_FILTER_IGNORE
-
-		# Étoiles
-		var srng := RandomNumberGenerator.new()
-		srng.seed = 98765
-		for _i in 120:
-			_stars.append({
-				"x": srng.randf(), "y": srng.randf() * 0.56,
-				"r": srng.randf_range(0.5, 2.0),
-				"a": srng.randf_range(0.25, 0.85),
-				"phase": srng.randf() * TAU,
-				"freq":  srng.randf_range(0.2, 1.8),
-			})
-
-		# Particules
-		for _i in 70:
-			_pts.append({
-				"x": randf(), "y": randf(),
-				"vy": randf_range(0.007, 0.020),
-				"r":  randf_range(1.2, 3.2),
-				"a":  randf_range(0.15, 0.75),
-			})
-
-	func _process(delta: float) -> void:
-		_t += delta
-
-		# Parallaxe souris
-		var mp := get_viewport().get_mouse_position()
-		var vs := get_viewport_rect().size
-		if vs.x > 0.0:
-			_mouse_px = lerpf(_mouse_px, mp.x / vs.x, delta * 2.2)
-			_mouse_py = lerpf(_mouse_py, mp.y / vs.y, delta * 2.2)
-
-		# Particules
-		for p in _pts:
-			p["y"] = float(p["y"]) - float(p["vy"]) * delta
-			if float(p["y"]) < -0.02:
-				p["y"] = 1.02
-				p["x"] = randf()
-
-		# Streaks
-		_streak_timer -= delta
-		if _streak_timer <= 0.0:
-			_streak_timer = randf_range(0.08, 0.55)
-			_streaks.append({
-				"y": randf_range(0.05, 0.92), "x": 0.0,
-				"len": randf_range(0.04, 0.22),
-				"spd": randf_range(0.4, 1.1),
-				"a": randf_range(0.4, 0.95),
-			})
-		var si := 0
-		while si < _streaks.size():
-			_streaks[si]["x"] = float(_streaks[si]["x"]) + float(_streaks[si]["spd"]) * delta
-			if float(_streaks[si]["x"]) > 1.1:
-				_streaks.remove_at(si)
-			else:
-				si += 1
-
-		# Anneaux
-		_ring_timer -= delta
-		if _ring_timer <= 0.0:
-			_ring_timer = randf_range(1.8, 3.5)
-			_rings.append({"r": 0.0, "a": 0.55, "spd": randf_range(0.18, 0.34)})
-		var ri := 0
-		while ri < _rings.size():
-			_rings[ri]["r"] = float(_rings[ri]["r"]) + float(_rings[ri]["spd"]) * delta
-			_rings[ri]["a"] = float(_rings[ri]["a"]) - delta * 0.42
-			if float(_rings[ri]["a"]) <= 0.0:
-				_rings.remove_at(ri)
-			else:
-				ri += 1
-
-		queue_redraw()
-
-	func _draw() -> void:
-		var vp_size := get_viewport_rect().size
-		var w := vp_size.x
-		var h := vp_size.y
-		var dx := (_mouse_px - 0.5) * 2.0
-		var dy := (_mouse_py - 0.5) * 2.0
-
-		# Étoiles scintillantes
-		for star in _stars:
-			var sp := float(star["phase"]) + _t * float(star["freq"])
-			var sa := float(star["a"]) * (0.5 + 0.5 * sin(sp))
-			var sx := (float(star["x"]) + dx * 0.01) * w
-			var sy := (float(star["y"]) + dy * 0.01) * h
-			draw_circle(Vector2(sx, sy), float(star["r"]), Color(C_CYAN, sa))
-
-		# Particules flottantes
-		for pt in _pts:
-			var px := (float(pt["x"]) + dx * 0.014) * w
-			var py := (float(pt["y"]) + dy * 0.018) * h
-			draw_circle(Vector2(px, py), float(pt["r"]), Color(C_CYAN, float(pt["a"])))
-
-		# Streaks
-		for st in _streaks:
-			var sx := float(st["x"]) * w
-			var sy := float(st["y"]) * h
-			var ex := (float(st["x"]) - float(st["len"])) * w
-			draw_line(Vector2(sx, sy), Vector2(ex, sy), Color(C_CYAN, float(st["a"])), 1.5)
-
-		# Anneaux
-		for ring in _rings:
-			var rad := float(ring["r"]) * mini(w, h) * 0.4
-			var alp := float(ring["a"])
-			draw_arc(Vector2(w * 0.5, h * 0.5), rad, 0, TAU, 64, Color(C_CYAN, alp), 2.0)
-
-# =============================================================
 # INITIALISATION
 # =============================================================
 
@@ -193,7 +61,9 @@ func _process(delta: float) -> void:
 		_update_signal_label()
 
 func _build_animated_background() -> void:
-	var fx := _BgFX.new()
+	var fx := AnimatedBackground.new()
+	# Important : On force le fond à s'animer même si le jeu est en pause
+	fx.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(fx)
 	move_child(fx, 1)
 
