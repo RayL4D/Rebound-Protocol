@@ -259,10 +259,26 @@ func _build_upgrade_row(id: String, _entry: Dictionary) -> Control:
 		segments.append(seg)
 
 	# ── Prix ─────────────────────────────────────────────────────
+	# Conteneur qui affiche SOIT le prix texte, SOIT l'icône cadenas
+	var price_wrap := Control.new()
+	price_wrap.custom_minimum_size = Vector2(72, 28)
+	hbox.add_child(price_wrap)
+
 	var price_lbl := _make_label("", 13, COLOR_GOLD)
-	price_lbl.custom_minimum_size = Vector2(72, 0)
+	price_lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hbox.add_child(price_lbl)
+	price_lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	price_wrap.add_child(price_lbl)
+
+	var lock_icon := _LockIcon.new()
+	lock_icon.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	lock_icon.custom_minimum_size = Vector2(20, 20)
+	lock_icon.offset_left   = -10.0
+	lock_icon.offset_right  =  10.0
+	lock_icon.offset_top    = -10.0
+	lock_icon.offset_bottom =  10.0
+	lock_icon.visible = false
+	price_wrap.add_child(lock_icon)
 
 	# ── Bouton acheter ────────────────────────────────────────────
 	var btn := _make_button(tr("UI_SHOP_BUY"), func(): _on_buy(id))
@@ -272,6 +288,7 @@ func _build_upgrade_row(id: String, _entry: Dictionary) -> Control:
 	_buy_rows[id] = {
 		"tier_lbl":  tier_lbl,
 		"price_lbl": price_lbl,
+		"lock_icon": lock_icon,
 		"btn":       btn,
 		"segments":  segments,
 		"max_tier":  max_tier,
@@ -314,9 +331,10 @@ func _refresh_row(id: String) -> void:
 	var price: int        = SaveData.get_next_tier_price(id)
 	var coins: int        = SaveData.get_coins()
 
-	var tier_lbl:  Label  = row["tier_lbl"]
-	var price_lbl: Label  = row["price_lbl"]
-	var btn:       Button = row["btn"]
+	var tier_lbl:  Label   = row["tier_lbl"]
+	var price_lbl: Label   = row["price_lbl"]
+	var lock_icon: Control = row.get("lock_icon")
+	var btn:       Button  = row["btn"]
 	var segments:  Array  = row["segments"]
 	var desc_lbl:  Label  = row.get("desc_lbl")
 
@@ -326,7 +344,8 @@ func _refresh_row(id: String) -> void:
 		tier_lbl.add_theme_color_override("font_color", COLOR_DIM)
 		for seg: ColorRect in segments:
 			seg.color = Color(0.08, 0.10, 0.13)
-		price_lbl.text = "🔒"
+		price_lbl.text = ""
+		if lock_icon: lock_icon.visible = true
 		price_lbl.add_theme_color_override("font_color", COLOR_DIM)
 		btn.disabled = true
 		btn.modulate = Color(0.35, 0.35, 0.35, 0.6)
@@ -334,6 +353,9 @@ func _refresh_row(id: String) -> void:
 			desc_lbl.text = tr("UI_SHOP_LOCKED_DASH")
 			desc_lbl.add_theme_color_override("font_color", Color(0.9, 0.65, 0.2, 0.85))
 		return
+
+	# Cadenas caché quand l'upgrade est accessible
+	if lock_icon: lock_icon.visible = false
 
 	# Restaurer la description d'origine si elle avait été remplacée par le message de verrou
 	if desc_lbl and desc_lbl.has_meta("base_text"):
@@ -498,3 +520,25 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and not event.is_echo():
 		_on_close()
 		get_viewport().set_input_as_handled()
+
+
+# =============================================================
+# ICÔNE CADENAS — dessinée (compatible toutes plateformes)
+# =============================================================
+
+class _LockIcon extends Control:
+	func _draw() -> void:
+		var c   := size * 0.5
+		var s   := minf(size.x, size.y) * 0.42
+		var col := Color(0.85, 0.65, 0.1)
+		# Corps du cadenas
+		draw_polygon(PackedVector2Array([
+			c + Vector2(-s * 0.72,  0.0),
+			c + Vector2( s * 0.72,  0.0),
+			c + Vector2( s * 0.72,  s * 0.88),
+			c + Vector2(-s * 0.72,  s * 0.88),
+		]), PackedColorArray([col, col, col, col]))
+		# Anse (arc épais au-dessus)
+		draw_arc(c + Vector2(0.0, s * 0.05), s * 0.52, PI, TAU, 16, col, s * 0.28)
+		# Trou de serrure
+		draw_circle(c + Vector2(0.0, s * 0.40), s * 0.20, Color(0.2, 0.12, 0.0))

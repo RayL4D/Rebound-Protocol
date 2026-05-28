@@ -59,13 +59,20 @@ func _draw() -> void:
 	if not _dash_unlocked:
 		draw_circle(c, r, Color(0.06, 0.06, 0.10, 0.75))
 		draw_arc(c, r, 0.0, TAU, 64, Color(0.35, 0.35, 0.40, 0.5), 2.5, true)
-		# Icône 🔒 centrée
-		var lock_size := int(r * 0.62)
-		var lock_w := font.get_string_size("🔒", HORIZONTAL_ALIGNMENT_CENTER, -1, lock_size)
-		draw_string(font,
-			Vector2(c.x - lock_w.x * 0.5, c.y + lock_w.y * 0.28),
-			"🔒", HORIZONTAL_ALIGNMENT_CENTER, -1, lock_size,
-			Color(0.55, 0.55, 0.60, 0.85))
+		# Cadenas dessiné (compatible vieux PC — pas d'emoji)
+		var s   : float = r * 0.42
+		var col : Color = Color(0.55, 0.55, 0.60, 0.85)
+		# Corps du cadenas
+		draw_polygon(PackedVector2Array([
+			c + Vector2(-s * 0.72,  s * 0.08),
+			c + Vector2( s * 0.72,  s * 0.08),
+			c + Vector2( s * 0.72,  s * 0.95),
+			c + Vector2(-s * 0.72,  s * 0.95),
+		]), PackedColorArray([col, col, col, col]))
+		# Anse (arc épais au-dessus du corps)
+		draw_arc(c + Vector2(0.0, s * 0.12), s * 0.52, PI, TAU, 20, col, s * 0.28)
+		# Trou de serrure
+		draw_circle(c + Vector2(0.0, s * 0.48), s * 0.20, Color(0.04, 0.04, 0.08))
 		return
 
 	# ── État normal ────────────────────────────────────────────────

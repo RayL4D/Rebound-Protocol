@@ -38,7 +38,7 @@ UI_LANGUAGE,LANGUAGE,LANGUE,IDIOMA
 UI_LEAVE,LEAVE,QUITTER,PARA IRSE
 UI_CREDITS,CREDITS,CRÉDITS,CRÉDITOS
 BOSS,,,
-BOSS_LION_NAME,⚔ LION COMMANDER ⚔,⚔ COMMANDANT LION ⚔,⚔ COMANDANTE LEÓN ⚔
+BOSS_LION_NAME,[ LION COMMANDER ],[ COMMANDANT LION ],[ COMANDANTE LEON ]
 BOSS_LION_ANNOUNCE,BOSS — LION COMMANDER,BOSS — COMMANDANT LION,JEFE — COMANDANTE LEÓN
 PAUSE,,,
 PAUSE_TITLE,PAUSE,PAUSE,PAUSA
@@ -73,7 +73,7 @@ ARENA_LVL3_WAVE_COWS,"Watch out, larger signatures incoming.","Attention, des si
 ARENA_LVL3_WAVE_CATS,They're fast! Cats on the radar.,Ils sont rapides ! Des chats sur le radar.,¡Son rápidos! Cats en el radar.
 ARENA_LVL3_WAVE_MIX,Multiple hostiles from all sides!,Plusieurs hostiles arrivent de tous les côtés !,¡Múltiples hostiles por todos lados!
 ARENA_LVL3_WAVE_BOSS,⚠️ CRITICAL ALERT - BOSS LION DETECTED,⚠️ ALERTE CRITIQUE - BOSS LION DÉTECTÉ,⚠️ ALERTA CRÍTICA - JEFE LEÓN DETECTADO
-ARENA_LVL3_WIN,🎉 AREA SECURED - LEVEL 3 COMPLETED,🎉 ZONE SÉCURISÉE - NIVEAU 3 ACCOMPLI,🎉 ZONA SEGURA - NIVEL 3 COMPLETADO
+ARENA_LVL3_WIN,[ AREA SECURED - LEVEL 3 COMPLETED ],[ ZONE SECURISEE - NIVEAU 3 ACCOMPLI ],[ ZONA SEGURA - NIVEL 3 COMPLETADO ]
 ARENA_LVL3_PICK_KEY,⚠️ Pick up the boss key to open the portal!,⚠️ Récupère la clé du boss pour ouvrir le portail !,⚠️ ¡Recoge la llave del jefe para abrir el portal!
 Crédits,,,
 CREDITS_DEV,DEVELOPMENT,DÉVELOPPEMENT,DESARROLLO
@@ -98,7 +98,7 @@ UI_SHOP_TAB_PASSIVES,PASSIVES,PASSIFS,PASIVAS
 UI_SHOP_CLOSE,CLOSE,FERMER,CERRAR
 UI_SHOP_BUY,BUY,ACHETER,COMPRAR
 UI_SHOP_MAX,MAX,MAX,MÁX
-UI_SHOP_LOCKED_DASH,🔒 Unlock the Dash skill first (XP),🔒 Déverrouillez d'abord le skill Dash (XP),🔒 Desbloquea primero el skill Dash (XP)
+UI_SHOP_LOCKED_DASH,Unlock the Dash skill first (XP),Déverrouillez d'abord le skill Dash (XP),Desbloquea primero el skill Dash (XP)
 SHOP_NAME_hp_max,Max HP,HP Maximum,HP Máximo
 SHOP_DESC_hp_max,+5 HP per tier,+5 HP max par palier,+5 HP máx por nivel
 SHOP_NAME_move_speed,Speed,Vitesse,Velocidad
@@ -146,7 +146,10 @@ UI_SLOT_EMPTY_DESC,Start a new adventure here,Démarrer une nouvelle aventure ic
 UI_SLOT_LOAD_BTN,▶ LOAD,▶ CHARGER,▶ CARGAR
 UI_SLOT_EMPTY_SHORT,EMPTY,VIDE,VACÍO
 UI_SLOT_NONE,No save data,Aucune sauvegarde,Sin datos de guardado
-UI_SLOT_STATS,🪙 %d coins   ❤ %d HP,🪙 %d pièces   ❤ %d HP,🪙 %d monedas   ❤ %d HP
+UI_SLOT_STATS,Lv.%d  |  %d coins  |  %d HP,Niv.%d  |  %d pièces  |  %d HP,Niv.%d  |  %d monedas  |  %d HP
+UI_SLOT_STAT_LV,Lv.%d,Niv.%d,Niv.%d
+UI_SLOT_STAT_COINS,%d coins,%d pièces,%d monedas
+UI_SLOT_STAT_HP,%d HP,%d HP,%d HP
 UI_DIALOG_TUTO_TITLE,◈ TUTORIAL,◈ TUTORIEL,◈ TUTORIAL
 UI_DIALOG_TUTO_MSG,Do you want to play the tutorial?,Souhaitez-vous jouer le tutoriel ?,¿Quieres jugar el tutorial?
 UI_DIALOG_TUTO_DESC,It will teach you the basics.,Il vous apprendra les bases.,Te enseñará los conceptos básicos.
@@ -208,7 +211,7 @@ SKILL_NAME_invuln_flash,Invulnerability Flash,Invulnérabilité éclair,Invulner
 SKILL_DESC_invuln_flash,0.5s invulnerability after parry.,"0,5s d'invulnérabilité après parade réussie.",0.5s de invulnerabilidad tras la parada.
 SKILL_NAME_clone_bullet,Bullet Clone,Clone de balle,Clon de bala
 SKILL_DESC_clone_bullet,Creates a random copy.,Ta balle crée une copie qui repart aléatoirement.,Tu bala crea una copia en dirección aleatoria.
-UI_SKILL_LEVEL_TITLE,⚡ LEVEL %d ⚡,⚡ NIVEAU %d ⚡,⚡ NIVEL %d ⚡
+UI_SKILL_LEVEL_TITLE,LEVEL %d,NIVEAU %d,NIVEL %d
 UI_SKILL_DRAWING,Drawing skill...,Tirage de compétence...,Eligiendo habilidad...
 UI_SKILL_CHOOSE_HINT,Press [1] or [2] to choose,Appuie sur [1] ou [2] pour choisir,Presiona [1] o [2] para elegir
 UI_BTN_SKILL,SKILLS,COMPÉTENCES,COMPETENCIAS

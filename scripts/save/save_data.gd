@@ -217,6 +217,7 @@ func get_slot_info(slot: int) -> Dictionary:
 		"timestamp": s.get("timestamp", 0),
 		"coins":     s.get("coins", 0),
 		"hp":        s.get("hp", 0),
+		"xp_level":  s.get("xp_level", 0),
 	}
 
 

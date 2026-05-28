@@ -137,7 +137,14 @@ func _build_ui() -> void:
 	a_vbox.process_mode  = Node.PROCESS_MODE_ALWAYS
 	announce.add_child(a_vbox)
 
-	# Titre
+	# Titre — éclairs dessinés flanquant le texte
+	var a_title_row := HBoxContainer.new()
+	a_title_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	a_title_row.add_theme_constant_override("separation", 8)
+	a_vbox.add_child(a_title_row)
+	var a_bolt_l := _LightningIcon.new()
+	a_bolt_l.custom_minimum_size = Vector2(22, 28)
+	a_title_row.add_child(a_bolt_l)
 	var a_header := Label.new()
 	a_header.text = tr("UI_SKILL_LEVEL_TITLE") % _level
 	a_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -145,7 +152,10 @@ func _build_ui() -> void:
 	a_header.add_theme_color_override("font_color", C_GOLD)
 	a_header.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 	a_header.add_theme_constant_override("outline_size", 5)
-	a_vbox.add_child(a_header)
+	a_title_row.add_child(a_header)
+	var a_bolt_r := _LightningIcon.new()
+	a_bolt_r.custom_minimum_size = Vector2(22, 28)
+	a_title_row.add_child(a_bolt_r)
 
 	# Sous-titre
 	var a_sub := Label.new()
@@ -361,7 +371,14 @@ func _reveal_cards(bg: ColorRect) -> void:
 	vbox.process_mode  = Node.PROCESS_MODE_ALWAYS
 	panel_root.add_child(vbox)
 
-	# Header
+	# Header — éclairs dessinés flanquant le texte
+	var title_row := HBoxContainer.new()
+	title_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	title_row.add_theme_constant_override("separation", 8)
+	vbox.add_child(title_row)
+	var bolt_l := _LightningIcon.new()
+	bolt_l.custom_minimum_size = Vector2(24, 30)
+	title_row.add_child(bolt_l)
 	var header := Label.new()
 	header.text = tr("UI_SKILL_LEVEL_TITLE") % _level
 	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -369,7 +386,10 @@ func _reveal_cards(bg: ColorRect) -> void:
 	header.add_theme_color_override("font_color", C_GOLD)
 	header.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 	header.add_theme_constant_override("outline_size", 5)
-	vbox.add_child(header)
+	title_row.add_child(header)
+	var bolt_r := _LightningIcon.new()
+	bolt_r.custom_minimum_size = Vector2(24, 30)
+	title_row.add_child(bolt_r)
 
 	# Rangée ── Rareté ──
 	var div_row := HBoxContainer.new()
@@ -689,3 +709,23 @@ func _on_card_chosen(skill_id: String) -> void:
 	var tw := create_tween()
 	tw.tween_interval(0.12)
 	tw.tween_callback(_finish)
+
+
+# =============================================================
+# ICÔNE ÉCLAIR — dessinée (compatible toutes plateformes)
+# =============================================================
+
+class _LightningIcon extends Control:
+	func _draw() -> void:
+		var c   := size * 0.5
+		var s   := minf(size.x, size.y) * 0.44
+		var col := Color(1.0, 0.85, 0.0)
+		# Éclair : polygone en forme de Z inversé
+		draw_polygon(PackedVector2Array([
+			c + Vector2( s * 0.28, -s),
+			c + Vector2(-s * 0.08, -s * 0.06),
+			c + Vector2( s * 0.38, -s * 0.06),
+			c + Vector2(-s * 0.28,  s),
+			c + Vector2( s * 0.08,  s * 0.06),
+			c + Vector2(-s * 0.38,  s * 0.06),
+		]), PackedColorArray([col, col, col, col, col, col]))

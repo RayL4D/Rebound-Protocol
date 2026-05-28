@@ -125,7 +125,7 @@ func _build_card_new_game(slot: int, info: Dictionary, used: bool) -> PanelConta
 		info_vbox.add_child(_make_label(tr("UI_SLOT_USED"), 11, COLOR_ORANGE))
 		var level_txt: String = _get_level_display_name(info["level"])
 		info_vbox.add_child(_make_label(level_txt, 14, Color(0.7, 0.6, 0.6)))
-		info_vbox.add_child(_make_label(tr("UI_SLOT_STATS") % [info["coins"], info["hp"]], 12, Color(0.6, 0.5, 0.5)))
+		info_vbox.add_child(_make_stats_row(info["xp_level"], info["coins"], info["hp"], 12, Color(0.6, 0.5, 0.5)))
 		info_vbox.add_child(_make_label(_format_timestamp(info["timestamp"]), 10, Color(0.4, 0.35, 0.35)))
 	else:
 		info_vbox.add_child(_make_label(tr("UI_SLOT_EMPTY"), 14, COLOR_CYAN))
@@ -184,7 +184,7 @@ func _build_card_continue(slot: int, info: Dictionary, used: bool) -> PanelConta
 	if used:
 		var level_txt: String = _get_level_display_name(info["level"])
 		info_vbox.add_child(_make_label(level_txt, 16, Color(0.9, 0.95, 1.0)))
-		info_vbox.add_child(_make_label(tr("UI_SLOT_STATS") % [info["coins"], info["hp"]], 13, COLOR_GOLD))
+		info_vbox.add_child(_make_stats_row(info["xp_level"], info["coins"], info["hp"], 13, COLOR_GOLD))
 		info_vbox.add_child(_make_label(_format_timestamp(info["timestamp"]), 11, COLOR_DIM))
 	else:
 		info_vbox.add_child(_make_label(tr("UI_SLOT_NONE"), 14, COLOR_DIM))
@@ -348,6 +348,43 @@ func _make_button(text: String, callback: Callable, color: Color, filled: bool) 
 	btn.pressed.connect(callback)
 	return btn
 
+## Ligne de stats avec icônes dessinées (compatibles vieux PC — pas d'emoji).
+func _make_stats_row(xp_level: int, coins: int, hp: int, font_size: int, color: Color) -> HBoxContainer:
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 3)
+
+	var icon_size := Vector2(font_size + 2, font_size + 2)
+
+	# ── Niveau ──
+	var lv_icon := _LevelIcon.new()
+	lv_icon.custom_minimum_size = icon_size
+	hbox.add_child(lv_icon)
+	var lv_lbl := _make_label(tr("UI_SLOT_STAT_LV") % xp_level, font_size, color)
+	hbox.add_child(lv_lbl)
+
+	var sep1 := _make_label("   ", font_size, color)
+	hbox.add_child(sep1)
+
+	# ── Pièces ──
+	var coin_icon := _CoinIconSmall.new()
+	coin_icon.custom_minimum_size = icon_size
+	hbox.add_child(coin_icon)
+	var coins_lbl := _make_label(tr("UI_SLOT_STAT_COINS") % coins, font_size, color)
+	hbox.add_child(coins_lbl)
+
+	var sep2 := _make_label("   ", font_size, color)
+	hbox.add_child(sep2)
+
+	# ── HP ──
+	var hp_icon := _HpIcon.new()
+	hp_icon.custom_minimum_size = icon_size
+	hbox.add_child(hp_icon)
+	var hp_lbl := _make_label(tr("UI_SLOT_STAT_HP") % hp, font_size, color)
+	hbox.add_child(hp_lbl)
+
+	return hbox
+
+
 func _get_level_display_name(level_id: String) -> String:
 	if level_id == "":
 		return tr("UI_SLOT_LEVEL_UNKNOWN")
@@ -360,3 +397,50 @@ func _get_level_display_name(level_id: String) -> String:
 		_:
 			# Si le niveau n'est pas dans la liste, on affiche l'ID brut par sécurité
 			return level_id.capitalize()
+
+
+# =============================================================
+# ICÔNES DESSINÉES — compatibles toutes plateformes (pas d'emoji)
+# =============================================================
+
+## Étoile à 8 branches cyan — indicateur de niveau
+class _LevelIcon extends Control:
+	func _draw() -> void:
+		var c := size * 0.5
+		var r := minf(size.x, size.y) * 0.46
+		var pts := PackedVector2Array()
+		var cols := PackedColorArray()
+		for i in 8:
+			var a   := TAU / 8.0 * float(i) - PI / 2.0
+			var rad := r if i % 2 == 0 else r * 0.38
+			pts.append(c + Vector2(cos(a) * rad, sin(a) * rad))
+			cols.append(Color(0.0, 0.85, 1.0))
+		draw_polygon(pts, cols)
+
+
+## Disque or avec reflet — icône pièce (même rendu que le HUD)
+class _CoinIconSmall extends Control:
+	func _draw() -> void:
+		var c := size * 0.5
+		var r := minf(size.x, size.y) * 0.5 - 1.0
+		draw_circle(c + Vector2(1.0, 1.5), r, Color(0.0, 0.0, 0.0, 0.35))
+		draw_circle(c, r, Color(1.0, 0.80, 0.0))
+		draw_arc(c, r * 0.68, 0.0, TAU, 24, Color(0.55, 0.38, 0.0, 0.55), 1.5)
+		draw_circle(c + Vector2(-r * 0.22, -r * 0.22), r * 0.42, Color(1.0, 0.96, 0.55, 0.50))
+
+
+## Cœur rouge — indicateur HP
+class _HpIcon extends Control:
+	func _draw() -> void:
+		var c := size * 0.5
+		var s := minf(size.x, size.y) * 0.42
+		var col := Color(0.95, 0.15, 0.15)
+		# Deux cercles pour les bosses du haut
+		draw_circle(c + Vector2(-s * 0.42, -s * 0.18), s * 0.53, col)
+		draw_circle(c + Vector2( s * 0.42, -s * 0.18), s * 0.53, col)
+		# Triangle pour la pointe basse
+		draw_polygon(PackedVector2Array([
+			c + Vector2(-s * 0.95,  0.0),
+			c + Vector2( s * 0.95,  0.0),
+			c + Vector2( 0.0,       s * 0.92),
+		]), PackedColorArray([col, col, col]))

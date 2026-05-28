@@ -554,9 +554,11 @@ func _restore_from_save() -> void:
 		print("[Player] HP final : ", current_hp, " / ", max_hp)
 	else:
 		print("[Player] _restore_from_save — aucun checkpoint, position et HP = défaut.")
-		# Premier lancement : enregistrer le HP initial en mémoire (pas d'écriture disque).
+		# Premier lancement : enregistrer les HP initiaux et persister sur disque
+		# pour qu'un quit avant le premier save point sauvegarde quand même le bon HP.
 		if SaveData.get_player_hp() == 0:
 			SaveData.set_player_hp(current_hp)
+			SaveData.save_current()
 
 	# Toujours émettre pour que le HUD affiche le bon HP dès le départ.
 	hp_changed.emit(current_hp)
