@@ -113,6 +113,11 @@ func _apply_layout() -> void:
 		if _right_joy != null:
 			_right_joy.visible      = false
 			_right_joy.process_mode = Node.PROCESS_MODE_DISABLED
+		# Réinitialiser la direction de visée mémorisée : sans ça, la dernière
+		# direction du joystick droit (mode manuel) resterait active et bloquerait
+		# le personnage dans l'ancienne orientation au retour en mode auto.
+		if _player != null:
+			_player._joystick_aim_dir = Vector2.ZERO
 		# Le bouton Parry prend la position et la taille de la BASE VISUELLE du joystick
 		# (nœud enfant "Base" = cercle de 280 px) et non la zone d'interaction complète.
 		if _parry_btn != null and _right_joy != null:

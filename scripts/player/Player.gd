@@ -94,6 +94,7 @@ var _target_zoom:      float = 8.0    # Initialisé depuis le SpringArm dans _re
 var _joystick_aim_dir: Vector2 = Vector2.ZERO
 
 # --- Auto-target mobile ------------------------------------------
+const AUTO_TARGET_MAX_DIST: float = 20.0       # Distance maximale de ciblage auto (mètres)
 var _auto_target_enemy:    Node3D     = null   # ennemi actuellement ciblé
 var _enemy_indicators:     Dictionary = {}     # enemy Node3D → Node3D indicateur visuel
 var _indicator_rot:        float      = 0.0    # rotation animée partagée des indicateurs
@@ -871,7 +872,8 @@ func _rotate_toward_mouse(delta: float = 0.0) -> void:
 		return
 
 	# --- Auto-face mobile (ciblage auto actif, joystick au repos) ---
-	# Face à l'ennemi ciblé. Le joystick droit reste un override manuel (ci-dessus).
+	# Face à l'ennemi ciblé. Sans cible, tourne avec la caméra.
+	# Le joystick droit reste un override manuel (ci-dessus).
 	if OS.has_feature("mobile") and Settings.auto_target_enabled:
 		if _auto_target_enemy != null and is_instance_valid(_auto_target_enemy):
 			var dir := _auto_target_enemy.global_position - global_position
@@ -883,6 +885,15 @@ func _rotate_toward_mouse(delta: float = 0.0) -> void:
 					target_yaw,
 					minf(12.0 * delta, 1.0)
 				)
+		else:
+			# Pas de cible : le personnage suit la direction de la caméra
+			# La caméra est derrière le joueur → joueur = caméra_yaw - 180°
+			var target_player_yaw := deg_to_rad(_cam_yaw - 180.0)
+			robot_model.global_rotation.y = lerp_angle(
+				robot_model.global_rotation.y,
+				target_player_yaw,
+				minf(10.0 * delta, 1.0)
+			)
 		return   # Ne pas appliquer la logique souris sur mobile
 
 	# --- Mobile sans auto-target (joystick au repos → aucune rotation auto) ---
@@ -922,18 +933,22 @@ func _rotate_toward_mouse(delta: float = 0.0) -> void:
 # AUTO-TARGET (mobile)
 # =============================================================
 
-## Met à jour _auto_target_enemy : si la cible courante est invalide,
-## sélectionne automatiquement l'ennemi le plus proche.
+## Met à jour _auto_target_enemy : si la cible courante est invalide ou trop loin,
+## sélectionne automatiquement l'ennemi le plus proche dans la zone de ciblage.
 func _update_auto_target() -> void:
 	if _auto_target_enemy != null and is_instance_valid(_auto_target_enemy):
-		return   # Cible encore valide — on la garde
+		# Relâcher la cible si elle sort de la distance maximale
+		var dist := global_position.distance_to(_auto_target_enemy.global_position)
+		if dist <= AUTO_TARGET_MAX_DIST:
+			return   # Cible valide et dans la zone — on la garde
+		_auto_target_enemy = null
 	_auto_target_enemy = _find_nearest_enemy()
 
 
-## Retourne l'ennemi le plus proche en vie.
+## Retourne l'ennemi le plus proche en vie dans la limite AUTO_TARGET_MAX_DIST.
 func _find_nearest_enemy() -> Node3D:
 	var best_node: Node3D = null
-	var best_dist: float  = INF
+	var best_dist: float  = AUTO_TARGET_MAX_DIST   # Limite de distance max
 	for node in get_tree().get_nodes_in_group("enemies"):
 		if not is_instance_valid(node) or not (node is Node3D):
 			continue
@@ -944,12 +959,15 @@ func _find_nearest_enemy() -> Node3D:
 	return best_node
 
 
-## Passe à l'ennemi suivant dans la liste.
+## Passe à l'ennemi suivant dans la liste (uniquement ceux dans la zone de ciblage).
 ## Appelée par MobileControls quand le joueur tape sur l'écran hors boutons.
 func cycle_auto_target() -> void:
 	var enemies := get_tree().get_nodes_in_group("enemies")
-	# Filtrer les invalides
-	enemies = enemies.filter(func(n): return is_instance_valid(n) and n is Node3D)
+	# Filtrer les invalides et ceux hors portée
+	enemies = enemies.filter(func(n):
+		return is_instance_valid(n) and n is Node3D \
+			and global_position.distance_to((n as Node3D).global_position) <= AUTO_TARGET_MAX_DIST
+	)
 	if enemies.is_empty():
 		_auto_target_enemy = null
 		return
@@ -985,7 +1003,6 @@ func _create_enemy_indicator() -> Node3D:
 	mat.emission                   = Color(0.0, 0.45, 1.0)
 	mat.emission_energy_multiplier = 2.8
 	mat.transparency               = BaseMaterial3D.TRANSPARENCY_ALPHA
-	mat.no_depth_test              = true
 	ring.set_surface_override_material(0, mat)
 	indicator.add_child(ring)
 
@@ -998,7 +1015,6 @@ func _create_enemy_indicator() -> Node3D:
 	arrow_mat.emission_enabled           = true
 	arrow_mat.emission                   = Color(0.0, 0.9, 1.0)
 	arrow_mat.emission_energy_multiplier = 3.5
-	arrow_mat.no_depth_test              = true
 	for i in 4:
 		var arrow := MeshInstance3D.new()
 		var prism  := PrismMesh.new()
