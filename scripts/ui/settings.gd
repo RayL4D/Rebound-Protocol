@@ -5,6 +5,11 @@
 class_name Settings
 extends Control
 
+## Valeur runtime lue depuis le ConfigFile.
+## Accessible globalement via Settings.auto_target_enabled.
+## true par défaut : activé sur mobile à la première installation.
+static var auto_target_enabled: bool = true
+
 const SETTINGS_PATH := "user://settings.cfg"
 
 # Chemin de la police pour rester cohérent avec le menu principal
@@ -19,6 +24,7 @@ var _volume_slider:     HSlider
 var _music_slider:      HSlider
 var _sfx_slider:        HSlider
 var _fullscreen_check:  CheckButton
+var _auto_target_check: CheckButton = null  # null sur desktop (section cachée)
 var _lang_buttons:      Dictionary = {}  # "fr" / "en" / "es" → Button
 
 var _font: FontFile = null
@@ -116,6 +122,13 @@ func _build_ui() -> void:
 	# --- Section Langue ---
 	_add_section_label(inner, "SETTINGS_SECTION_LANGUAGE")
 	_add_language_buttons(inner)
+
+	# --- Section Mobile (visible uniquement sur mobile) ---
+	if OS.has_feature("mobile"):
+		inner.add_child(HSeparator.new())
+		_add_section_label(inner, "SETTINGS_SECTION_MOBILE")
+		_auto_target_check = _add_check(inner, "SETTINGS_AUTO_TARGET")
+		_auto_target_check.toggled.connect(_on_auto_target_toggled)
 
 	# --- Bouton retour (hors du panneau) ---
 	vbox.add_child(_make_button("SETTINGS_BACK", _on_back_pressed))
@@ -315,6 +328,11 @@ func _on_fullscreen_toggled(pressed: bool) -> void:
 	_save_settings()
 
 
+func _on_auto_target_toggled(pressed: bool) -> void:
+	Settings.auto_target_enabled = pressed
+	_save_settings()
+
+
 func _change_language(locale: String) -> void:
 	TranslationServer.set_locale(locale)
 	_refresh_lang_buttons()
@@ -349,6 +367,7 @@ func _save_settings() -> void:
 	cfg.set_value("audio",   "sfx_volume",    _sfx_slider.value)
 	cfg.set_value("display", "fullscreen",    _fullscreen_check.button_pressed)
 	cfg.set_value("locale",  "language",      TranslationServer.get_locale())
+	cfg.set_value("mobile",  "auto_target",   Settings.auto_target_enabled)
 	cfg.save(SETTINGS_PATH)
 
 
@@ -376,8 +395,8 @@ func _load_and_apply_settings() -> void:
 	_apply_bus_volume("Music",  music)
 	_apply_bus_volume("SFX",    sfx)
 
-	# Affichage
-	var fs: bool = cfg.get_value("display", "fullscreen", false)
+	# Affichage — plein écran activé par défaut
+	var fs: bool = cfg.get_value("display", "fullscreen", true)
 	_fullscreen_check.set_pressed_no_signal(fs)
 	if fs:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
@@ -386,6 +405,12 @@ func _load_and_apply_settings() -> void:
 	var lang: String = cfg.get_value("locale", "language", "fr")
 	TranslationServer.set_locale(lang)
 	_refresh_lang_buttons()
+
+	# Ciblage auto (mobile uniquement — activé par défaut)
+	var at: bool = cfg.get_value("mobile", "auto_target", true)
+	Settings.auto_target_enabled = at
+	if _auto_target_check != null:
+		_auto_target_check.set_pressed_no_signal(at)
 
 
 # =============================================================
@@ -396,6 +421,7 @@ func _load_and_apply_settings() -> void:
 static func apply_saved_settings() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load("user://settings.cfg") != OK:
+		# Pas de fichier config → les valeurs par défaut des vars statiques sont déjà correctes
 		return
 
 	# Audio
@@ -413,11 +439,14 @@ static func apply_saved_settings() -> void:
 	if idx_s != -1:
 		AudioServer.set_bus_volume_db(idx_s, linear_to_db(sfx / 100.0) if sfx > 0.0 else -80.0)
 
-	# Affichage
-	var fs: bool = cfg.get_value("display", "fullscreen", false)
+	# Affichage — plein écran activé par défaut
+	var fs: bool = cfg.get_value("display", "fullscreen", true)
 	if fs:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 
 	# Langue
 	var lang: String = cfg.get_value("locale", "language", "fr")
 	TranslationServer.set_locale(lang)
+
+	# Ciblage auto mobile — activé par défaut
+	Settings.auto_target_enabled = cfg.get_value("mobile", "auto_target", true)

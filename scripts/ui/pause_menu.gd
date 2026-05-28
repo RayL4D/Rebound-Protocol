@@ -26,11 +26,12 @@ var _panel_settings: Control
 var _panel_skills:   Control
 var _skills_list:    VBoxContainer   # contenu dynamique, rebâti à chaque ouverture
 
-var _volume_slider:    HSlider
-var _music_slider:     HSlider
-var _sfx_slider:       HSlider
-var _fullscreen_check: CheckButton
-var _lang_buttons:     Dictionary = {}
+var _volume_slider:     HSlider
+var _music_slider:      HSlider
+var _sfx_slider:        HSlider
+var _fullscreen_check:  CheckButton
+var _auto_target_check: CheckButton = null   # null sur desktop
+var _lang_buttons:      Dictionary = {}
 var _font: FontFile = null
 
 # --- Audio ------------------------------------------------------
@@ -188,6 +189,13 @@ func _build_settings_panel() -> Control:
 	_add_section_label(inner, "SETTINGS_SECTION_LANGUAGE")
 	_add_language_buttons(inner)
 
+	# Section Mobile (uniquement sur mobile)
+	if OS.has_feature("mobile"):
+		inner.add_child(HSeparator.new())
+		_add_section_label(inner, "SETTINGS_SECTION_MOBILE")
+		_auto_target_check = _add_check(inner, "SETTINGS_AUTO_TARGET")
+		_auto_target_check.toggled.connect(_on_auto_target_toggled)
+
 	# Bouton retour (hors panneau)
 	vbox.add_child(_make_button("SETTINGS_BACK", _show_main_panel))
 
@@ -274,6 +282,11 @@ func _on_fullscreen_toggled(pressed: bool) -> void:
 	_save_settings()
 
 
+func _on_auto_target_toggled(pressed: bool) -> void:
+	Settings.auto_target_enabled = pressed
+	_save_settings()
+
+
 func _change_language(locale: String) -> void:
 	TranslationServer.set_locale(locale)
 	_refresh_lang_buttons()
@@ -302,6 +315,7 @@ func _save_settings() -> void:
 	cfg.set_value("audio",   "sfx_volume",    _sfx_slider.value)
 	cfg.set_value("display", "fullscreen",    _fullscreen_check.button_pressed)
 	cfg.set_value("locale",  "language",      TranslationServer.get_locale())
+	cfg.set_value("mobile",  "auto_target",   Settings.auto_target_enabled)
 	cfg.save(SETTINGS_PATH)
 
 
@@ -326,9 +340,15 @@ func _load_settings_into_panel() -> void:
 	_sfx_slider.value_changed.connect(_on_sfx_changed)
 
 	_fullscreen_check.set_pressed_no_signal(
-		cfg.get_value("display", "fullscreen", false)
+		cfg.get_value("display", "fullscreen", true)
 	)
 	_refresh_lang_buttons()
+
+	# Ciblage auto — activé par défaut
+	var at: bool = cfg.get_value("mobile", "auto_target", true)
+	Settings.auto_target_enabled = at
+	if _auto_target_check != null:
+		_auto_target_check.set_pressed_no_signal(at)
 
 
 # ------------------------------------------------------------------

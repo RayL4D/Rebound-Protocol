@@ -37,6 +37,13 @@ const UPGRADE_LABELS: Dictionary = {
 	"dash_armor":       ["SHOP_NAME_dash_armor", "SHOP_DESC_dash_armor"],
 }
 
+# Upgrades verrouillées tant qu'un skill XP n'est pas obtenu.
+# Clé = upgrade_id  |  Valeur = skill_id requis dans XpManager
+const SKILL_REQUIRED: Dictionary = {
+	"dash_cooldown": "dash_unlock",
+	"dash_armor":    "dash_unlock",
+}
+
 const _SFX_BUY:   AudioStream = preload("res://audio/sfx/ui/shop_buy.wav")
 const _SFX_BUY_MAX: AudioStream = preload("res://audio/sfx/ui/shop_buy_max.wav")
 const _SFX_HOVER:   AudioStream = preload("res://audio/sfx/ui/btn_hover.wav")
@@ -222,6 +229,7 @@ func _build_upgrade_row(id: String, _entry: Dictionary) -> Control:
 	info_vbox.add_child(_make_label(name_str, 14, Color(0.92, 0.97, 1.0)))
 	var desc_lbl := _make_label(desc_str, 10, COLOR_DIM)
 	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc_lbl.set_meta("base_text", desc_str)   # sauvegarde le texte d'origine
 	info_vbox.add_child(desc_lbl)
 
 	# ── Barre de progression + compteur ─────────────────────────
@@ -267,6 +275,7 @@ func _build_upgrade_row(id: String, _entry: Dictionary) -> Control:
 		"btn":       btn,
 		"segments":  segments,
 		"max_tier":  max_tier,
+		"desc_lbl":  desc_lbl,
 	}
 	_refresh_row(id)
 	return panel
@@ -286,6 +295,15 @@ func _refresh_coins() -> void:
 		_refresh_row(id)
 
 
+func _is_unlocked_for(upgrade_id: String) -> bool:
+	if not SKILL_REQUIRED.has(upgrade_id):
+		return true
+	var skill_id: String = SKILL_REQUIRED[upgrade_id]
+	if not get_tree().root.has_node("XpManager"):
+		return false
+	return XpManager.has_skill(skill_id)
+
+
 func _refresh_row(id: String) -> void:
 	if not _buy_rows.has(id):
 		return
@@ -300,6 +318,29 @@ func _refresh_row(id: String) -> void:
 	var price_lbl: Label  = row["price_lbl"]
 	var btn:       Button = row["btn"]
 	var segments:  Array  = row["segments"]
+	var desc_lbl:  Label  = row.get("desc_lbl")
+
+	# ── Skill prérequis non obtenu → verrouillé ──────────────────
+	if not _is_unlocked_for(id):
+		tier_lbl.text = "%d / %d" % [tier, max_tier]
+		tier_lbl.add_theme_color_override("font_color", COLOR_DIM)
+		for seg: ColorRect in segments:
+			seg.color = Color(0.08, 0.10, 0.13)
+		price_lbl.text = "🔒"
+		price_lbl.add_theme_color_override("font_color", COLOR_DIM)
+		btn.disabled = true
+		btn.modulate = Color(0.35, 0.35, 0.35, 0.6)
+		if desc_lbl:
+			desc_lbl.text = tr("UI_SHOP_LOCKED_DASH")
+			desc_lbl.add_theme_color_override("font_color", Color(0.9, 0.65, 0.2, 0.85))
+		return
+
+	# Restaurer la description d'origine si elle avait été remplacée par le message de verrou
+	if desc_lbl and desc_lbl.has_meta("base_text"):
+		var base: String = desc_lbl.get_meta("base_text")
+		if desc_lbl.text != base:
+			desc_lbl.text = base
+			desc_lbl.add_theme_color_override("font_color", COLOR_DIM)
 
 	tier_lbl.text = "%d / %d" % [tier, max_tier]
 

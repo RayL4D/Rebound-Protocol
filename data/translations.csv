@@ -98,6 +98,7 @@ UI_SHOP_TAB_PASSIVES,PASSIVES,PASSIFS,PASIVAS
 UI_SHOP_CLOSE,CLOSE,FERMER,CERRAR
 UI_SHOP_BUY,BUY,ACHETER,COMPRAR
 UI_SHOP_MAX,MAX,MAX,MÁX
+UI_SHOP_LOCKED_DASH,🔒 Unlock the Dash skill first (XP),🔒 Déverrouillez d'abord le skill Dash (XP),🔒 Desbloquea primero el skill Dash (XP)
 SHOP_NAME_hp_max,Max HP,HP Maximum,HP Máximo
 SHOP_DESC_hp_max,+5 HP per tier,+5 HP max par palier,+5 HP máx por nivel
 SHOP_NAME_move_speed,Speed,Vitesse,Velocidad
@@ -240,3 +241,5 @@ ARENA_FIRST_LEVEL_1_TITLE,Desert Garrison,Garnison Désertique,Guarnición del D
 ARENA_FIRST_LEVEL_1_DESC,The Protocol's regional logistics center. Ships unload troops in a loop. Fight your way through the canine infantry and the bursts of the scout Cats.,Centre logistique régional du Protocole. Les vaisseaux débarquent des troupes en boucle. Frayez-vous un chemin à travers l'infanterie canine et les rafales des Chats éclaireurs.,Centro logístico regional del Protocolo. Las naves desembarcan tropas en bucle. Ábrete paso a través de la infantería canina y las ráfagas de los Gatos exploradores.
 LOADING_DEFAULT_TITLE,Loading protocols...,Chargement des protocoles...,Cargando protocolos...
 LOADING_DEFAULT_DESC,Please wait while combat data is synchronizing.,Veuillez patienter pendant la synchronisation des données de combat.,"Por favor, espera mientras se sincronizan los datos de combate."
+SETTINGS_SECTION_MOBILE,Mobile Controls,Contrôles mobiles,Controles móviles
+SETTINGS_AUTO_TARGET,Auto-target,Ciblage auto,Auto-objetivo
