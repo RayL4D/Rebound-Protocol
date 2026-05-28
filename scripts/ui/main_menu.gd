@@ -815,10 +815,5 @@ func _on_toggle_language_pressed() -> void:
 	flags_container.visible = !flags_container.visible
 
 func _change_language(locale: String) -> void:
-	TranslationServer.set_locale(locale)
-	SceneManager.current_lang = locale
+	SceneManager.update_language(locale)
 	flags_container.hide()
-	var cfg := ConfigFile.new()
-	cfg.load("user://settings.cfg")
-	cfg.set_value("locale", "language", locale)
-	cfg.save("user://settings.cfg")
