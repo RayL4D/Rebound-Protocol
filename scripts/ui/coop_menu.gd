@@ -390,7 +390,7 @@ func _on_host_lan_pressed() -> void:
 	if n.is_empty():
 		_set_status(tr("UI_ERROR_NAME"), true)
 		return
-	_set_status(tr("UI_ERROR_NAME"), false)
+	_set_status(tr("UI_SALON_CREATION"), false)
 	NetworkManager.host_lan(n)
 
 
