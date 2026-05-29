@@ -80,7 +80,7 @@ func _ready() -> void:
 	current_hp = max_hp
 	add_to_group("enemies")
 	collision_layer = 16
-	collision_mask  = 5
+	collision_mask  = 21   # 5 (géométrie + joueur) | 16 (autres ennemis)
 	player = get_tree().get_first_node_in_group("player")
 	_setup_model()
 	_sfx_player     = AudioStreamPlayer.new()

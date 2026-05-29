@@ -29,13 +29,16 @@ var _panel_settings: Control
 var _panel_skills:   Control
 var _skills_list:    VBoxContainer   # contenu dynamique, rebâti à chaque ouverture
 
-var _volume_slider:    HSlider
-var _music_slider:     HSlider
-var _sfx_slider:       HSlider
-var _fullscreen_check: CheckButton
-var _lang_buttons:     Dictionary = {}
+var _volume_slider:     HSlider
+var _music_slider:      HSlider
+var _sfx_slider:        HSlider
+var _fullscreen_check:  CheckButton
+var _auto_target_check: CheckButton = null   # null sur desktop
+var _lang_buttons:      Dictionary = {}
 var _font: FontFile = null
 var _confirm_overlay: ColorRect = null
+
+var _M: float = 1.6 if OS.has_feature("mobile") else 1.0
 
 # --- Audio ------------------------------------------------------
 const _SFX_HOVER:       AudioStream = preload("res://audio/sfx/ui/btn_hover.wav")
@@ -192,6 +195,13 @@ func _build_settings_panel() -> Control:
 	_add_section_label(inner, "SETTINGS_SECTION_LANGUAGE")
 	_add_language_buttons(inner)
 
+	# Section Mobile (uniquement sur mobile)
+	if OS.has_feature("mobile"):
+		inner.add_child(HSeparator.new())
+		_add_section_label(inner, "SETTINGS_SECTION_MOBILE")
+		_auto_target_check = _add_check(inner, "SETTINGS_AUTO_TARGET")
+		_auto_target_check.toggled.connect(_on_auto_target_toggled)
+
 	# Bouton retour (hors panneau)
 	vbox.add_child(_make_button("SETTINGS_BACK", _show_main_panel))
 
@@ -236,7 +246,7 @@ func _show_skills_panel() -> void:
 		lbl.add_theme_color_override("font_color", Color(0.50, 0.55, 0.60))
 		if _font:
 			lbl.add_theme_font_override("font", _font)
-		lbl.add_theme_font_size_override("font_size", 15)
+		lbl.add_theme_font_size_override("font_size", int(15 * _M))
 		_skills_list.add_child(lbl)
 	else:
 		for skill_id in acquired:
@@ -278,6 +288,11 @@ func _on_fullscreen_toggled(pressed: bool) -> void:
 	_save_settings()
 
 
+func _on_auto_target_toggled(pressed: bool) -> void:
+	Settings.auto_target_enabled = pressed
+	_save_settings()
+
+
 func _change_language(locale: String) -> void:
 	if TranslationServer.get_locale().begins_with(locale):
 		return
@@ -306,6 +321,7 @@ func _save_settings() -> void:
 	cfg.set_value("audio",   "sfx_volume",    _sfx_slider.value)
 	cfg.set_value("display", "fullscreen",    _fullscreen_check.button_pressed)
 	cfg.set_value("locale",  "language",      TranslationServer.get_locale())
+	cfg.set_value("mobile",  "auto_target",   Settings.auto_target_enabled)
 	cfg.save(SETTINGS_PATH)
 
 
@@ -330,9 +346,15 @@ func _load_settings_into_panel() -> void:
 	_sfx_slider.value_changed.connect(_on_sfx_changed)
 
 	_fullscreen_check.set_pressed_no_signal(
-		cfg.get_value("display", "fullscreen", false)
+		cfg.get_value("display", "fullscreen", true)
 	)
 	_refresh_lang_buttons()
+
+	# Ciblage auto — activé par défaut
+	var at: bool = cfg.get_value("mobile", "auto_target", true)
+	Settings.auto_target_enabled = at
+	if _auto_target_check != null:
+		_auto_target_check.set_pressed_no_signal(at)
 
 
 # ------------------------------------------------------------------
@@ -348,11 +370,11 @@ func _build_skills_panel() -> Control:
 	center.add_child(outer)
 
 	var panel := _make_panel_box()
-	panel.custom_minimum_size = Vector2(580, 0)
+	panel.custom_minimum_size = Vector2(580 * _M, 0)
 	outer.add_child(panel)
 
 	var inner := VBoxContainer.new()
-	inner.add_theme_constant_override("separation", 12)
+	inner.add_theme_constant_override("separation", int(12 * _M))
 	panel.add_child(inner)
 
 	_add_title(inner, "⚡  " + tr("UI_BTN_SKILL") + "  ⚡")
@@ -360,7 +382,7 @@ func _build_skills_panel() -> Control:
 
 	# ScrollContainer : hauteur bornée pour ne pas dépasser l'écran
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size          = Vector2(0, 340)
+	scroll.custom_minimum_size          = Vector2(0, 340 * _M)
 	scroll.horizontal_scroll_mode       = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.size_flags_vertical          = Control.SIZE_EXPAND_FILL
 	inner.add_child(scroll)
@@ -413,7 +435,7 @@ func _make_skill_row(skill_id: String) -> Control:
 	name_lbl.add_theme_color_override("font_color", Color.WHITE)
 	if _font:
 		name_lbl.add_theme_font_override("font", _font)
-	name_lbl.add_theme_font_size_override("font_size", 16)
+	name_lbl.add_theme_font_size_override("font_size", int(16 * _M))
 	header.add_child(name_lbl)
 
 	var rar_lbl := Label.new()
@@ -421,7 +443,7 @@ func _make_skill_row(skill_id: String) -> Control:
 	rar_lbl.add_theme_color_override("font_color", rc)
 	if _font:
 		rar_lbl.add_theme_font_override("font", _font)
-	rar_lbl.add_theme_font_size_override("font_size", 12)
+	rar_lbl.add_theme_font_size_override("font_size", int(12 * _M))
 	header.add_child(rar_lbl)
 
 	# Description
@@ -431,7 +453,7 @@ func _make_skill_row(skill_id: String) -> Control:
 	desc.add_theme_color_override("font_color", Color(0.72, 0.80, 0.88))
 	if _font:
 		desc.add_theme_font_override("font", _font)
-	desc.add_theme_font_size_override("font_size", 13)
+	desc.add_theme_font_size_override("font_size", int(13 * _M))
 	col.add_child(desc)
 
 	return row
@@ -450,10 +472,10 @@ func _make_panel_box() -> PanelContainer:
 	style.border_width_top      = 2
 	style.border_width_bottom   = 2
 	style.border_color          = COLOR_CYAN
-	style.content_margin_left   = 40.0
-	style.content_margin_right  = 40.0
-	style.content_margin_top    = 32.0
-	style.content_margin_bottom = 32.0
+	style.content_margin_left   = 40.0 * _M
+	style.content_margin_right  = 40.0 * _M
+	style.content_margin_top    = 32.0 * _M
+	style.content_margin_bottom = 32.0 * _M
 	panel.add_theme_stylebox_override("panel", style)
 	return panel
 
@@ -464,7 +486,7 @@ func _add_title(parent: Control, text: String) -> void:
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if _font:
 		lbl.add_theme_font_override("font", _font)
-	lbl.add_theme_font_size_override("font_size", 36)
+	lbl.add_theme_font_size_override("font_size", int(36 * _M))
 	lbl.add_theme_color_override("font_color", COLOR_CYAN)
 	parent.add_child(lbl)
 
@@ -475,23 +497,23 @@ func _add_section_label(parent: Control, text: String) -> void:
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if _font:
 		lbl.add_theme_font_override("font", _font)
-	lbl.add_theme_font_size_override("font_size", 16)
+	lbl.add_theme_font_size_override("font_size", int(16 * _M))
 	lbl.add_theme_color_override("font_color", Color(0.7, 0.85, 0.9))
 	parent.add_child(lbl)
 
 
 func _add_slider(parent: Control, label_text: String, min_v: float, max_v: float, default_v: float) -> HSlider:
 	var hbox := HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 16)
+	hbox.add_theme_constant_override("separation", int(16 * _M))
 	parent.add_child(hbox)
 
 	var lbl := Label.new()
 	lbl.text = label_text
-	lbl.custom_minimum_size = Vector2(160, 0)
+	lbl.custom_minimum_size = Vector2(160 * _M, 0)
 	lbl.vertical_alignment  = VERTICAL_ALIGNMENT_CENTER
 	if _font:
 		lbl.add_theme_font_override("font", _font)
-	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.add_theme_font_size_override("font_size", int(14 * _M))
 	hbox.add_child(lbl)
 
 	var slider := HSlider.new()
@@ -499,17 +521,17 @@ func _add_slider(parent: Control, label_text: String, min_v: float, max_v: float
 	slider.max_value           = max_v
 	slider.step                = 1.0
 	slider.value               = default_v
-	slider.custom_minimum_size = Vector2(200, 0)
+	slider.custom_minimum_size = Vector2(200 * _M, 0)
 	hbox.add_child(slider)
 
 	var val_lbl := Label.new()
-	val_lbl.custom_minimum_size       = Vector2(40, 0)
+	val_lbl.custom_minimum_size       = Vector2(40 * _M, 0)
 	val_lbl.horizontal_alignment      = HORIZONTAL_ALIGNMENT_RIGHT
 	val_lbl.vertical_alignment        = VERTICAL_ALIGNMENT_CENTER
 	val_lbl.text                      = str(int(default_v)) + "%"
 	if _font:
 		val_lbl.add_theme_font_override("font", _font)
-	val_lbl.add_theme_font_size_override("font_size", 14)
+	val_lbl.add_theme_font_size_override("font_size", int(14 * _M))
 	val_lbl.add_theme_color_override("font_color", COLOR_CYAN)
 	hbox.add_child(val_lbl)
 
@@ -520,14 +542,14 @@ func _add_slider(parent: Control, label_text: String, min_v: float, max_v: float
 func _add_check(parent: Control, label_text: String) -> CheckButton:
 	var hbox := HBoxContainer.new()
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	hbox.add_theme_constant_override("separation", 16)
+	hbox.add_theme_constant_override("separation", int(16 * _M))
 	parent.add_child(hbox)
 
 	var lbl := Label.new()
 	lbl.text = label_text
 	if _font:
 		lbl.add_theme_font_override("font", _font)
-	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.add_theme_font_size_override("font_size", int(14 * _M))
 	hbox.add_child(lbl)
 
 	var check := CheckButton.new()
@@ -538,16 +560,17 @@ func _add_check(parent: Control, label_text: String) -> CheckButton:
 func _add_language_buttons(parent: Control) -> void:
 	var hbox := HBoxContainer.new()
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	hbox.add_theme_constant_override("separation", 20)
+	hbox.add_theme_constant_override("separation", int(20 * _M))
 	parent.add_child(hbox)
 
 	var langs := {"FR": "fr", "EN": "en", "ES": "es"}
 	for label in langs:
 		var btn := Button.new()
 		btn.text = label
-		btn.custom_minimum_size = Vector2(60, 36)
+		btn.custom_minimum_size = Vector2(60 * _M, 36 * _M)
 		if _font:
 			btn.add_theme_font_override("font", _font)
+		btn.add_theme_font_size_override("font_size", int(14 * _M))
 		btn.pressed.connect(_change_language.bind(langs[label]))
 		hbox.add_child(btn)
 		_lang_buttons[langs[label]] = btn
@@ -570,11 +593,11 @@ func _refresh_lang_buttons() -> void:
 func _make_button(label_text: String, callback: Callable) -> Button:
 	var btn := Button.new()
 	btn.text                   = label_text
-	btn.custom_minimum_size    = Vector2(220, 44)
+	btn.custom_minimum_size    = Vector2(220 * _M, 44 * _M)
 	btn.process_mode           = Node.PROCESS_MODE_WHEN_PAUSED  # reçoit le touch/clic pendant la pause
 	if _font:
 		btn.add_theme_font_override("font", _font)
-	btn.add_theme_font_size_override("font_size", 18)
+	btn.add_theme_font_size_override("font_size", int(18 * _M))
 	btn.add_theme_color_override("font_color", COLOR_CYAN)
 
 	var style := StyleBoxFlat.new()

@@ -25,6 +25,7 @@ const FONT_PATH                := "res://ui_theme/fonts/Xolonium-Regular.ttf"
 
 const COLOR_CYAN := Color(0.0, 0.851, 1.0)
 
+var _M:            float              = 1.6 if OS.has_feature("mobile") else 1.0
 var _sfx_player:   AudioStreamPlayer = null
 var _font:         FontFile           = null
 var _status_label: Label              = null
@@ -102,6 +103,8 @@ func _ready() -> void:
 		)
 
 	Settings.apply_saved_settings()
+	if _M > 1.0:
+		_apply_mobile_scaling()
 
 	btn_new_game.pressed.connect(_on_new_game_pressed)
 	btn_quit.pressed.connect(_on_quit_pressed)
@@ -145,6 +148,32 @@ func _process(delta: float) -> void:
 # CONSTRUCTION VISUELLE
 # =============================================================
 
+func _apply_mobile_scaling() -> void:
+	var M := _M
+	# Titre et sous-titre
+	_title_label.add_theme_font_size_override("font_size", int(40 * M))
+	_subtitle_label.add_theme_font_size_override("font_size", int(25 * M))
+
+	# Séparations des VBox
+	var main_vbox := $CenterContainer/MainVBox as VBoxContainer
+	main_vbox.add_theme_constant_override("separation", int(50 * M))
+	var btns_vbox := $CenterContainer/MainVBox/ButtonsVBox as VBoxContainer
+	btns_vbox.add_theme_constant_override("separation", int(15 * M))
+	var lang_vbox := $CenterContainer/MainVBox/LanguageVBox as VBoxContainer
+	lang_vbox.add_theme_constant_override("separation", int(10 * M))
+
+	# Taille minimale des boutons principaux
+	var main_btns := [btn_new_game, btn_continue, btn_coop, btn_options, btn_quit, btn_credits]
+	for btn in main_btns:
+		var b := btn as Button
+		b.add_theme_font_size_override("font_size", int(18 * M))
+		b.custom_minimum_size = Vector2(260.0 * M, 44.0 * M)
+
+	# Bouton langue
+	btn_toggle_language.add_theme_font_size_override("font_size", int(14 * M))
+	btn_toggle_language.custom_minimum_size = Vector2(160.0 * M, 36.0 * M)
+
+
 func _build_background() -> void:
 	_bg_rect.color = Color(0.025, 0.045, 0.075)
 	
@@ -155,29 +184,30 @@ func _build_background() -> void:
 
 
 func _build_hud_labels() -> void:
+	var M := _M
 	_status_label = Label.new()
 	_status_label.text = "▸ SYSTÈME ACTIF"
-	_status_label.add_theme_font_size_override("font_size", 12)
+	_status_label.add_theme_font_size_override("font_size", int(12 * M))
 	_status_label.add_theme_color_override("font_color", COLOR_CYAN)
 	if _font:
 		_status_label.add_theme_font_override("font", _font)
 	_status_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
-	_status_label.offset_left   =  18.0
-	_status_label.offset_top    = -34.0
-	_status_label.offset_bottom = -14.0
-	_status_label.offset_right  =  220.0
+	_status_label.offset_left   =  18.0 * M
+	_status_label.offset_top    = -34.0 * M
+	_status_label.offset_bottom = -14.0 * M
+	_status_label.offset_right  =  280.0 * M
 	add_child(_status_label)
 
 	_signal_label = Label.new()
-	_signal_label.add_theme_font_size_override("font_size", 12)
+	_signal_label.add_theme_font_size_override("font_size", int(12 * M))
 	_signal_label.add_theme_color_override("font_color", COLOR_CYAN)
 	if _font:
 		_signal_label.add_theme_font_override("font", _font)
 	_signal_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
-	_signal_label.offset_left   = -210.0
-	_signal_label.offset_top    = -34.0
-	_signal_label.offset_bottom = -14.0
-	_signal_label.offset_right  = -18.0
+	_signal_label.offset_left   = -260.0 * M
+	_signal_label.offset_top    = -34.0 * M
+	_signal_label.offset_bottom = -14.0 * M
+	_signal_label.offset_right  = -18.0 * M
 	_signal_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	add_child(_signal_label)
 	_update_signal_label()

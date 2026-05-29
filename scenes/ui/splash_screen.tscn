@@ -32,4 +32,4 @@ grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("3_eina6")
 expand_mode = 2
-stretch_mode = 6
+stretch_mode = 5
