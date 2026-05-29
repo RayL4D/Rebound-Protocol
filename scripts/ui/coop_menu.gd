@@ -371,7 +371,7 @@ func _show_lobby() -> void:
 	# Adapte le label du bouton copier : IP directe ou code relay
 	if _btn_copy != null:
 		var is_ip: bool = "." in NetworkManager.room_code
-		_btn_copy.text = tr("UI_COPY_IP") if is_ip else tr("UI_CODE_LABEL_BIS")
+		_btn_copy.text = tr("UI_COPY_IP") if is_ip else tr("UI_COPY_CODE")
 
 
 # ── Handlers boutons ──────────────────────────────────────────────────────────
