@@ -1424,6 +1424,8 @@ next_scene_path = "uid://dpcguux7a3rqn"
 
 [node name="SavePoint" parent="." unique_id=1095395053 instance=ExtResource("32_2i80p")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.824667, -0.41242743, -25.17982)
+checkpoint_id = "tutorial_1"
+level_name = "arena_base"
 
 [node name="Chest" parent="." unique_id=1892450482 instance=ExtResource("25_3ojju")]
 transform = Transform3D(0.08058166, 0, 0.99674803, 0, 1, 0, -0.99674803, 0, 0.08058166, -6.6517687, 0, 4.6073527)

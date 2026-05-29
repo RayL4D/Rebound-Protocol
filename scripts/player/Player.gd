@@ -515,6 +515,21 @@ func restore_from_checkpoint() -> void:
 	_restore_from_save()
 
 
+## Restaure uniquement les HP depuis la sauvegarde, SANS toucher à la position.
+## Utilisé lors d'une transition inter-niveau : le checkpoint appartient au niveau
+## précédent, la position serait hors-map, mais les HP doivent être conservés.
+func restore_hp_only() -> void:
+	_restore_pending = false
+	if SaveData.active_slot < 0:
+		hp_changed.emit(current_hp)
+		return
+	var saved_hp := SaveData.get_player_hp()
+	if saved_hp > 0:
+		current_hp = mini(saved_hp, max_hp)
+	hp_changed.emit(current_hp)
+	print("[Player] restore_hp_only — hp=", current_hp, " / ", max_hp)
+
+
 ## Restaure position + HP depuis le dernier checkpoint sauvegardé.
 ## Appelée soit via _restore_pending dans _physics_process, soit via restore_from_checkpoint().
 func _restore_from_save() -> void:

@@ -221,5 +221,14 @@ func _deferred_restore_player() -> void:
 	var player: Player = get_tree().get_first_node_in_group("player")
 	if player == null:
 		return
-	print("[Level1] _deferred_restore_player — appel restore_from_checkpoint()")
-	player.restore_from_checkpoint()
+
+	# Si le checkpoint sauvegardé appartient à un AUTRE niveau (ex. le tutoriel),
+	# ne pas restaurer la position : le joueur spawnerait hors de cette map.
+	# On restaure seulement les HP pour conserver l'état de santé du joueur.
+	var saved_level := SaveData.get_current_level()
+	if saved_level != "" and saved_level != "arena_first_level_1":
+		print("[Level1] _deferred_restore_player — checkpoint d'un autre niveau (", saved_level, "), restore HP uniquement.")
+		player.restore_hp_only()
+	else:
+		print("[Level1] _deferred_restore_player — appel restore_from_checkpoint()")
+		player.restore_from_checkpoint()

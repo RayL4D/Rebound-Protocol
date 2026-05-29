@@ -1126,8 +1126,6 @@ transform = Transform3D(4.7587223, 0, -1.5344577, 0, 5, 0, 1.5344577, 0, 4.75872
 
 [node name="Player" parent="." unique_id=222719199 instance=ExtResource("1_ha378")]
 transform = Transform3D(-0.9873115, 0, -0.15879565, 0, 1, 0, 0.15879565, 0, -0.9873115, -3.5227365, 0.43636608, -22.382069)
-move_speed = 30.0
-max_hp = 10000
 
 [node name="Pet_Cow_1" parent="." unique_id=1156179715 instance=ExtResource("5_260nm")]
 transform = Transform3D(0.24782768, 0, -0.9688041, 0, 1, 0, 0.9688041, 0, 0.24782768, 92.61157, -0.3308797, 95.63044)
@@ -1168,12 +1166,18 @@ coin_count = 30
 
 [node name="SavePoint_1" parent="SavePoint_container" unique_id=1095395053 instance=ExtResource("45_ctbie")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.666991, 13.002875, 175.01176)
+checkpoint_id = "level1_1"
+level_name = "arena_first_level_1"
 
 [node name="SavePoint_2" parent="SavePoint_container" unique_id=237861613 instance=ExtResource("45_ctbie")]
 transform = Transform3D(1, 0, 0, 0, 0.9784226, -0.20661405, 0, 0.20661405, 0.9784226, 172.06082, 18.74612, 45.999573)
+checkpoint_id = "level1_2"
+level_name = "arena_first_level_1"
 
 [node name="SavePoint_3" parent="SavePoint_container" unique_id=1766967230 instance=ExtResource("45_ctbie")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 245.08685, 19.556004, -36.59371)
+checkpoint_id = "level1_3"
+level_name = "arena_first_level_1"
 
 [connection signal="body_entered" from="Wave_manager_container/Trigger_Zone1" to="." method="_on_trigger_zone_1_body_entered"]
 [connection signal="body_entered" from="Wave_manager_container/Trigger_Zone2" to="." method="_on_trigger_zone_2_body_entered"]
