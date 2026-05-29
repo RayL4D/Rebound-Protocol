@@ -92,6 +92,7 @@ var guide_target: Node3D      = null
 
 # --- Coin counter + boutique ----------------------------------
 var _coin_label_hud:  Label        = null
+var _shop_btn:        Button       = null   # référence pour re-traduction
 var _shop_open:       bool         = false
 var _shop_instance:   CanvasLayer  = null   # référence pour fermer via B
 
@@ -142,6 +143,9 @@ func _ready() -> void:
 	if xp_mgr != null:
 		xp_mgr.xp_changed.connect(_on_xp_changed)
 		_on_xp_changed(int(xp_mgr.get("current_xp")), int(xp_mgr.get("xp_to_next")))
+
+	# --- Connexion au changement de langue ---
+	SceneManager.language_changed.connect(_on_language_changed)
 
 
 func _process(delta: float) -> void:
@@ -470,6 +474,7 @@ func _build_coin_panel() -> void:
 			_sfx_player.play()
 	)
 	add_child(shop_btn)
+	_shop_btn = shop_btn
 
 
 func _open_shop_from_hud() -> void:
@@ -749,6 +754,15 @@ func _on_player_died() -> void:
 
 func _update_label(hp: int) -> void:
 	_hp_label.text = "%d / %d" % [hp, _player.max_hp]
+
+
+func _on_language_changed(_locale: String) -> void:
+	# Re-traduit tous les textes dynamiques du HUD
+	if _shop_btn != null:
+		_shop_btn.text = tr("UI_SHOP_TITLE")
+	# Propage NOTIFICATION_TRANSLATION_CHANGED à tous les enfants
+	# (Labels de la scène avec clés de traduction : WaveLabel, EnemiesLabel, MessageLabel)
+	propagate_notification(NOTIFICATION_TRANSLATION_CHANGED)
 
 
 func _flash_damage_vignette() -> void:

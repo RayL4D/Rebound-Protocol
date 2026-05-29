@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://uvh5qm1cyi12" path="res://scripts/ui/loading_screen.gd" id="1_5fj0j"]
 [ext_resource type="Texture2D" uid="uid://blmsyhc3ofpkr" path="res://assets/loader/loader_player-head.JPG" id="1_q4fso"]
-[ext_resource type="Texture2D" uid="uid://dkhvehbd1pg0e" path="res://assets/ui/loading_screen_background/arena_first_level_1.JPG" id="2_q4fso"]
+[ext_resource type="Texture2D" uid="uid://bbwqw7af6ka53" path="res://assets/ui/loading_screen_background/arena_first_level/arena_first_level_1.png" id="2_s2kth"]
 [ext_resource type="FontFile" uid="uid://ci0o36dhvuhqf" path="res://ui_theme/fonts/Xolonium-Regular.ttf" id="3_s2kth"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_s41fs"]
@@ -22,6 +22,8 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_5fj0j")
 
 [node name="Background" type="TextureRect" parent="." unique_id=127689443]
@@ -31,7 +33,7 @@ anchor_right = 1.0
 anchor_bottom = 0.75
 grow_horizontal = 2
 grow_vertical = 2
-texture = ExtResource("2_q4fso")
+texture = ExtResource("2_s2kth")
 expand_mode = 1
 stretch_mode = 6
 
