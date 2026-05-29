@@ -246,3 +246,6 @@ LOADING_DEFAULT_TITLE,Loading protocols...,Chargement des protocoles...,Cargando
 LOADING_DEFAULT_DESC,Please wait while combat data is synchronizing.,Veuillez patienter pendant la synchronisation des données de combat.,"Por favor, espera mientras se sincronizan los datos de combate."
 SETTINGS_SECTION_MOBILE,Mobile Controls,Contrôles mobiles,Controles móviles
 SETTINGS_AUTO_TARGET,Auto-target,Ciblage auto,Auto-objetivo
+BTN_JUMP,JUMP,SAUT,SALTAR
+BTN_PARRY,PARRY,PARADE,PARAR
+BTN_DASH,DASH,DASH,DASH

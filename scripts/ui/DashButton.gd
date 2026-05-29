@@ -127,9 +127,12 @@ func _draw() -> void:
 	draw_line(Vector2(c.x - r * 0.42, sy), Vector2(c.x + r * 0.42, sy),
 			  C_SEP_P if p else C_SEP, 1.5, true)
 
-	# 7. Label "DASH"
-	var text := "DASH"
-	var font_size := int(r * 0.24)
+	# 7. Label localisé — auto-fit pour que ça rentre quelle que soit la langue
+	var text := tr("BTN_DASH")
+	var font_size := maxi(int(r * 0.24), 8)
+	var max_w : float = r * 0.90
+	while font_size > 7 and font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > max_w:
+		font_size -= 1
 	var tc := C_TAG_P if p else C_TAG
 	var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
 	draw_string(font, Vector2(c.x - text_size.x / 2.0, sy + text_size.y * 0.85),
