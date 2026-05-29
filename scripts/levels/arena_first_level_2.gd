@@ -5,6 +5,7 @@ extends Node3D
 
 @onready var hud: Node = $HUD
 @onready var level_exit: Node = $Instant_exit
+@onready var _nav_region: NavigationRegion3D = $NavigationRegion3D
 
 func _ready() -> void:
 	_prewarm_bullet_shaders()
@@ -15,7 +16,8 @@ func _ready() -> void:
 	CollisionManager.add_missing_collisions(self)
 	_setup_ui()
 	_set_permanent_message("LVL2_CAVE_ENTRY")
-	
+	call_deferred("_bake_navigation")
+
 	if level_exit and level_exit.has_method("activate"):
 		level_exit.activate()
 
@@ -55,6 +57,37 @@ func _set_permanent_message(translation_key: String) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_TRANSLATION_CHANGED:
 		_set_permanent_message("LVL2_CAVE_ENTRY")
+
+
+func _bake_navigation() -> void:
+	if not is_instance_valid(_nav_region):
+		return
+
+	var nav_mesh := _nav_region.navigation_mesh
+	nav_mesh.cell_size                        = 0.25
+	nav_mesh.cell_height                      = 0.20
+	nav_mesh.agent_radius                     = 0.5
+	nav_mesh.agent_height                     = 2.0
+	nav_mesh.agent_max_climb                  = 0.5
+	nav_mesh.agent_max_slope                  = 45.0
+	nav_mesh.region_min_size                  = 4.0
+	nav_mesh.geometry_parsed_geometry_type    = NavigationMesh.PARSED_GEOMETRY_BOTH
+	nav_mesh.geometry_source_geometry_mode    = NavigationMesh.SOURCE_GEOMETRY_ROOT_NODE_CHILDREN
+
+	var source_geo := NavigationMeshSourceGeometryData3D.new()
+	NavigationServer3D.parse_source_geometry_data(nav_mesh, source_geo, self)
+	NavigationServer3D.bake_from_source_geometry_data_async(
+		nav_mesh, source_geo,
+		Callable(self, "_on_navigation_baked")
+	)
+
+
+func _on_navigation_baked() -> void:
+	if is_instance_valid(_nav_region):
+		NavigationServer3D.region_set_navigation_mesh(
+			_nav_region.get_region_rid(), _nav_region.navigation_mesh
+		)
+	print("[Level2] Navigation mesh baked.")
 
 
 func _prewarm_bullet_shaders() -> void:

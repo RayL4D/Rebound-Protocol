@@ -197,6 +197,8 @@ height = 0.001
 height = 0.1
 radius = 0.22802734
 
+[sub_resource type="NavigationMesh" id="NavigationMesh_lvl3"]
+
 [node name="ArenaFirstLevel3" type="Node3D" unique_id=1901296367]
 script = ExtResource("1_os1jq")
 
@@ -1190,5 +1192,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 141.10164, 40.28144, -55.4739
 [node name="PauseMenu" parent="." unique_id=217714843 instance=ExtResource("38_pohuh")]
 
 [node name="MobileControls" parent="." unique_id=1449797109 instance=ExtResource("39_2bpxm")]
+
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=1111111113]
+navigation_mesh = SubResource("NavigationMesh_lvl3")
 
 [connection signal="body_entered" from="Wave_manager_container/Trigger_Zone2" to="." method="_on_trigger_zone_2_body_entered"]

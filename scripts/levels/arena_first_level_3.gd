@@ -8,6 +8,7 @@ extends Node3D
 @onready var level_exit: Node = $WorldObjects_container/portal_container/LevelExit
 @onready var hud: Node = $HUD
 @onready var hidden_save_point_1 = $SavePoint_container/SavePoint_2
+@onready var _nav_region: NavigationRegion3D = $NavigationRegion3D
 
 # Variables de contrôle
 var _zone2_triggered: bool = false
@@ -23,6 +24,7 @@ func _ready() -> void:
 	_setup_ui()
 	_setup_waves()
 	_connect_signals()
+	call_deferred("_bake_navigation")
 	
 	# === DÉSACTIVATION DES SAVE POINTS AU LANCEMENT ===
 	if hidden_save_point_1:
@@ -36,6 +38,37 @@ func _ready() -> void:
 # =============================================================
 # CONFIGURATION
 # =============================================================
+
+func _bake_navigation() -> void:
+	if not is_instance_valid(_nav_region):
+		return
+
+	var nav_mesh := _nav_region.navigation_mesh
+	nav_mesh.cell_size                        = 0.25
+	nav_mesh.cell_height                      = 0.20
+	nav_mesh.agent_radius                     = 0.5
+	nav_mesh.agent_height                     = 2.0
+	nav_mesh.agent_max_climb                  = 0.5
+	nav_mesh.agent_max_slope                  = 45.0
+	nav_mesh.region_min_size                  = 4.0
+	nav_mesh.geometry_parsed_geometry_type    = NavigationMesh.PARSED_GEOMETRY_BOTH
+	nav_mesh.geometry_source_geometry_mode    = NavigationMesh.SOURCE_GEOMETRY_ROOT_NODE_CHILDREN
+
+	var source_geo := NavigationMeshSourceGeometryData3D.new()
+	NavigationServer3D.parse_source_geometry_data(nav_mesh, source_geo, self)
+	NavigationServer3D.bake_from_source_geometry_data_async(
+		nav_mesh, source_geo,
+		Callable(self, "_on_navigation_baked")
+	)
+
+
+func _on_navigation_baked() -> void:
+	if is_instance_valid(_nav_region):
+		NavigationServer3D.region_set_navigation_mesh(
+			_nav_region.get_region_rid(), _nav_region.navigation_mesh
+		)
+	print("[Level3] Navigation mesh baked.")
+
 
 func _prewarm_bullet_shaders() -> void:
 	const SCENE = preload("res://scenes/projectiles/bullet_enemy.tscn")

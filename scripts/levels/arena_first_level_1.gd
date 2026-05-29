@@ -8,6 +8,7 @@ extends Node3D
 @onready var wave_manager_zone2: WaveManager = $Wave_manager_container/WaveManager_Zone2
 @onready var level_exit: Node = $Zones/Instant_exit
 @onready var hud: Node = $HUD
+@onready var _nav_region: NavigationRegion3D = $NavigationRegion3D
 # Chemins des save point
 @onready var hidden_save_point_1 = $SavePoint_container/SavePoint_1
 @onready var hidden_save_point_2 = $SavePoint_container/SavePoint_3
@@ -34,7 +35,8 @@ func _ready() -> void:
 	_connect_signals()
 	
 	ScoreManager.start_level()
-	
+	call_deferred("_bake_navigation")
+
 	# === DÉSACTIVATION DES MURS AU LANCEMENT ===
 	if has_node(WALL_1_PATH):
 		var wall1 = get_node(WALL_1_PATH)
@@ -135,6 +137,45 @@ func _on_trigger_zone_1_body_entered(body: Node3D) -> void:
 			if wall1.has_node("MeshInstance3D"):
 				wall1.get_node("MeshInstance3D").visible = true
 				
+
+func _bake_navigation() -> void:
+	if not is_instance_valid(_nav_region):
+		return
+
+	# Configurer le NavigationMesh pour les ennemis du jeu (rayon ~0.5 m)
+	var nav_mesh := _nav_region.navigation_mesh
+	nav_mesh.cell_size                        = 0.25
+	nav_mesh.cell_height                      = 0.20
+	nav_mesh.agent_radius                     = 0.5
+	nav_mesh.agent_height                     = 2.0
+	nav_mesh.agent_max_climb                  = 0.5
+	nav_mesh.agent_max_slope                  = 45.0
+	nav_mesh.region_min_size                  = 4.0
+	# Scanner TOUS les corps statiques ET meshes — corps statiques = décors avec collision
+	nav_mesh.geometry_parsed_geometry_type    = NavigationMesh.PARSED_GEOMETRY_BOTH
+	# Source : enfants du nœud passé à parse_source_geometry_data (= self = racine scène)
+	nav_mesh.geometry_source_geometry_mode    = NavigationMesh.SOURCE_GEOMETRY_ROOT_NODE_CHILDREN
+
+	# Parser la géométrie depuis la RACINE de la scène (et non le NavigationRegion3D)
+	# → les décors/obstacles frères sont inclus dans le mesh de navigation
+	var source_geo := NavigationMeshSourceGeometryData3D.new()
+	NavigationServer3D.parse_source_geometry_data(nav_mesh, source_geo, self)
+
+	# Bake asynchrone : ne bloque pas le thread principal
+	# callback : applique le mesh baked à la région dès que c'est terminé
+	NavigationServer3D.bake_from_source_geometry_data_async(
+		nav_mesh, source_geo,
+		Callable(self, "_on_navigation_baked")
+	)
+
+
+func _on_navigation_baked() -> void:
+	if is_instance_valid(_nav_region):
+		NavigationServer3D.region_set_navigation_mesh(
+			_nav_region.get_region_rid(), _nav_region.navigation_mesh
+		)
+	print("[Level1] Navigation mesh baked.")
+
 
 func _prewarm_bullet_shaders() -> void:
 	const SCENE = preload("res://scenes/projectiles/bullet_enemy.tscn")

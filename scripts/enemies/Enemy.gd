@@ -67,6 +67,21 @@ var _nav_timer: float = 0.0
 
 var _stuck_timer: float = 0.0
 var _last_position: Vector3 = Vector3.ZERO
+
+# --- Détection du joueur ----------------------------------------
+## Activer sur les ennemis pré-placés (pas les vagues) pour qu'ils ne
+## poursuivent le joueur que s'il entre dans leur champ de vision.
+## Laisser false pour les ennemis de vague (comportement inchangé).
+@export_group("Détection")
+@export var use_detection:    bool  = false
+@export var detection_range:  float = 12.0   # portée en mètres
+@export var detection_fov:    float = 110.0  # champ de vision en degrés
+## Rayon de perte de cible : le joueur est "perdu" au-delà de cette distance.
+## Par défaut = 2× la portée de détection.
+@export var lose_range_mult:  float = 2.0
+
+@export_group("")   # ferme le groupe "Détection"
+var _player_detected: bool = false
 # =============================================================
 # LIFECYCLE
 # =============================================================
@@ -192,16 +207,77 @@ func _physics_process(delta: float) -> void:
 
 	_apply_gravity(delta)
 
+	# --- Détection (uniquement pour les ennemis pré-placés) ---
+	if use_detection:
+		_update_detection()
+
 	# Mise à jour de la cible de navigation
-	_nav_timer -= delta
-	if _nav_timer <= 0.0:
-		_nav_timer = NAV_UPDATE_INTERVAL
-		_nav_agent.target_position = player.global_position
+	# Si use_detection est actif, on ne met à jour que si le joueur est détecté.
+	var chasing := not use_detection or _player_detected
+	if chasing:
+		_nav_timer -= delta
+		if _nav_timer <= 0.0:
+			_nav_timer = NAV_UPDATE_INTERVAL
+			_nav_agent.target_position = player.global_position
+	else:
+		# Ennemi au repos : cible = position actuelle pour éviter tout mouvement
+		_nav_agent.target_position = global_position
 
 	_update_movement(delta)
 	move_and_slide()
-	_face_player()
+	if chasing:
+		_face_player()
 	_update_animation()
+
+
+# =============================================================
+# DÉTECTION DU JOUEUR (champ de vision + portée + raycast)
+# =============================================================
+
+func _update_detection() -> void:
+	var dist := global_position.distance_to(player.global_position)
+
+	if _player_detected:
+		# Perte de cible si le joueur s'éloigne trop
+		if dist > detection_range * lose_range_mult:
+			_player_detected = false
+		return
+
+	# ── 1. Portée ──────────────────────────────────────────────────
+	if dist > detection_range:
+		return
+
+	# ── 2. Champ de vision ─────────────────────────────────────────
+	var to_player := (player.global_position - global_position)
+	to_player.y   = 0.0
+	if to_player.length_squared() > 0.01:
+		var forward  := -global_transform.basis.z
+		forward.y    = 0.0
+		if forward.length_squared() > 0.001:
+			var angle := rad_to_deg(forward.normalized().angle_to(to_player.normalized()))
+			if angle > detection_fov * 0.5:
+				return  # Hors champ de vision
+
+	# ── 3. Ligne de vue (raycast) ───────────────────────────────────
+	var space := get_world_3d().direct_space_state
+	var eye_offset := Vector3(0.0, 0.9, 0.0)   # hauteur des yeux de l'ennemi
+	var query := PhysicsRayQueryParameters3D.create(
+		global_position + eye_offset,
+		player.global_position + eye_offset,
+		0b10101   # layers 1 + 3 + 5 (géométrie + joueur)
+	)
+	query.exclude = [self]
+	var hit := space.intersect_ray(query)
+	# Détecté uniquement si le ray touche le joueur (pas un mur entre les deux)
+	if not hit.is_empty() and hit.get("collider") != player:
+		return
+
+	_player_detected = true
+
+
+## Alerte immédiate quand l'ennemi reçoit un coup (même hors champ de vision).
+func alert() -> void:
+	_player_detected = true
 
 
 # =============================================================
@@ -266,6 +342,10 @@ func _update_animation() -> void:
 func take_damage(amount: int, silent_hurt: bool = false) -> void:
 	if not is_inside_tree():
 		return
+	# Un ennemi pré-placé qui reçoit un coup détecte toujours le joueur,
+	# même s'il était hors champ de vision.
+	if use_detection:
+		_player_detected = true
 	current_hp = max(0, current_hp - amount)
 	_spawn_damage_number(amount)
 	if current_hp <= 0:

@@ -16,7 +16,7 @@
 [ext_resource type="PackedScene" uid="uid://dgaaan3vs5ujh" path="res://assets/models/environments/tutorial_and_first_level/machine_generator.glb" id="7_dppew"]
 [ext_resource type="PackedScene" uid="uid://dysysxe40a80g" path="res://assets/models/environments/tutorial_and_first_level/craft_speederB.glb" id="8_f2nsb"]
 [ext_resource type="PackedScene" uid="uid://mwlayrnfs41m" path="res://assets/models/environments/tutorial_and_first_level/platform_large.glb" id="9_74u5m"]
-[ext_resource type="PackedScene" uid="uid://bk14aw3kobgpm" path="res://scenes/levels/zones/instant_exit.tscn" id="9_qsnft"]
+[ext_resource type="PackedScene" uid="uid://dqfp8p8vh8unc" path="res://scenes/levels/zones/instant_exit.tscn" id="9_qsnft"]
 [ext_resource type="PackedScene" uid="uid://cw87pir38gk1v" path="res://assets/models/environments/tutorial_and_first_level/machine_wirelessCable.glb" id="10_pxsce"]
 [ext_resource type="PackedScene" uid="uid://0knuqo2qton5" path="res://assets/models/environments/tutorial_and_first_level/desk_computerScreen.glb" id="11_pxsce"]
 [ext_resource type="PackedScene" uid="uid://1jmmybq2se2u" path="res://assets/models/environments/tutorial_and_first_level/bones.glb" id="12_5o6i8"]
@@ -43,7 +43,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="44_ctbie"]
 [ext_resource type="PackedScene" uid="uid://dugi48yxe82ny" path="res://scenes/pickups/chest.tscn" id="44_om3xt"]
 [ext_resource type="PackedScene" uid="uid://c1ba4apgy2p4p" path="res://scenes/levels/save_point.tscn" id="45_ctbie"]
-[ext_resource type="PackedScene" uid="uid://bxss4q4q2p5dq" path="res://scenes/ui/mobile_controls.tscn" id="45_hrfqu"]
+[ext_resource type="PackedScene" uid="uid://cnm5imuwr82km" path="res://scenes/ui/mobile_controls.tscn" id="45_hrfqu"]
 [ext_resource type="PackedScene" uid="uid://c1stu4jqgvuns" path="res://assets/models/environments/tutorial_and_first_level/hangar_smallA.glb" id="50_260nm"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tbebd"]
@@ -178,6 +178,8 @@ height = 0.001
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_8hb0y"]
 height = 0.1
 radius = 2.5
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_lvl1"]
 
 [node name="ArenaFirstLevel1" type="Node3D" unique_id=1626442709]
 script = ExtResource("1_doyx5")
@@ -1129,12 +1131,24 @@ transform = Transform3D(-0.9873115, 0, -0.15879565, 0, 1, 0, 0.15879565, 0, -0.9
 
 [node name="Pet_Cow_1" parent="." unique_id=1156179715 instance=ExtResource("5_260nm")]
 transform = Transform3D(0.24782768, 0, -0.9688041, 0, 1, 0, 0.9688041, 0, 0.24782768, 92.61157, -0.3308797, 95.63044)
+use_detection = null
+detection_range = null
+detection_fov = null
+lose_range_mult = null
 
 [node name="Pet_Cow_2" parent="." unique_id=2054159834 instance=ExtResource("5_260nm")]
 transform = Transform3D(0.8095501, 0, -0.58705074, 0, 1, 0, 0.58705074, 0, 0.8095501, 25.524864, -0.67723846, 59.22924)
+use_detection = null
+detection_range = null
+detection_fov = null
+lose_range_mult = null
 
 [node name="Pet_Cow_3" parent="." unique_id=1659004844 instance=ExtResource("5_260nm")]
 transform = Transform3D(0.7381964, 0, -0.6745859, 0, 1, 0, 0.6745859, 0, 0.7381964, 42.197075, 0.29960012, 156.95418)
+use_detection = null
+detection_range = null
+detection_fov = null
+lose_range_mult = null
 
 [node name="HUD" parent="." unique_id=1994348935 instance=ExtResource("42_ayx3v")]
 
@@ -1178,6 +1192,9 @@ level_name = "arena_first_level_1"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 245.08685, 19.556004, -36.59371)
 checkpoint_id = "level1_3"
 level_name = "arena_first_level_1"
+
+[node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=1111111111]
+navigation_mesh = SubResource("NavigationMesh_lvl1")
 
 [connection signal="body_entered" from="Wave_manager_container/Trigger_Zone1" to="." method="_on_trigger_zone_1_body_entered"]
 [connection signal="body_entered" from="Wave_manager_container/Trigger_Zone2" to="." method="_on_trigger_zone_2_body_entered"]
