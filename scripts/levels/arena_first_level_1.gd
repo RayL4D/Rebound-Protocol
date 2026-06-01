@@ -236,31 +236,67 @@ func _on_trigger_zone_2_body_entered(body: Node3D) -> void:
 # =============================================================
 
 func _on_zone_1_finished() -> void:
+	# Persistance immédiate sur disque — zone 1 terminée, ne pas refaire les vagues au rechargement
+	if SaveData.active_slot >= 0:
+		SaveData.set_competence("lvl1_zone1_done", true)
+	_apply_zone1_done_state()
+
+func _on_zone_2_finished() -> void:
+	# Persistance immédiate sur disque — zone 2 terminée
+	if SaveData.active_slot >= 0:
+		SaveData.set_competence("lvl1_zone2_done", true)
+	_apply_zone2_done_state()
+	_set_permanent_message("LVL1_EXIT_OPENED_MSG")
+
+
+# =============================================================
+# ÉTAT "ZONE TERMINÉE" — appelé en fin de vagues ET à la restauration checkpoint
+# =============================================================
+
+## Applique l'état "zone 1 terminée" sans relancer les vagues.
+## Appelé soit par _on_zone_1_finished(), soit par _deferred_restore_player()
+## quand la sauvegarde indique que la zone est déjà faite.
+func _apply_zone1_done_state() -> void:
+	_zone1_triggered = true
+
+	# Supprimer le trigger pour éviter tout déclenchement accidentel
+	var trigger = get_node_or_null("Wave_manager_container/Trigger_Zone1")
+	if trigger:
+		trigger.queue_free()
+
+	# Mur zone 1 : déjà désactivé par _ready(), on s'assure qu'il le reste
 	if has_node(WALL_1_PATH):
 		var wall1 = get_node(WALL_1_PATH)
 		wall1.get_node("CollisionShape3D").set_deferred("disabled", true)
 		if wall1.has_node("MeshInstance3D"):
 			wall1.get_node("MeshInstance3D").visible = false
-			
+
+	# Rendre le save point visible (le joueur peut vouloir sauvegarder à nouveau)
 	if hidden_save_point_1:
 		hidden_save_point_1.visible = true
 		hidden_save_point_1.process_mode = Node.PROCESS_MODE_INHERIT
 
-func _on_zone_2_finished() -> void:
+
+## Applique l'état "zone 2 terminée" sans relancer les vagues.
+func _apply_zone2_done_state() -> void:
+	_zone2_triggered = true
+
+	var trigger = get_node_or_null("Wave_manager_container/Trigger_Zone2")
+	if trigger:
+		trigger.queue_free()
+
 	if has_node(WALL_2_PATH):
 		var wall2 = get_node(WALL_2_PATH)
 		wall2.get_node("CollisionShape3D").set_deferred("disabled", true)
 		if wall2.has_node("MeshInstance3D"):
 			wall2.get_node("MeshInstance3D").visible = false
-			
+
 	if hidden_save_point_2:
 		hidden_save_point_2.visible = true
 		hidden_save_point_2.process_mode = Node.PROCESS_MODE_INHERIT
-			
+
 	if level_exit and level_exit.has_method("activate"):
 		level_exit.activate()
-	
-	_set_permanent_message("LVL1_EXIT_OPENED_MSG")
 
 # =============================================================
 # UTILITAIRES
@@ -285,6 +321,16 @@ func _deferred_restore_player() -> void:
 	var player: Player = get_tree().get_first_node_in_group("player")
 	if player == null:
 		return
+
+	# Restaurer l'état des zones AVANT de replacer le joueur, afin que
+	# les murs / triggers / save points soient dans le bon état dès l'apparition.
+	var competences := SaveData.get_competences()
+	if competences.get("lvl1_zone1_done", false):
+		print("[Level1] Zone 1 déjà terminée — restauration état sans relancer les vagues.")
+		_apply_zone1_done_state()
+	if competences.get("lvl1_zone2_done", false):
+		print("[Level1] Zone 2 déjà terminée — restauration état sans relancer les vagues.")
+		_apply_zone2_done_state()
 
 	# Si le checkpoint sauvegardé appartient à un AUTRE niveau (ex. le tutoriel),
 	# ne pas restaurer la position : le joueur spawnerait hors de cette map.
