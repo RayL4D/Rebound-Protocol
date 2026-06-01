@@ -33,6 +33,7 @@ enum WaveType { NORMAL, SPECIAL, BOSS }
 # --- VARIABLES INTERNES ---
 var _current_wave: int = 0
 var _enemies_alive: int = 0
+var _enemy_spawner: MultiplayerSpawner = null
 var _is_running: bool = false
 var _wave_completed: bool = false
 var _spawn_positions: Array[Vector3] = []
@@ -220,12 +221,13 @@ func _generate_and_spawn_wave(wave_num: int, type: WaveType) -> void:
 
 func _spawn_dropship(pos: Vector3, enemy_scene: PackedScene, amount: int) -> void:
 	if not dropship_scene: return
-	
+
 	var ship = dropship_scene.instantiate()
 	ship.mob_scene = enemy_scene
 	ship.spawn_count = amount
 	ship.enemy_died_callback = _on_enemy_died
-	
+	ship.enemy_spawner = _enemy_spawner
+
 	get_tree().current_scene.add_child(ship)
 	ship.global_position = pos
 
@@ -292,3 +294,6 @@ func reset() -> void:
 	_current_wave = 0
 	_enemies_alive = 0
 	_wave_completed = false
+	
+func setup_enemy_spawner(spawner: MultiplayerSpawner) -> void:
+	_enemy_spawner = spawner

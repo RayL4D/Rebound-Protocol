@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://bp60v57ol6ybs"]
 
 [ext_resource type="Script" uid="uid://hq5vxwps0fd4" path="res://scripts/coop/coop_arena.gd" id="1_arena"]
-[ext_resource type="PackedScene" uid="uid://chm01swb33150" path="res://scenes/ui/HUD.tscn" id="2_hj6t5"]
 [ext_resource type="Script" uid="uid://c5jjq8dvl8wmn" path="res://scripts/levels/wave_manager_coop.gd" id="2_k5dlg"]
 [ext_resource type="PackedScene" uid="uid://cp8oo218ghcj" path="res://scenes/player/player.tscn" id="2_ml5ki"]
 [ext_resource type="PackedScene" uid="uid://dh1hioalq5p7" path="res://scenes/enemies/dropship.tscn" id="3_utkiw"]
@@ -69,8 +68,6 @@ size = Vector3(120, 50, 1)
 
 [node name="CoopArena" type="Node3D" unique_id=11884712]
 script = ExtResource("1_arena")
-
-[node name="HUD" parent="." unique_id=1994348935 instance=ExtResource("2_hj6t5")]
 
 [node name="Wave_manager_coop" type="Node" parent="." unique_id=169607386]
 script = ExtResource("2_k5dlg")
@@ -1920,3 +1917,5 @@ transform = Transform3D(-2.186756, 0, 4.4964542, 0, 4.9999995, 0, -4.4964542, 0,
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 359.4296, 757.07715, -517.84814)
 move_speed = 300.0
 max_hp = 10000
+
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="." unique_id=2120505134]

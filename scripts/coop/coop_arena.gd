@@ -91,6 +91,25 @@ func _ready() -> void:
 	if multiplayer.is_server():
 		await get_tree().create_timer(0.3).timeout
 		_spawn_all_players()
+		
+	var enemies_root := Node3D.new()
+	enemies_root.name = "Enemies"
+	add_child(enemies_root)
+
+	# Spawner d'ennemis — pas de spawn_function, on utilise la liste blanche
+	var enemy_spawner := MultiplayerSpawner.new()
+	enemy_spawner.name = "EnemySpawner"
+	enemy_spawner.spawn_path = NodePath("../Enemies")
+	enemy_spawner.spawn_function = _spawn_enemy_from_path  # ✅
+	add_child(enemy_spawner)
+		
+	var wave_mgr := $Wave_manager_coop
+	wave_mgr.setup_enemy_spawner(enemy_spawner)
+
+	# Pré-enregistrer les scènes (optionnel mais propre)
+	for scene in wave_mgr.basic_enemies + wave_mgr.advanced_enemies + wave_mgr.bosses:
+		if scene:
+			enemy_spawner.add_spawnable_scene(scene.resource_path)
 
 
 func _prewarm_bullet_shaders() -> void:
@@ -423,3 +442,11 @@ func get_alive_players() -> Array:
 		if is_instance_valid(node) and not node.get("is_dead"):
 			result.append(node)
 	return result
+
+	
+func _spawn_enemy_from_path(scene_path: String) -> Node:
+	var scene: PackedScene = load(scene_path)
+	if not scene:
+		push_error("CoopArena : scène ennemie introuvable : " + scene_path)
+		return null
+	return scene.instantiate()

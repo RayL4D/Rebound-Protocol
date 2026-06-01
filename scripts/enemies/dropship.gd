@@ -14,6 +14,7 @@ extends Node3D
 ## Si non null, remplace le mesh GLB par défaut (cargo_spawner)
 var dropship_mesh: PackedScene = null
 var enemy_died_callback: Callable = Callable()
+var enemy_spawner: MultiplayerSpawner = null
 
 # --- Nœuds ---------------------------------------------------
 @onready var anim_player: AnimationPlayer = %AnimationPlayer
@@ -75,18 +76,29 @@ func _start_delivery_sequence() -> void:
 	_start_takeoff()
 
 
+func _start_takeoff() -> void:
+	anim_player.play("takeoff")
+	await anim_player.animation_finished
+	queue_free()
+
 func _spawn_mobs() -> void:
 	if not mob_scene:
 		push_warning("Dropship : Aucune scène de mob assignée !")
 		return
 
 	for i in range(spawn_count):
-		var mob = mob_scene.instantiate()
+		var mob: Node
+
+		if enemy_spawner:
+			mob = enemy_spawner.spawn(mob_scene.resource_path)  # on repasse au path
+		else:
+			mob = mob_scene.instantiate()
+			get_parent().add_child(mob)
+
+		if not mob: continue
 
 		if enemy_died_callback.is_valid() and mob.has_signal("enemy_died"):
 			mob.enemy_died.connect(enemy_died_callback)
-
-		get_parent().add_child(mob)
 
 		var offset := Vector3(randf_range(-2.0, 2.0), 0, randf_range(-2.0, 2.0))
 		mob.global_position = spawn_point.global_position + offset
@@ -94,8 +106,4 @@ func _spawn_mobs() -> void:
 
 	print("Dropship : %d unité(s) déployée(s)." % spawn_count)
 
-
-func _start_takeoff() -> void:
-	anim_player.play("takeoff")
-	await anim_player.animation_finished
-	queue_free()
+# Supprime entièrement _is_scene_registered()
