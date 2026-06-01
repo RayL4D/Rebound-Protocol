@@ -164,8 +164,12 @@ func _ready() -> void:
 
 ## Recharge toutes les données depuis le disque (sans toucher à active_slot).
 ## À appeler avant d'afficher un écran qui lit les infos des slots.
+## Émet slot_loaded si un slot est actif afin que XpManager (et tout autre
+## autoload abonné) se resynchronise avec les données du dernier checkpoint.
 func reload_from_disk() -> void:
 	_load_from_disk()
+	if active_slot >= 0:
+		slot_loaded.emit()
 
 
 # =============================================================

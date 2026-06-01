@@ -236,6 +236,8 @@ func _move_orbit() -> void:
 	if dist > combat_distance:
 		var nav_dir := _get_move_direction()
 		if nav_dir == Vector3.ZERO:
+			velocity.x = 0.0
+			velocity.z = 0.0
 			return
 		velocity.x = nav_dir.x * move_speed
 		velocity.z = nav_dir.z * move_speed

@@ -80,6 +80,7 @@ var _camera:       Camera3D = null
 var _current_fill: float    = 1.0
 var _target_fill:  float    = 1.0
 var _pulse_time:   float    = 0.0
+var _prev_hp:      int      = -1   # HP précédents pour distinguer dégâts / soin
 
 # --- Vignette dégât -------------------------------------------
 var _vignette_rect: ColorRect      = null
@@ -133,6 +134,7 @@ func _ready() -> void:
 	_camera       = get_viewport().get_camera_3d()
 	_target_fill  = float(_player.current_hp) / float(_player.max_hp)
 	_current_fill = _target_fill
+	_prev_hp      = _player.current_hp
 	_refresh_bar(_current_fill)
 	_update_label(_player.current_hp)
 	_player.hp_changed.connect(_on_hp_changed)
@@ -744,7 +746,10 @@ func _refresh_bar(fill: float) -> void:
 func _on_hp_changed(new_hp: int) -> void:
 	_target_fill = float(new_hp) / float(_player.max_hp)
 	_update_label(new_hp)
-	_flash_damage_vignette()
+	# Ne flasher que si les HP ont diminué (dégâts), pas en cas de soin.
+	if _prev_hp < 0 or new_hp < _prev_hp:
+		_flash_damage_vignette()
+	_prev_hp = new_hp
 
 
 func _on_player_died() -> void:

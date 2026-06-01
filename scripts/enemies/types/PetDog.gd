@@ -37,7 +37,14 @@ func _on_ready() -> void:
 		return
 	if player == null:
 		return
-	weapon.activate(player)
+	# Ennemis pré-placés : attendre la détection avant d'activer l'arme
+	if not use_detection:
+		weapon.activate(player)
+
+
+func _on_player_detected() -> void:
+	if weapon != null and player != null:
+		weapon.activate(player)
 
 
 # =============================================================
@@ -53,6 +60,8 @@ func _update_movement(_delta: float) -> void:
 
 	var dir := _get_move_direction()
 	if dir == Vector3.ZERO:
+		velocity.x = 0.0
+		velocity.z = 0.0
 		return
 	velocity.x = dir.x * move_speed
 	velocity.z = dir.z * move_speed

@@ -118,7 +118,7 @@ func _build_ui() -> void:
 	var header := HBoxContainer.new()
 	root.add_child(header)
 
-	var title := _make_label(tr("UI_SHOP_TITLE"), int(28 * _M), COLOR_CYAN)
+	var title := _make_label(tr("UI_SHOP_HEADER"), int(28 * _M), COLOR_CYAN)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
 
