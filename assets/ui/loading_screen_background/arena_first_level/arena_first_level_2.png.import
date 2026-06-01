@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dkhvehbd1pg0e"
-path="res://.godot/imported/arena_first_level_1.JPG-1aca5f45349c4a68403e4dd38386924a.ctex"
+uid="uid://cph5dgp2lyt3o"
+path="res://.godot/imported/arena_first_level_2.png-9ad76f8e55145acade99894fb08f9455.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/ui/loading_screen_background/arena_first_level_1.JPG"
-dest_files=["res://.godot/imported/arena_first_level_1.JPG-1aca5f45349c4a68403e4dd38386924a.ctex"]
+source_file="res://assets/ui/loading_screen_background/arena_first_level/arena_first_level_2.png"
+dest_files=["res://.godot/imported/arena_first_level_2.png-9ad76f8e55145acade99894fb08f9455.ctex"]
 
 [params]
 

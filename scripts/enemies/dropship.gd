@@ -1,6 +1,5 @@
 # =============================================================
 # Dropship.gd — Vaisseau de transport de troupes
-# Rebound Protocol · Conventions : snake_case vars, PascalCase class
 # =============================================================
 class_name Dropship
 extends Node3D
@@ -9,9 +8,9 @@ extends Node3D
 @export var mob_scene: PackedScene
 @export var pause_duration: float = 1.5
 @export var spawn_count: int = 1
+@export var push_force: float = 8.0 # Force avec laquelle le joueur est éjecté
 
 # --- Composition : données injectées par le WaveManager -------
-## Si non null, remplace le mesh GLB par défaut (cargo_spawner)
 var dropship_mesh: PackedScene = null
 var enemy_died_callback: Callable = Callable()
 
@@ -21,6 +20,7 @@ var enemy_died_callback: Callable = Callable()
 @onready var dust_container: Node3D       = %Cargo_dust_container
 @onready var container: Node3D            = $Dropship_container
 @onready var cargo_spawner: Node3D        = $Dropship_container/cargo_spawner
+@onready var push_area: Area3D            = %PushArea # Notre nouvelle zone de répulsion
 
 
 # =============================================================
@@ -32,7 +32,6 @@ func _ready() -> void:
 		push_error("Dropship : AnimationPlayer introuvable !")
 		return
 
-	# Swap du mesh avant de lancer l'animation
 	if dropship_mesh:
 		_swap_mesh(dropship_mesh)
 
@@ -40,21 +39,31 @@ func _ready() -> void:
 	_start_delivery_sequence()
 
 
+func _physics_process(delta: float) -> void:
+	# On repousse le joueur UNIQUEMENT pendant que le vaisseau descend (atterrissage)
+	if anim_player.current_animation == "landing" and push_area:
+		for body in push_area.get_overlapping_bodies():
+			# Assure-toi que ton joueur est bien dans le groupe "player" (ou utilise "body is PlayerClass")
+			if body.is_in_group("player"): 
+				# 1. Calculer la direction du centre du vaisseau vers le joueur
+				var push_dir = body.global_position - global_position
+				push_dir.y = 0 # On ignore la hauteur pour le pousser purement à l'horizontale
+				push_dir = push_dir.normalized()
+				
+				# 2. Déplacer physiquement le joueur vers l'extérieur
+				# On modifie global_position pour être sûr de passer outre le script de mouvement du joueur
+				body.global_position += push_dir * push_force * delta
+
+
 # =============================================================
 # SWAP DE MESH
 # =============================================================
-
 func _swap_mesh(new_mesh_scene: PackedScene) -> void:
 	if not cargo_spawner:
 		push_warning("Dropship : cargo_spawner introuvable, swap ignoré.")
 		return
-
-	# On garde le transform du mesh original pour que le nouveau
-	# soit positionné et mis à l'échelle de la même façon
 	var saved_transform := cargo_spawner.transform
-
 	cargo_spawner.queue_free()
-
 	var new_mesh: Node3D = new_mesh_scene.instantiate()
 	container.add_child(new_mesh)
 	new_mesh.transform = saved_transform
@@ -63,15 +72,11 @@ func _swap_mesh(new_mesh_scene: PackedScene) -> void:
 # =============================================================
 # SÉQUENCE
 # =============================================================
-
 func _start_delivery_sequence() -> void:
 	anim_player.play("landing")
 	await anim_player.animation_finished
-
 	_spawn_mobs()
-
 	await get_tree().create_timer(pause_duration).timeout
-
 	_start_takeoff()
 
 
@@ -82,10 +87,8 @@ func _spawn_mobs() -> void:
 
 	for i in range(spawn_count):
 		var mob = mob_scene.instantiate()
-
 		if enemy_died_callback.is_valid() and mob.has_signal("enemy_died"):
 			mob.enemy_died.connect(enemy_died_callback)
-
 		get_parent().add_child(mob)
 
 		var offset := Vector3(randf_range(-2.0, 2.0), 0, randf_range(-2.0, 2.0))
