@@ -91,7 +91,8 @@ CREDITS_COPYRIGHT,© 2025 - All rights reserved,© 2025 - Tous droits réservés
 Chest,,,
 CHEST_OPEN,Open [F] ,Ouvrir [F] ,Abierto [F] 
 Shop,,,
-UI_SHOP_TITLE,SHOP [B],BOUTIQUE [B],TIENDA [B]
+UI_SHOP_TITLE,Shop,Boutique,Tienda
+UI_SHOP_HEADER,Shop Upgrades,Boutique d'amélioration,Tienda de mejoras
 UI_SHOP_TAB_PLAYER,PLAYER,JOUEUR,JUGADOR
 UI_SHOP_TAB_SHIELD,SHIELD,BOUCLIER,ESCUDO
 UI_SHOP_TAB_PASSIVES,PASSIVES,PASSIFS,PASIVAS

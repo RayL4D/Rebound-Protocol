@@ -60,6 +60,8 @@ func _update_movement(_delta: float) -> void:
 
 	var dir := _get_move_direction()
 	if dir == Vector3.ZERO:
+		velocity.x = 0.0
+		velocity.z = 0.0
 		return
 	velocity.x = dir.x * move_speed
 	velocity.z = dir.z * move_speed

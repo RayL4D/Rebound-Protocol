@@ -35,7 +35,6 @@ func _ready() -> void:
 	_connect_signals()
 	
 	ScoreManager.start_level()
-	call_deferred("_bake_navigation")
 
 	# === DÉSACTIVATION DES MURS AU LANCEMENT ===
 	if has_node(WALL_1_PATH):
