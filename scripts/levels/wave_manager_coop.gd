@@ -34,6 +34,7 @@ enum WaveType { NORMAL, SPECIAL, BOSS }
 var _current_wave: int = 0
 var _enemies_alive: int = 0
 var _enemy_spawner: MultiplayerSpawner = null
+var _dropship_spawner: MultiplayerSpawner = null
 var _is_running: bool = false
 var _wave_completed: bool = false
 var _spawn_positions: Array[Vector3] = []
@@ -220,16 +221,24 @@ func _generate_and_spawn_wave(wave_num: int, type: WaveType) -> void:
 				pos_index += 1
 
 func _spawn_dropship(pos: Vector3, enemy_scene: PackedScene, amount: int) -> void:
-	if not dropship_scene: return
+	if not multiplayer.is_server(): return
 
-	var ship = dropship_scene.instantiate()
-	ship.mob_scene = enemy_scene
-	ship.spawn_count = amount
-	ship.enemy_died_callback = _on_enemy_died
-	ship.enemy_spawner = _enemy_spawner
-
-	get_tree().current_scene.add_child(ship)
-	ship.global_position = pos
+	# 🔴 Utilisation directe du spawner injecté
+	if _dropship_spawner:
+		# On prépare le colis pour le réseau
+		var data = {
+			"ship_path": dropship_scene.resource_path,
+			"pos": pos,
+			"mob_path": enemy_scene.resource_path,
+			"amount": amount
+		}
+		var ship = _dropship_spawner.spawn(data)
+		
+		# Le spawner retourne l'instance au serveur, on lui passe le callback de mort
+		if ship:
+			ship.enemy_died_callback = _on_enemy_died
+	else:
+		push_error("WaveManagerCoop : _dropship_spawner est introuvable (null) !")
 
 # =============================================================
 # CALLBACKS & CONDITIONS DE FIN
@@ -295,5 +304,6 @@ func reset() -> void:
 	_enemies_alive = 0
 	_wave_completed = false
 	
-func setup_enemy_spawner(spawner: MultiplayerSpawner) -> void:
-	_enemy_spawner = spawner
+func setup_spawners(enemy_spawner: MultiplayerSpawner, dropship_spawner: MultiplayerSpawner) -> void:
+	_enemy_spawner = enemy_spawner
+	_dropship_spawner = dropship_spawner

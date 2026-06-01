@@ -1919,3 +1919,13 @@ move_speed = 300.0
 max_hp = 10000
 
 [node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="." unique_id=2120505134]
+_spawnable_scenes = PackedStringArray("uid://ubnnx67erpeq", "res://scenes/enemies/pet_cat.tscn")
+spawn_path = NodePath("../EnemiesContainer")
+
+[node name="EnemiesContainer" type="Node3D" parent="." unique_id=2092210422]
+
+[node name="MultiplayerSpawner2" type="MultiplayerSpawner" parent="." unique_id=1800380791]
+_spawnable_scenes = PackedStringArray("uid://dh1hioalq5p7")
+spawn_path = NodePath("../DropshipSpawner")
+
+[node name="DropshipSpawner" type="Node3D" parent="." unique_id=780006254]

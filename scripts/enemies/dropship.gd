@@ -76,23 +76,30 @@ func _start_delivery_sequence() -> void:
 	_start_takeoff()
 
 
-func _start_takeoff() -> void:
-	anim_player.play("takeoff")
-	await anim_player.animation_finished
-	queue_free()
-
 func _spawn_mobs() -> void:
-	if not mob_scene:
-		push_warning("Dropship : Aucune scène de mob assignée !")
-		return
+	# 🔴 Seul l'hôte demande l'apparition
+	if not multiplayer.is_server(): return
+	if not mob_scene: return
 
 	for i in range(spawn_count):
 		var mob: Node
+		var offset := Vector3(randf_range(-2.0, 2.0), 0, randf_range(-2.0, 2.0))
+		var spawn_pos = spawn_point.global_position + offset
+		var y_rot = spawn_point.global_rotation.y
 
 		if enemy_spawner:
-			mob = enemy_spawner.spawn(mob_scene.resource_path)  # on repasse au path
+			# On prépare le colis pour le réseau
+			var data = {
+				"path": mob_scene.resource_path,
+				"pos": spawn_pos,
+				"rot_y": y_rot
+			}
+			mob = enemy_spawner.spawn(data)
 		else:
+			# Sécurité (si tu testes hors-ligne sans spawner)
 			mob = mob_scene.instantiate()
+			mob.global_position = spawn_pos
+			mob.global_rotation.y = y_rot
 			get_parent().add_child(mob)
 
 		if not mob: continue
@@ -100,10 +107,11 @@ func _spawn_mobs() -> void:
 		if enemy_died_callback.is_valid() and mob.has_signal("enemy_died"):
 			mob.enemy_died.connect(enemy_died_callback)
 
-		var offset := Vector3(randf_range(-2.0, 2.0), 0, randf_range(-2.0, 2.0))
-		mob.global_position = spawn_point.global_position + offset
-		mob.global_rotation.y = spawn_point.global_rotation.y
-
 	print("Dropship : %d unité(s) déployée(s)." % spawn_count)
 
-# Supprime entièrement _is_scene_registered()
+func _start_takeoff() -> void:
+	anim_player.play("takeoff")
+	await anim_player.animation_finished
+	# 🔴 Seul l'hôte détruit le vaisseau
+	if multiplayer.is_server():
+		queue_free()
