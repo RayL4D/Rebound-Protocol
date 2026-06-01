@@ -125,6 +125,9 @@ func _spawn_all_players() -> void:
 	var keys: Array = NetworkManager.players.keys()
 	for i: int in keys.size():
 		$PlayerSpawner.spawn({ "peer_id": int(keys[i]), "slot": i })
+		
+	await get_tree().process_frame  # laisser les joueurs rejoindre le groupe "player"
+	$Wave_manager_coop.start()
 
 
 ## Fonction de spawn appelée sur TOUS les pairs par le MultiplayerSpawner.
