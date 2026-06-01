@@ -37,7 +37,14 @@ func _on_ready() -> void:
 		return
 	if player == null:
 		return
-	weapon.activate(player)
+	# Ennemis pré-placés : attendre la détection avant d'activer l'arme
+	if not use_detection:
+		weapon.activate(player)
+
+
+func _on_player_detected() -> void:
+	if weapon != null and player != null:
+		weapon.activate(player)
 
 
 # =============================================================

@@ -209,7 +209,7 @@ transform = Transform3D(-0.9999981, 0, 0.0018674135, 0, 1, 0, -0.0018674135, 0, 
 mesh = SubResource("BoxMesh_enpma")
 
 [node name="Mesh_ground_06" type="MeshInstance3D" parent="Ground/Mesh_container" unique_id=1340238511]
-transform = Transform3D(-0.1657188, 0, -0.98617303, 0, 1, 0, 0.98617303, 0, -0.1657188, 40.04013, -1, 64.33941)
+transform = Transform3D(-0.1657188, 0, -0.98617303, 0, 1, 0, 0.98617303, 0, -0.1657188, 40.04652, -0.94066143, 64.33948)
 mesh = SubResource("BoxMesh_enpma")
 
 [node name="Mesh_ground_07" type="MeshInstance3D" parent="Ground/Mesh_container" unique_id=748396967]
@@ -687,11 +687,18 @@ shape = SubResource("BoxShape3D_f2nsb")
 [node name="WaveManager_Zone1" type="Node" parent="Wave_manager_container" unique_id=877376594]
 script = ExtResource("2_arrf3")
 dropship_scene = ExtResource("3_r734y")
-dropship_spawn_points = Array[NodePath]([NodePath("DropShipSpawn_01")])
+dropship_spawn_points = Array[NodePath]([NodePath("DropShipSpawn_01"), NodePath("DropShipSpawn_02")])
 enemy_scene = ExtResource("4_r734y")
+enemy_catalog = Array[PackedScene]([ExtResource("4_r734y"), ExtResource("5_260nm"), ExtResource("6_yfmpj")])
 
 [node name="DropShipSpawn_01" type="Marker3D" parent="Wave_manager_container/WaveManager_Zone1" unique_id=987807997]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.6608505, 12.913968, 169.7789)
+
+[node name="DropShipSpawn_02" type="Marker3D" parent="Wave_manager_container/WaveManager_Zone1" unique_id=1234500001]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.667725, 12.913968, 175.48717)
+
+[node name="DropShipSpawn_03" type="Marker3D" parent="Wave_manager_container/WaveManager_Zone1" unique_id=1828433632]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.380228, 12.913968, 186.07591)
 
 [node name="WaveManager_Zone2" type="Node" parent="Wave_manager_container" unique_id=546491800]
 script = ExtResource("2_arrf3")
@@ -1129,27 +1136,6 @@ transform = Transform3D(4.7587223, 0, -1.5344577, 0, 5, 0, 1.5344577, 0, 4.75872
 [node name="Player" parent="." unique_id=222719199 instance=ExtResource("1_ha378")]
 transform = Transform3D(-0.9873115, 0, -0.15879565, 0, 1, 0, 0.15879565, 0, -0.9873115, -3.5227365, 0.43636608, -22.382069)
 
-[node name="Pet_Cow_1" parent="." unique_id=1156179715 instance=ExtResource("5_260nm")]
-transform = Transform3D(0.24782768, 0, -0.9688041, 0, 1, 0, 0.9688041, 0, 0.24782768, 92.61157, -0.3308797, 95.63044)
-use_detection = null
-detection_range = null
-detection_fov = null
-lose_range_mult = null
-
-[node name="Pet_Cow_2" parent="." unique_id=2054159834 instance=ExtResource("5_260nm")]
-transform = Transform3D(0.8095501, 0, -0.58705074, 0, 1, 0, 0.58705074, 0, 0.8095501, 25.524864, -0.67723846, 59.22924)
-use_detection = null
-detection_range = null
-detection_fov = null
-lose_range_mult = null
-
-[node name="Pet_Cow_3" parent="." unique_id=1659004844 instance=ExtResource("5_260nm")]
-transform = Transform3D(0.7381964, 0, -0.6745859, 0, 1, 0, 0.6745859, 0, 0.7381964, 42.197075, 0.29960012, 156.95418)
-use_detection = null
-detection_range = null
-detection_fov = null
-lose_range_mult = null
-
 [node name="HUD" parent="." unique_id=1994348935 instance=ExtResource("42_ayx3v")]
 
 [node name="GameOver" parent="." unique_id=892376385 instance=ExtResource("43_om3xt")]
@@ -1195,6 +1181,86 @@ level_name = "arena_first_level_1"
 
 [node name="NavigationRegion3D" type="NavigationRegion3D" parent="." unique_id=1111111111]
 navigation_mesh = SubResource("NavigationMesh_lvl1")
+
+[node name="Patrol1" type="Node3D" parent="." unique_id=368931052]
+
+[node name="PetDog" parent="Patrol1" unique_id=437757490 instance=ExtResource("4_r734y")]
+transform = Transform3D(0.09334374, 0, -0.99563396, 0, 1, 0, 0.99563396, 0, 0.09334374, 29.555029, 0, 56.182697)
+use_detection = true
+patrol_enabled = true
+patrol_distance = 8.0
+
+[node name="PetDog2" parent="Patrol1" unique_id=448784601 instance=ExtResource("4_r734y")]
+transform = Transform3D(-0.11639336, 0, -0.9932032, 0, 1, 0, 0.9932032, 0, -0.11639336, 29.264162, 0, 60.92073)
+use_detection = true
+patrol_enabled = true
+patrol_distance = 8.0
+
+[node name="PetCow" parent="Patrol1" unique_id=1156179715 instance=ExtResource("5_260nm")]
+transform = Transform3D(-0.0057770386, 0, -0.99998343, 0, 1, 0, 0.99998343, 0, -0.0057770386, 29.45267, 0, 58.54582)
+use_detection = true
+patrol_enabled = true
+patrol_distance = 8.0
+
+[node name="Patrol2" type="Node3D" parent="." unique_id=1322361326]
+
+[node name="PetDog" parent="Patrol2" unique_id=2053720078 instance=ExtResource("4_r734y")]
+transform = Transform3D(0.99937797, 0, 0.035265762, 0, 1, 0, -0.035265762, 0, 0.99937797, 90.399155, 0, 135.65965)
+use_detection = true
+patrol_enabled = true
+patrol_distance = 8.0
+
+[node name="PetDog2" parent="Patrol2" unique_id=1757031443 instance=ExtResource("4_r734y")]
+transform = Transform3D(0.98475015, 0, -0.17397474, 0, 1, 0, 0.17397474, 0, 0.98475015, 95.11224, 0, 136.22566)
+use_detection = true
+patrol_enabled = true
+patrol_distance = 8.0
+
+[node name="PetCow" parent="Patrol2" unique_id=123747311 instance=ExtResource("5_260nm")]
+transform = Transform3D(0.99795383, 0, -0.06394018, 0, 1, 0, 0.06394018, 0, 0.99795383, 92.75233, 0, 135.8993)
+use_detection = true
+patrol_enabled = true
+patrol_distance = 8.0
+
+[node name="Patrol3" type="Node3D" parent="." unique_id=155130158]
+
+[node name="PetDog" parent="Patrol3" unique_id=101864514 instance=ExtResource("4_r734y")]
+transform = Transform3D(-0.9946831, 0, -0.10298343, 0, 1, 0, 0.10298343, 0, -0.9946831, -0.92573476, 0, 85.09704)
+use_detection = true
+patrol_enabled = true
+patrol_distance = 8.0
+
+[node name="PetDog2" parent="Patrol3" unique_id=1841696986 instance=ExtResource("4_r734y")]
+transform = Transform3D(-0.99428403, 0, 0.10676733, 0, 1, 0, -0.10676733, 0, -0.99428403, -5.6663637, 0, 84.85207)
+use_detection = true
+patrol_enabled = true
+patrol_distance = 8.0
+
+[node name="PetCow" parent="Patrol3" unique_id=1359587282 instance=ExtResource("5_260nm")]
+transform = Transform3D(-0.99999255, 0, -0.003909467, 0, 1, 0, 0.003909467, 0, -0.99999255, -3.289737, 0, 85.01757)
+use_detection = true
+patrol_enabled = true
+patrol_distance = 8.0
+
+[node name="Patrol4" type="Node3D" parent="." unique_id=63876154]
+
+[node name="PetDog" parent="Patrol4" unique_id=1954793718 instance=ExtResource("4_r734y")]
+transform = Transform3D(0.13379592, 0, -0.99100894, 0, 1, 0, 0.99100894, 0, 0.13379592, 34.110878, 0, 157.71034)
+use_detection = true
+patrol_enabled = true
+patrol_distance = 8.0
+
+[node name="PetDog2" parent="Patrol4" unique_id=204464213 instance=ExtResource("4_r734y")]
+transform = Transform3D(-0.07586623, 0, -0.99711806, 0, 1, 0, 0.99711806, 0, -0.07586623, 34.013123, 0, 162.4563)
+use_detection = true
+patrol_enabled = true
+patrol_distance = 8.0
+
+[node name="PetCow" parent="Patrol4" unique_id=2137715583 instance=ExtResource("5_260nm")]
+transform = Transform3D(0.034934387, 0, -0.9993897, 0, 1, 0, 0.9993897, 0, 0.034934387, 34.104797, 0, 160.07568)
+use_detection = true
+patrol_enabled = true
+patrol_distance = 8.0
 
 [connection signal="body_entered" from="Wave_manager_container/Trigger_Zone1" to="." method="_on_trigger_zone_1_body_entered"]
 [connection signal="body_entered" from="Wave_manager_container/Trigger_Zone2" to="." method="_on_trigger_zone_2_body_entered"]

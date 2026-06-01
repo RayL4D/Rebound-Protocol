@@ -77,11 +77,25 @@ var _last_position: Vector3 = Vector3.ZERO
 @export var detection_range:  float = 12.0   # portée en mètres
 @export var detection_fov:    float = 110.0  # champ de vision en degrés
 ## Rayon de perte de cible : le joueur est "perdu" au-delà de cette distance.
-## Par défaut = 2× la portée de détection.
 @export var lose_range_mult:  float = 2.0
 
-@export_group("")   # ferme le groupe "Détection"
+@export_group("Patrouille")
+## Activer pour que l'ennemi fasse des rondes avant de détecter le joueur.
+## Fonctionne avec use_detection = true : patrouille → combat à la détection.
+@export var patrol_enabled:   bool  = false
+## Distance aller-retour de chaque côté du point de spawn (en mètres).
+@export var patrol_distance:  float = 6.0
+## Vitesse de patrouille relative à move_speed (0.0 – 1.0).
+@export var patrol_speed:     float = 0.55
+
+@export_group("")
 var _player_detected: bool = false
+
+# --- État patrouille -------------------------------------------
+var _patrol_origin:    Vector3 = Vector3.ZERO
+var _patrol_waypoints: Array[Vector3] = []
+var _patrol_idx:       int     = 0
+var _patrol_wait:      float   = 0.0   # pause courte à chaque extrémité
 # =============================================================
 # LIFECYCLE
 # =============================================================
@@ -115,6 +129,21 @@ func _ready() -> void:
 
 	if player != null:
 		_nav_agent.target_position = player.global_position
+
+	# Initialisation de la patrouille si activée
+	if patrol_enabled and use_detection:
+		_patrol_origin = global_position
+		# Direction de patrouille = axe Z local (avant/arrière depuis la rotation initiale)
+		var fwd := -global_transform.basis.z
+		fwd.y = 0.0
+		if fwd.length_squared() < 0.01:
+			fwd = Vector3(0, 0, 1)
+		fwd = fwd.normalized()
+		_patrol_waypoints = [
+			_patrol_origin + fwd * patrol_distance,
+			_patrol_origin - fwd * patrol_distance,
+		]
+		_patrol_idx = 0
 
 	_on_ready()
 
@@ -219,15 +248,52 @@ func _physics_process(delta: float) -> void:
 		if _nav_timer <= 0.0:
 			_nav_timer = NAV_UPDATE_INTERVAL
 			_nav_agent.target_position = player.global_position
-	else:
-		# Ennemi au repos : cible = position actuelle pour éviter tout mouvement
-		_nav_agent.target_position = global_position
-
-	_update_movement(delta)
-	move_and_slide()
-	if chasing:
+		_update_movement(delta)
 		_face_player()
+	elif patrol_enabled and not _patrol_waypoints.is_empty():
+		_update_patrol(delta)
+	else:
+		# Ennemi au repos sans patrouille : immobile
+		velocity.x = 0.0
+		velocity.z = 0.0
+
+	move_and_slide()
 	_update_animation()
+
+
+# =============================================================
+# PATROUILLE — va-et-vient entre deux waypoints autour du spawn
+# =============================================================
+
+func _update_patrol(delta: float) -> void:
+	# Pause courte à chaque extrémité avant de repartir
+	if _patrol_wait > 0.0:
+		_patrol_wait -= delta
+		velocity.x = 0.0
+		velocity.z = 0.0
+		return
+
+	var target  := _patrol_waypoints[_patrol_idx]
+	var to_tgt  := target - global_position
+	to_tgt.y    = 0.0
+	var dist    := to_tgt.length()
+
+	if dist < 0.8:
+		# Waypoint atteint : pause puis passer au suivant
+		_patrol_wait = 0.6
+		_patrol_idx  = (_patrol_idx + 1) % _patrol_waypoints.size()
+		velocity.x   = 0.0
+		velocity.z   = 0.0
+		return
+
+	# Déplacement direct vers le waypoint (pas de nav mesh — plus robuste en patrol)
+	var dir     := to_tgt.normalized()
+	var speed   := move_speed * patrol_speed
+	velocity.x   = dir.x * speed
+	velocity.z   = dir.z * speed
+
+	# Orientation dans la direction de marche
+	rotation.y   = atan2(dir.x, dir.z)
 
 
 # =============================================================
@@ -243,15 +309,19 @@ func _update_detection() -> void:
 			_player_detected = false
 		return
 
+	# (suite : vérifications portée + FOV + raycast)
+
 	# ── 1. Portée ──────────────────────────────────────────────────
 	if dist > detection_range:
 		return
 
 	# ── 2. Champ de vision ─────────────────────────────────────────
+	# _face_player() / _update_patrol() orientent le +Z local vers la direction
+	# regardée → basis.z = avant visuel de l'ennemi (pas -basis.z).
 	var to_player := (player.global_position - global_position)
 	to_player.y   = 0.0
 	if to_player.length_squared() > 0.01:
-		var forward  := -global_transform.basis.z
+		var forward  := global_transform.basis.z
 		forward.y    = 0.0
 		if forward.length_squared() > 0.001:
 			var angle := rad_to_deg(forward.normalized().angle_to(to_player.normalized()))
@@ -272,12 +342,26 @@ func _update_detection() -> void:
 	if not hit.is_empty() and hit.get("collider") != player:
 		return
 
-	_player_detected = true
+	_set_player_detected()
 
 
 ## Alerte immédiate quand l'ennemi reçoit un coup (même hors champ de vision).
 func alert() -> void:
+	_set_player_detected()
+
+
+## Déclenche la détection et notifie les sous-classes (ex. pour activer l'arme).
+func _set_player_detected() -> void:
+	if _player_detected:
+		return
 	_player_detected = true
+	_on_player_detected()
+
+
+## Hook surchargeable : appelé UNE SEULE FOIS quand le joueur est détecté.
+## Utiliser pour activer l'arme sur les ennemis pré-placés (use_detection = true).
+func _on_player_detected() -> void:
+	pass
 
 
 # =============================================================
@@ -345,7 +429,7 @@ func take_damage(amount: int, silent_hurt: bool = false) -> void:
 	# Un ennemi pré-placé qui reçoit un coup détecte toujours le joueur,
 	# même s'il était hors champ de vision.
 	if use_detection:
-		_player_detected = true
+		_set_player_detected()
 	current_hp = max(0, current_hp - amount)
 	_spawn_damage_number(amount)
 	if current_hp <= 0:
@@ -645,6 +729,8 @@ func _flash_hit(color: Color, duration: float) -> void:
 		var tw := create_tween()
 		tw.tween_interval(duration)
 		tw.tween_callback(func():
+			if not is_instance_valid(mesh):
+				return
 			for i in orig_mats.size():
 				mesh.set_surface_override_material(i, orig_mats[i])
 		)

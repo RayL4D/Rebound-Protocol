@@ -16,10 +16,20 @@ class WaveData:
 	var dropship_count: int
 	var message: String
 	# --- Sélection d'ennemi par index dans le catalogue ---
-	var enemy_index: int = -1  # -1 = utiliser enemy_scene par défaut, sinon index dans enemy_catalog
-	# --- boss ---	
-	var enemy_scene: PackedScene = null 
-	var dropship_mesh: PackedScene = null 
+	var enemy_index: int = -1
+	## Vague mixte simple : un type d'ennemi par dropship.
+	var enemy_mix: Array[int] = []
+	## Groupes par dropship : Array de [enemy_index, count, position_index].
+	## position_index = index dans dropship_spawn_points (0, 1, 2…).
+	## Permet à chaque dropship de spawner un mix précis depuis une position précise.
+	## Ex pour 2 spawns, chacun 3 chiens + 3 vaches :
+	##   [[0,3,0],[1,3,0],[0,3,1],[1,3,1]]
+	##   → pos0 : 3 chiens, pos0 : 3 vaches, pos1 : 3 chiens, pos1 : 3 vaches
+	## Si renseigné, prend le pas sur enemy_count/dropship_count/enemy_mix.
+	var dropship_groups: Array = []
+	# --- boss ---
+	var enemy_scene: PackedScene = null
+	var dropship_mesh: PackedScene = null
 
 	func _init(p_count: int, p_ships: int, p_msg: String, p_enemy_idx: int = -1) -> void:
 		enemy_count = p_count
@@ -157,16 +167,32 @@ func _start_wave(index: int) -> void:
 
 func _spawn_wave(wave: WaveData) -> void:
 	_current_wave_data = wave
-	_enemies_alive = wave.enemy_count
-	_update_enemies_label()
 
 	var positions: Array[Vector3] = _get_spawn_positions()
 	if positions.is_empty():
 		push_error("WaveManager : aucun point de spawn configuré !")
 		return
 
+	# ── Mode groupes : configuration explicite [enemy_index, count] par dropship ──
+	if not wave.dropship_groups.is_empty():
+		_enemies_alive = 0
+		for grp in wave.dropship_groups:
+			_enemies_alive += int(grp[1])
+		_update_enemies_label()
+		for grp in wave.dropship_groups:
+			# Chaque entrée = [enemy_index, count, position_index]
+			var enemy_idx := int(grp[0])
+			var count     := int(grp[1])
+			var pos_idx   := int(grp[2]) if grp.size() >= 3 else 0
+			var pos       := positions[pos_idx % positions.size()]
+			_spawn_dropship(pos, count, enemy_idx)
+		return
+
+	# ── Mode standard ──────────────────────────────────────────────────────────
+	_enemies_alive = wave.enemy_count
+	_update_enemies_label()
+
 	var ships := mini(wave.dropship_count, positions.size())
-	# Prévention des divisions par zéro si dropship_count est 0
 	var base_per_ship: int = int(float(wave.enemy_count) / float(ships)) if ships > 0 else 0
 	var remainder: int = wave.enemy_count % ships if ships > 0 else 0
 
@@ -174,25 +200,30 @@ func _spawn_wave(wave: WaveData) -> void:
 		var count := base_per_ship + (1 if i < remainder else 0)
 		if count <= 0:
 			continue
-		_spawn_dropship(positions[i % positions.size()], count)
+		var ship_idx := wave.enemy_index
+		if not wave.enemy_mix.is_empty():
+			ship_idx = wave.enemy_mix[i % wave.enemy_mix.size()]
+		_spawn_dropship(positions[i % positions.size()], count, ship_idx)
 
-func _spawn_dropship(pos: Vector3, enemy_count: int) -> void:
+func _spawn_dropship(pos: Vector3, enemy_count: int, override_enemy_idx: int = -2) -> void:
 	if not dropship_scene:
 		push_error("WaveManager : dropship_scene non assigné !")
 		return
 
 	var ship = dropship_scene.instantiate()
-	
-	# 🎯 NOUVELLE LOGIQUE : Sélection de l'ennemi
+
+	# Sélection de l'ennemi — priorités :
+	# 1. enemy_scene custom dans WaveData (boss)
+	# 2. override_enemy_idx fourni par _spawn_wave (vague mixte)
+	# 3. enemy_index général de la vague
+	# 4. enemy_scene par défaut du WaveManager
 	var selected_enemy: PackedScene = null
-	
-	# Priorité 1 : enemy_scene dans WaveData (pour boss custom)
 	if _current_wave_data.enemy_scene:
 		selected_enemy = _current_wave_data.enemy_scene
-	# Priorité 2 : enemy_index dans le catalogue
+	elif override_enemy_idx >= 0 and override_enemy_idx < enemy_catalog.size():
+		selected_enemy = enemy_catalog[override_enemy_idx]
 	elif _current_wave_data.enemy_index >= 0 and _current_wave_data.enemy_index < enemy_catalog.size():
 		selected_enemy = enemy_catalog[_current_wave_data.enemy_index]
-	# Priorité 3 : enemy_scene par défaut (rétro-compatibilité)
 	else:
 		selected_enemy = enemy_scene
 	

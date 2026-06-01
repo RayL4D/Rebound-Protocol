@@ -92,17 +92,40 @@ func _setup_ui() -> void:
 
 func _setup_waves() -> void:
 	if wave_manager_zone1:
-		var waves_z1: Array[WaveManager.WaveData] = [
-			WaveManager.WaveData.new(5, 1, "WAVE_NAME_OUTPOST", 0)
+		# Vague 1 : 12 chiens (6 par dropship)
+		var w1a := WaveManager.WaveData.new(12, 2, "WAVE_NAME_OUTPOST", 0)
+
+		# Vague 2 : chaque spawn point reçoit 3 chiens ET 3 vaches
+		# Format : [enemy_index, count, position_index]
+		var w1b := WaveManager.WaveData.new(0, 0, "WAVE_NAME_OUTPOST")
+		w1b.dropship_groups = [
+			[0, 3, 0],   # pos 0 → 3 chiens
+			[1, 3, 0],   # pos 0 → 3 vaches
+			[0, 3, 1],   # pos 1 → 3 chiens
+			[1, 3, 1],   # pos 1 → 3 vaches
 		]
+
+		# Utiliser append() évite les problèmes de parsing des typed array literals
+		# avec des inner classes en GDScript
+		var waves_z1: Array[WaveManager.WaveData] = []
+		waves_z1.append(w1a)
+		waves_z1.append(w1b)
 		wave_manager_zone1.setup_waves(waves_z1)
-	
+
 	if wave_manager_zone2:
-		var waves_z2: Array[WaveManager.WaveData] = [
-			WaveManager.WaveData.new(10, 2, "WAVE_NAME_SQUAD", 0),
-			WaveManager.WaveData.new(15, 3, "WAVE_NAME_REINFORCEMENTS", 1),
-			WaveManager.WaveData.new(20, 3, "WAVE_NAME_MAX_ALERT", 2)
-		]
+		var w2a := WaveManager.WaveData.new(8, 2, "WAVE_NAME_SQUAD")
+		w2a.enemy_mix = [0, 1]
+
+		var w2b := WaveManager.WaveData.new(9, 3, "WAVE_NAME_REINFORCEMENTS")
+		w2b.enemy_mix = [1, 2, 2]
+
+		var w2c := WaveManager.WaveData.new(12, 3, "WAVE_NAME_MAX_ALERT")
+		w2c.enemy_mix = [0, 1, 2]
+
+		var waves_z2: Array[WaveManager.WaveData] = []
+		waves_z2.append(w2a)
+		waves_z2.append(w2b)
+		waves_z2.append(w2c)
 		wave_manager_zone2.setup_waves(waves_z2)
 
 func _connect_signals() -> void:
