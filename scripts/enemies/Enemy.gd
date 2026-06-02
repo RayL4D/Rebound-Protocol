@@ -48,6 +48,7 @@ var player: Player          = null
 var _model: Node3D          = null
 var _anim_player: AnimationPlayer = null  # trouvé automatiquement dans _setup_model
 var _gesture_active: bool = false         # true pendant une animation de geste (bloque idle/walk/run)
+var is_dead: bool = false
 
 # Matériaux originaux mémorisés à l'init — restaurés après chaque flash.
 # Clé : MeshInstance3D  Valeur : Material original
@@ -56,6 +57,9 @@ var _gesture_active: bool = false         # true pendant une animation de geste 
 var _orig_mats: Dictionary = {}
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
+
+# --- SYSTÈME DE SILHOUETTE (X-RAY) -----------------------------
+var _highlight_material: ShaderMaterial = null
 
 # --- Signal (compatible avec EnemyPlaceholder) ------------------
 signal enemy_died
@@ -264,11 +268,15 @@ func _update_animation() -> void:
 
 ## silent_hurt : passer true pour supprimer le son hurt (ex. stomp/dash — le joueur a son propre son d'impact)
 func take_damage(amount: int, silent_hurt: bool = false) -> void:
-	if not is_inside_tree():
+	# 🛠️ Si l'ennemi est déjà mort ou hors de l'arbre, on ignore complètement
+	if is_dead or not is_inside_tree():
 		return
+		
 	current_hp = max(0, current_hp - amount)
 	_spawn_damage_number(amount)
+	
 	if current_hp <= 0:
+		is_dead = true # 🛠️ On verrouille immédiatement avant d'appeler _die()
 		_die()
 		return
 
@@ -477,7 +485,7 @@ func _spawn_death_burst() -> void:
 			Color(1.0, 0.9, 0.2))   # jaune vif
 
 
-func _spawn_burst_particle(parent: Node, origin: Vector3,
+static func _spawn_burst_particle(parent: Node, origin: Vector3,
 		direction: Vector3, speed: float, color: Color) -> void:
 	var sphere_mesh := SphereMesh.new()
 	sphere_mesh.radius         = 0.055
@@ -608,3 +616,35 @@ func _get_move_direction() -> Vector3:
 	var dir  := (next - global_position)
 	dir.y     = 0.0
 	return dir.normalized()
+
+## Active ou désactive la silhouette à travers les murs
+func toggle_highlight(enabled: bool) -> void:
+	if _model == null:
+		return
+
+	# On crée le matériau de silhouette au premier appel si besoin
+	if enabled and _highlight_material == null:
+		var shader := Shader.new()
+		shader.code = """
+		shader_type spatial;
+		render_mode unshaded, depth_test_disabled;
+		
+		uniform vec4 silhouette_color : source_color = vec4(1.0, 0.35, 0.0, 0.5);
+		
+		void fragment() {
+			ALBEDO = silhouette_color.rgb;
+			ALPHA = silhouette_color.a;
+		}
+		"""
+		_highlight_material = ShaderMaterial.new()
+		_highlight_material.shader = shader
+
+	# On applique ou on retire le overlay sur tous les sous-meshes de l'ennemi
+	var meshes: Array[MeshInstance3D] = []
+	_collect_meshes(_model, meshes)
+	
+	for mesh in meshes:
+		if enabled:
+			mesh.material_overlay = _highlight_material
+		else:
+			mesh.material_overlay = null
