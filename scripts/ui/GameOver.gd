@@ -45,6 +45,8 @@ var _is_glitching:  bool   = false
 var _accent_color:  Color  = COLOR_RED
 var _panel_visible: bool   = false
 
+var _M: float = 1.6 if OS.has_feature("mobile") else 1.0
+
 # --- Audio ------------------------------------------------------
 const _SFX_HOVER:  AudioStream = preload("res://audio/sfx/ui/btn_hover.wav")
 const _SFX_CLICK:  AudioStream = preload("res://audio/sfx/ui/btn_click.wav")
@@ -170,8 +172,11 @@ func _build_ui() -> void:
 
 	# Panneau central
 	# PROCESS_MODE_WHEN_PAUSED : doit répondre aux inputs même pendant la pause
+	var M := _M
+	var pw := 380.0 * M
+	var ph := 260.0 * M
 	_panel                = Control.new()
-	_panel.size           = Vector2(380.0, 260.0)
+	_panel.size           = Vector2(pw, ph)
 	_panel.set_anchors_preset(Control.PRESET_CENTER)
 	_panel.position      -= _panel.size * 0.5
 	_panel.process_mode   = Node.PROCESS_MODE_WHEN_PAUSED
@@ -187,10 +192,10 @@ func _build_ui() -> void:
 	_add_scan_lines(_panel)
 
 	# Séparateurs
-	for y in [75.0, 148.0]:
+	for y in [75.0 * M, 148.0 * M]:
 		var sep       := ColorRect.new()
 		sep.color      = Color(COLOR_CYAN, 0.25)
-		sep.size       = Vector2(380.0, 1.0)
+		sep.size       = Vector2(pw, 1.0)
 		sep.position   = Vector2(0.0, y)
 		_panel.add_child(sep)
 
@@ -200,11 +205,11 @@ func _build_ui() -> void:
 
 	# Titre
 	_title = Label.new()
-	_title.size     = Vector2(380.0, 75.0)
+	_title.size     = Vector2(pw, 75.0 * M)
 	_title.position = Vector2(0.0, 0.0)
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_title.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
-	_title.add_theme_font_size_override("font_size", 42)
+	_title.add_theme_font_size_override("font_size", int(42 * M))
 	_title.add_theme_color_override("font_color", COLOR_RED)
 	_title.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.8))
 	_title.add_theme_constant_override("outline_size", 3)
@@ -212,30 +217,30 @@ func _build_ui() -> void:
 
 	# Sous-titre
 	_subtitle = Label.new()
-	_subtitle.size     = Vector2(380.0, 30.0)
-	_subtitle.position = Vector2(0.0, 88.0)
+	_subtitle.size     = Vector2(pw, 30.0 * M)
+	_subtitle.position = Vector2(0.0, 88.0 * M)
 	_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_subtitle.add_theme_font_size_override("font_size", 11)
+	_subtitle.add_theme_font_size_override("font_size", int(11 * M))
 	_subtitle.add_theme_color_override("font_color", Color(0.45, 0.75, 0.85, 0.9))
 	_panel.add_child(_subtitle)
 
 	# Watermark
 	var tip := Label.new()
 	tip.text     = "REBOUND PROTOCOL"
-	tip.size     = Vector2(380.0, 20.0)
-	tip.position = Vector2(0.0, 122.0)
+	tip.size     = Vector2(pw, 20.0 * M)
+	tip.position = Vector2(0.0, 122.0 * M)
 	tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	tip.add_theme_font_size_override("font_size", 8)
+	tip.add_theme_font_size_override("font_size", int(8 * M))
 	tip.add_theme_color_override("font_color", Color(0.3, 0.5, 0.6, 0.5))
 	_panel.add_child(tip)
 
 	# Boutons
-	_btn_retry = _make_button(tr("UI_RETRY"), Vector2(90.0, 163.0), Vector2(200.0, 38.0), true)
+	_btn_retry = _make_button(tr("UI_RETRY"), Vector2(pw * 0.237, 163.0 * M), Vector2(pw * 0.527, 38.0 * M), true)
 	_btn_retry.pressed.connect(_on_retry)
 	_btn_retry.process_mode = Node.PROCESS_MODE_ALWAYS   # fonctionne paused ou non
 	_panel.add_child(_btn_retry)
 
-	_btn_quit = _make_button(tr("UI_QUIT"), Vector2(90.0, 210.0), Vector2(200.0, 30.0), false)
+	_btn_quit = _make_button(tr("UI_QUIT"), Vector2(pw * 0.237, 210.0 * M), Vector2(pw * 0.527, 30.0 * M), false)
 	_btn_quit.pressed.connect(_on_quit)
 	_btn_quit.process_mode = Node.PROCESS_MODE_ALWAYS    # fonctionne paused ou non
 	_panel.add_child(_btn_quit)
@@ -246,26 +251,30 @@ func _add_scan_lines(parent: Control) -> void:
 	lines.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	lines.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(lines)
-	for i in range(0, 260, 4):
+	var panel_h := int(260.0 * _M)
+	var panel_w := 380.0 * _M
+	for i in range(0, panel_h, 4):
 		var line          := ColorRect.new()
 		line.color         = Color(0.0, 0.0, 0.0, 0.12)
 		line.position      = Vector2(0.0, float(i))
-		line.size          = Vector2(380.0, 1.0)
+		line.size          = Vector2(panel_w, 1.0)
 		line.mouse_filter  = Control.MOUSE_FILTER_IGNORE
 		lines.add_child(line)
 
 
 func _make_corners(origin: Vector2, size: Vector2, color: Color) -> Array:
 	var result := []
+	var cl := CORNER_LEN * _M
+	var ct := CORNER_THK * _M
 	for p in [
-		[origin,                                                       Vector2(CORNER_LEN, CORNER_THK)],
-		[origin,                                                       Vector2(CORNER_THK, CORNER_LEN)],
-		[origin + Vector2(size.x - CORNER_LEN, 0),                    Vector2(CORNER_LEN, CORNER_THK)],
-		[origin + Vector2(size.x - CORNER_THK, 0),                    Vector2(CORNER_THK, CORNER_LEN)],
-		[origin + Vector2(0, size.y - CORNER_THK),                    Vector2(CORNER_LEN, CORNER_THK)],
-		[origin + Vector2(0, size.y - CORNER_LEN),                    Vector2(CORNER_THK, CORNER_LEN)],
-		[origin + Vector2(size.x - CORNER_LEN, size.y - CORNER_THK), Vector2(CORNER_LEN, CORNER_THK)],
-		[origin + Vector2(size.x - CORNER_THK, size.y - CORNER_LEN), Vector2(CORNER_THK, CORNER_LEN)],
+		[origin,                                                   Vector2(cl, ct)],
+		[origin,                                                   Vector2(ct, cl)],
+		[origin + Vector2(size.x - cl, 0),                        Vector2(cl, ct)],
+		[origin + Vector2(size.x - ct, 0),                        Vector2(ct, cl)],
+		[origin + Vector2(0, size.y - ct),                        Vector2(cl, ct)],
+		[origin + Vector2(0, size.y - cl),                        Vector2(ct, cl)],
+		[origin + Vector2(size.x - cl, size.y - ct),              Vector2(cl, ct)],
+		[origin + Vector2(size.x - ct, size.y - cl),              Vector2(ct, cl)],
 	]:
 		var r      := ColorRect.new()
 		r.color     = color
@@ -281,7 +290,7 @@ func _make_button(label: String, pos: Vector2, sz: Vector2, primary: bool) -> Bu
 	btn.position = pos
 	btn.size     = sz
 	# process_mode est assigné individuellement après l'appel
-	btn.add_theme_font_size_override("font_size", 13 if primary else 11)
+	btn.add_theme_font_size_override("font_size", int((13 if primary else 11) * _M))
 	btn.add_theme_color_override("font_color",        COLOR_CYAN if primary else Color(0.4, 0.6, 0.7))
 	btn.add_theme_color_override("font_hover_color",  Color.WHITE)
 	btn.add_theme_color_override("font_pressed_color",COLOR_CYAN)

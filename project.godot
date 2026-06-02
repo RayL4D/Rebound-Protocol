@@ -11,7 +11,8 @@ config_version=5
 [application]
 
 config/name="Rebound Protocol"
-run/main_scene="uid://csuqak0vnysy3"
+run/main_scene="res://scenes/ui/splash_screen.tscn"
+run/disable_stdout=true
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="uid://b3c1onv2sximu"
 
@@ -23,6 +24,8 @@ CollisionManager="*res://scripts/levels/collision_manager.gd"
 MusicManager="*res://scripts/autoloads/music_manager.gd"
 AmbientManager="*res://scripts/autoloads/ambient_manager.gd"
 XpManager="*res://scripts/autoloads/xp_manager.gd"
+NetworkManager="*res://scripts/autoloads/network_manager.gd"
+ScoreManager="*res://scripts/autoloads/scoreManager.gd"
 
 [display]
 

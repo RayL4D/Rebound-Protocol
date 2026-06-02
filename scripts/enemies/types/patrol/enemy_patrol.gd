@@ -1,7 +1,7 @@
 extends Enemy # Hérite de votre classe de base Rebound Protocol
 
 @export var path_follow : PathFollow3D
-@export var detection_range : float = 12.0
+# detection_range est hérité de Enemy.gd — ne pas redéclarer
 
 enum State { PATROLLING, CHASING }
 var _current_state = State.PATROLLING

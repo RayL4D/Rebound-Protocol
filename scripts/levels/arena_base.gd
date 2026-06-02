@@ -7,23 +7,14 @@ extends Node
 @onready var wave_manager: Node = $WaveManager
 @onready var tutorial_manager: TutorialManager = $TutorialManager
 @onready var hud: Node = $HUD
-
-# --- Boss ---
-const BOSS_SCENE := preload("res://scenes/enemies/boss_lion.tscn")
-var _boss: BossLion = null
+@onready var hidden_save_point_1 = $SavePoint
 
 
 func _ready() -> void:
+	_prewarm_bullet_shaders()
 	MusicManager.play("gameplay")
 	AmbientManager.play("arena")
-
 	TranslationServer.set_locale(SceneManager.current_lang)
-
-	#TranslationServer.set_locale("es") # Espagnol pour le test
-	# Générer les collisions manquantes pour la géométrie de cette scène.
-	# Sans await : _ready() des enfants s'exécute avant celui du parent,
-	# donc cet appel se termine AVANT celui du script racine du niveau.
-	# Le CollisionManager détecte ensuite les StaticBody3D déjà créés → pas de doublon.
 	CollisionManager.add_missing_collisions(self)
 
 	# --- Labels HUD ---
@@ -32,15 +23,20 @@ func _ready() -> void:
 	var enemies_label: Label   = hud.get_node_or_null("%EnemiesLabel")
 	var step_label:    Label   = hud.get_node_or_null("%StepLabel")
 	var panel:         Control = hud.get_node_or_null("%PanelContainer")
+	
 
 	wave_manager.setup_ui(wave_label, message_label, enemies_label, panel)
+	_scale_hud_labels_for_mobile(wave_label, message_label, enemies_label)
+
+	if hidden_save_point_1:
+		hidden_save_point_1.visible = false
+		hidden_save_point_1.process_mode = Node.PROCESS_MODE_DISABLED
 
 	# --- Vagues ---
 	var waves: Array[WaveManager.WaveData] = [
-		WaveManager.WaveData.new(1, 1, ""),   # Ennemi test post-tuto
-		#WaveManager.WaveData.new(1, 1, tr("WAVE_MSG_1")),
-		#WaveManager.WaveData.new(2, 1, tr("WAVE_MSG_2")),
-		#WaveManager.WaveData.new(3, 2, tr("WAVE_MSG_FINAL")),
+		WaveManager.WaveData.new(1, 1, tr("TUTO_STEP_5")),
+		WaveManager.WaveData.new(2, 1, tr("WAVE_MSG_1")),
+		WaveManager.WaveData.new(3, 2, tr("WAVE_MSG_FINAL")),
 	]
 	wave_manager.setup_waves(waves)
 
@@ -49,12 +45,31 @@ func _ready() -> void:
 	tutorial_manager.setup(player, panel, message_label, step_label)
 	tutorial_manager.tutorial_completed.connect(_on_tutorial_completed)
 	tutorial_manager.start()
-
-	# Pas de boss dans le tutoriel — la sortie s'active directement après les vagues.
+		
 	wave_manager.all_waves_finished.connect(func():
-		var exit_zone = $LevelExit
+		message_label.text = tr("MISSION_ACCOMPLISHED")
+		var exit_zone = $Hangar_exit
+		if hidden_save_point_1:
+			hidden_save_point_1.visible = true
+			hidden_save_point_1.process_mode = Node.PROCESS_MODE_INHERIT
 		exit_zone.activate()
 	)
+
+	call_deferred("_deferred_restore_player")
+
+
+## Force la compilation des shaders de balles dès le chargement de l'arène.
+## Sans ça, la 1ère balle tirée provoque un freeze sur les PC moins puissants
+## (Godot compile le shader StandardMaterial3D → émission + transparence à la volée).
+## Un dummy bullet est ajouté hors-champ (Y=-500), rendu un frame, puis supprimé.
+func _prewarm_bullet_shaders() -> void:
+	const SCENE = preload("res://scenes/projectiles/bullet_enemy.tscn")
+	var dummy: Node3D = SCENE.instantiate() as Node3D
+	dummy.position = Vector3(0.0, -500.0, 0.0)
+	add_child(dummy)
+	await get_tree().process_frame
+	if is_instance_valid(dummy):
+		dummy.queue_free()
 
 
 func _on_tutorial_completed() -> void:
@@ -62,53 +77,41 @@ func _on_tutorial_completed() -> void:
 
 
 # =============================================================
-# BOSS
+# SCALING MOBILE — labels dialogue / vague
 # =============================================================
+func _scale_hud_labels_for_mobile(wave_label: Label, message_label: Label, enemies_label: Label) -> void:
+	if not OS.has_feature("mobile"):
+		return
+	const M := 1.6
+	var font_sz := int(20 * M * 1.35)   # ~43 px
 
-func _on_waves_finished() -> void:
-	# Les vagues normales sont terminées — spawner le boss
-	_spawn_boss()
+	# Taille de police
+	for lbl: Label in [wave_label, message_label, enemies_label]:
+		if lbl != null:
+			lbl.add_theme_font_size_override("font_size", font_sz)
+
+	# Élargir la zone MessageLabel (anchor center-top → offsets horizontaux)
+	if message_label != null:
+		message_label.offset_left   = -220.0
+		message_label.offset_right  =  220.0
+		message_label.offset_top    =  100.0
+		message_label.offset_bottom =  100.0 + font_sz + 10.0
+
+	# GridContainer (Wave / Ennemis) en bas à droite
+	var grid := hud.get_node_or_null("WaveContainer/GridContainer")
+	if grid != null:
+		grid.offset_left = -408.0 * M
+		grid.offset_top  = -50.0  * M
 
 
-func _spawn_boss() -> void:
-	MusicManager.play("boss")
-	_boss = BOSS_SCENE.instantiate() as BossLion
-	add_child(_boss)
-
-	# Placer le boss en face du centre de l'arène (à 12 unités du joueur)
+# =============================================================
+# RESTAURATION CHECKPOINT (filet de sécurité)
+# =============================================================
+func _deferred_restore_player() -> void:
+	if SaveData.active_slot < 0:
+		return  # Mode co-op ou aucun slot chargé — pas de restauration checkpoint
 	var player: Player = get_tree().get_first_node_in_group("player")
-	if player:
-		var spawn_dir := Vector3(0.0, 0.0, -1.0)   # Côté opposé (ajuste si besoin)
-		_boss.global_position = player.global_position + spawn_dir * 12.0
-	else:
-		_boss.global_position = Vector3(0.0, 0.0, -12.0)
-
-	# Connexion des signaux
-	_boss.boss_hp_changed.connect(_on_boss_hp_changed)
-	_boss.boss_died.connect(_on_boss_died)
-
-	# Afficher un message d'annonce
-	var message_label: Label = hud.get_node_or_null("%MessageLabel")
-	var panel: Control       = hud.get_node_or_null("%PanelContainer")
-	if panel:
-		panel.visible = true
-	if message_label:
-		message_label.text = tr("BOSS_LION_ANNOUNCE")
-	await get_tree().create_timer(2.5).timeout
-	if panel:
-		panel.visible = false
-
-
-func _on_boss_hp_changed(_current_hp: int, _max_hp: int) -> void:
-	pass
-
-
-func _on_boss_died() -> void:
-	MusicManager.play("gameplay")
-	# Activer la sortie et afficher le message de fin
-	var exit_zone = $LevelExit
-	exit_zone.activate()
-
-	var message_label: Label = hud.get_node_or_null("%MessageLabel")
-	if message_label:
-		message_label.text = tr("MISSION_ACCOMPLISHED")
+	if player == null:
+		return
+	print("[ArenaBase] _deferred_restore_player — appel restore_from_checkpoint()")
+	player.restore_from_checkpoint()

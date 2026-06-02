@@ -140,13 +140,15 @@ func _draw() -> void:
 		C_SEP_P if p else C_SEP, 1.5, true)
 
 	# ----------------------------------------------------------
-	# 7. Label "PARRY" — calé dans la zone restante sous le séparateur
+	# 7. Label localisé — auto-fit pour que ça rentre quelle que soit la langue
 	# ----------------------------------------------------------
 	var tc  := C_TAG_P if p else C_TAG
 	var fnt := get_theme_default_font()
-	# Police légèrement plus petite que JumpButton pour caser "PARRY" avec spaces
-	var fsz : int   = maxi(int(r * 0.19), 8)
-	var lbl := "P A R R Y"
+	var lbl := tr("BTN_PARRY")
+	var fsz : int   = maxi(int(r * 0.21), 8)
+	var max_w : float = r * 0.90
+	while fsz > 7 and fnt.get_string_size(lbl, HORIZONTAL_ALIGNMENT_LEFT, -1, fsz).x > max_w:
+		fsz -= 1
 	var tw  : float = fnt.get_string_size(lbl, HORIZONTAL_ALIGNMENT_LEFT, -1, fsz).x
 	# Baseline : centre vertical entre séparateur et bord du cercle
 	var text_y : float = sy + (r - sy + c.y) * 0.52 + fsz * 0.5

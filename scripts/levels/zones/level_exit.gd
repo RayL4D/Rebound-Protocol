@@ -1,25 +1,22 @@
+# Portail pour sortir ET TERMINER un niveau (au niveau du score)
 extends Area3D
 
-@export_file("*.tscn") var next_scene: String = "res://scenes/levels/arena_base.tscn"
-
-@onready var animation_player: AnimationPlayer = $AnimationPlayer
+@onready var mesh_detect : Node = $Mesh_detector
+@onready var meshs_portal_effect : Node = $Portal/Mesh_container
 
 func _ready():
-	# caché au début
 	monitorable = false
 	monitoring = false
-	hide()
-	body_entered.connect(_on_body_entered)
-
+	mesh_detect.hide()
+	meshs_portal_effect.hide()
+	if not body_entered.is_connected(_on_body_entered):
+		body_entered.connect(_on_body_entered)
 
 func activate():
 	monitoring = true
-	show()
-	
-	if animation_player and animation_player.has_animation("direction_animation"):
-		animation_player.play("direction_animation")
-
+	mesh_detect.show()
+	meshs_portal_effect.show()
 
 func _on_body_entered(body: Node3D):
-	if body is Player: 
-		SceneManager.load_level("res://scenes/levels/arena_base.tscn")
+	if body is Player:
+		ScoreManager.call_deferred("end_level")

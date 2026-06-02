@@ -2,6 +2,11 @@ extends Node
 
 ## Génère automatiquement les collisions manquantes.
 func add_missing_collisions(node: Node) -> void:
+	# Garde-fou : nœud null ou libéré (peut arriver pendant le chargement de scène
+	# si un enfant est queue_free() entre l'appel parent et l'appel récursif).
+	if not is_instance_valid(node):
+		return
+
 	# Ignorer les entités mobiles, les zones de trigger et les corps rigides.
 	if node is CharacterBody3D or node is Area3D or node is RigidBody3D:
 		return

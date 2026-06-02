@@ -22,6 +22,7 @@
 #       ├── [Modèle scope-large-a.glb]
 #       └── WeaponSniper (Node3D) ← charge + laser + tir unique
 # =============================================================
+@tool
 class_name PetKoala
 extends Enemy
 

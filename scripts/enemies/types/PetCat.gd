@@ -17,6 +17,7 @@
 #   │   └── WeaponBurst (Node3D) ← script WeaponBurst.gd
 #   └── (pas de ShootTimer — géré par WeaponComponent)
 # =============================================================
+@tool
 class_name PetCat
 extends Enemy
 
@@ -44,7 +45,13 @@ func _on_ready() -> void:
 		return
 	if player == null:
 		return
-	weapon.activate(player)
+	if not use_detection:
+		weapon.activate(player)
+
+
+func _on_player_detected() -> void:
+	if weapon != null and player != null:
+		weapon.activate(player)
 
 	# Animation gesture-negative (grognement) à chaque début de rafale
 	weapon.fired.connect(_on_burst_fired)

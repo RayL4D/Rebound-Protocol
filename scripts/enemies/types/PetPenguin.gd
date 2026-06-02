@@ -31,6 +31,7 @@
 #   Cela émule parfaitement un enfant de animal-penguin2, sans dépendre
 #   de l'espace local du GLB.
 # =============================================================
+@tool
 class_name PetPenguin
 extends Enemy
 

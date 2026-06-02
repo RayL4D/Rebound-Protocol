@@ -62,7 +62,16 @@ var _base_color: Color
 
 func _ready() -> void:
 	player = get_parent()
-	camera = get_viewport().get_camera_3d()
+	# La caméra est récupérée en lazy dans _orbit_toward_mouse() plutôt qu'ici,
+	# car au moment du spawn la caméra active du viewport peut être nulle ou
+	# appartenir à un autre joueur (en co-op, la caméra du joueur local n'est
+	# activée qu'à la fin de Player._ready(), après Shield._ready()).
+	camera = null
+
+	# Initialiser _shield_direction depuis le facing réel du joueur APRÈS que
+	# Player._ready() a eu le temps de s'exécuter (children avant parent,
+	# donc on diffère à la fin du frame courant via call_deferred).
+	call_deferred("_init_shield_direction")
 
 	# Player polyphonique pour les sons bouclier (block + reflect)
 	_sfx_shield = AudioStreamPlayer.new()
@@ -103,6 +112,17 @@ func _ready() -> void:
 	_apply_save_upgrades()
 
 
+## Lit le facing initial du robot_model après que Player._ready() a terminé.
+## Évite que le bouclier apparaisse à la mauvaise position au premier frame.
+func _init_shield_direction() -> void:
+	var p := player as Player
+	if p == null or p.robot_model == null:
+		return
+	var fwd := p.robot_model.global_transform.basis.z
+	if fwd.length_squared() > 0.01:
+		_shield_direction = fwd.normalized()
+
+
 func _apply_save_upgrades() -> void:
 	refresh_skill_upgrades()   # Délègue au recalcul unifié save + skill
 
@@ -134,6 +154,10 @@ func refresh_upgrades() -> void:
 
 
 func _process(delta: float) -> void:
+	# Multijoueur : le bouclier distant ne doit pas réagir à la souris locale.
+	# player.is_multiplayer_authority() retourne true en solo → aucun impact.
+	if not player.is_multiplayer_authority():
+		return
 	_orbit_toward_mouse()
 	# Décrémenter les timers de combo — reset quand la fenêtre expire
 	if _block_combo_timer > 0.0:
@@ -156,19 +180,50 @@ func _process(delta: float) -> void:
 # =============================================================
 
 func _orbit_toward_mouse() -> void:
+	# Lazy-get : récupère la caméra du joueur local au premier appel valide.
+	# On passe par player.$SpringArm3D/Camera3D plutôt que get_camera_3d()
+	# pour s'assurer d'utiliser la caméra de CE joueur, pas celle du viewport.
 	if camera == null:
-		return
+		var p := player as Player
+		if p != null:
+			camera = p.get_node_or_null("SpringArm3D/Camera3D") as Camera3D
+		if camera == null:
+			return
 
 	var dir := Vector3.ZERO
 
-	# --- Joystick mobile prioritaire ---
 	var p := player as Player
-	if p != null and p._joystick_aim_dir.length_squared() > 0.04:
+
+	# --- Auto-target mobile : bouclier suit la direction du personnage ---
+	# Quand auto-target est actif, le personnage fait face à l'ennemi ciblé.
+	# Le bouclier doit suivre cette même direction plutôt que le toucher d'écran.
+	if OS.has_feature("mobile") and Settings.auto_target_enabled and p != null:
+		# Si joystick droit actif → override manuel (même logique que Player)
+		if p._joystick_aim_dir.length_squared() > 0.04:
+			var cb        := camera.global_transform.basis
+			var cam_right := Vector3(cb.x.x, 0.0, cb.x.z).normalized()
+			var cam_fwd   := -Vector3(cb.z.x, 0.0, cb.z.z).normalized()
+			dir = cam_right * p._joystick_aim_dir.x - cam_fwd * p._joystick_aim_dir.y
+			dir.y = 0.0
+		else:
+			# Sinon : forward du robot_model (direction de l'auto-face)
+			# basis.z pointe dans la direction du regard (atan2(x,z) convention)
+			dir = p.robot_model.global_transform.basis.z
+			dir.y = 0.0
+
+	# --- Joystick mobile prioritaire (sans auto-target) ---
+	elif p != null and p._joystick_aim_dir.length_squared() > 0.04:
 		var cb        := camera.global_transform.basis
 		var cam_right := Vector3(cb.x.x, 0.0, cb.x.z).normalized()
 		var cam_fwd   := -Vector3(cb.z.x, 0.0, cb.z.z).normalized()
 		dir = cam_right * p._joystick_aim_dir.x - cam_fwd * p._joystick_aim_dir.y
 		dir.y = 0.0
+
+	elif OS.has_feature("mobile"):
+		# Mobile sans auto-target et joystick au repos :
+		# Utiliser la dernière direction connue (initialisée à FORWARD au spawn)
+		dir = _shield_direction
+
 	else:
 		# --- Souris (desktop) ---
 		var mouse_pos := get_viewport().get_mouse_position()
@@ -390,17 +445,24 @@ func _apply_parry_regen(has_xp: bool) -> void:
 func _do_shield_nova() -> void:
 	const NOVA_RANGE  := 9.0
 	const NOVA_DAMAGE := 15
+
+	# Capturer la position MAINTENANT pendant que le shield est dans l'arbre.
+	# global_position sur un nœud hors arbre génère une erreur Godot.
+	var nova_origin := global_position
+
 	var enemies := get_tree().get_nodes_in_group("enemies")
-	
 	for node: Node in enemies:
-		if not is_instance_valid(node) or not node.is_inside_tree() or not node.has_method("take_damage"):			
+		if not is_instance_valid(node) or not node.is_inside_tree() or not node.has_method("take_damage"):
 			continue
-			
-		var dist := (node as Node3D).global_position.distance_to(global_position)
+		var dist := (node as Node3D).global_position.distance_to(nova_origin)
 		if dist <= NOVA_RANGE:
 			(node as Enemy).take_damage(NOVA_DAMAGE, true)
 
 	# Visuel : anneau d'onde
+	# IMPORTANT : add_child() AVANT global_position.
+	# Un MeshInstance3D créé avec .new() n'est pas dans l'arbre ;
+	# accéder à global_position hors arbre lève l'erreur
+	# "!is_inside_tree()" dans get_global_transform().
 	var ring := MeshInstance3D.new()
 	var mesh := TorusMesh.new()
 	mesh.inner_radius  = 0.1
@@ -409,15 +471,15 @@ func _do_shield_nova() -> void:
 	mesh.ring_segments = 24
 	ring.mesh          = mesh
 	ring.rotation.x    = PI * 0.5
-	ring.global_position = global_position
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color              = Color(1.0, 0.80, 0.0, 0.9)
-	mat.emission_enabled          = true
-	mat.emission                  = Color(1.0, 0.70, 0.0)
+	mat.albedo_color               = Color(1.0, 0.80, 0.0, 0.9)
+	mat.emission_enabled           = true
+	mat.emission                   = Color(1.0, 0.70, 0.0)
 	mat.emission_energy_multiplier = 5.0
-	mat.transparency              = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.transparency               = BaseMaterial3D.TRANSPARENCY_ALPHA
 	ring.set_surface_override_material(0, mat)
-	get_tree().current_scene.add_child(ring)
+	get_tree().current_scene.add_child(ring)   # ← dans l'arbre d'abord
+	ring.global_position = nova_origin          # ← puis positionner
 	var tw := ring.create_tween().set_parallel(true)
 	tw.tween_property(ring, "scale", Vector3(NOVA_RANGE * 2.0, 1, NOVA_RANGE * 2.0), 0.40)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)

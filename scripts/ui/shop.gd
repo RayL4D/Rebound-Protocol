@@ -4,14 +4,6 @@
 # =============================================================
 # CanvasLayer construit entièrement en code.
 # Accessible via PauseMenu (bouton "Boutique").
-#
-# Layout :
-#   ┌─ En-tête : pièces courantes ──────────────────────────┐
-#   │  Onglets : JOUEUR | BOUCLIER | PASSIFS                 │
-#   │  ┌─ Liste scrollable des upgrades ──────────────────┐  │
-#   │  │  [Nom]  [Palier]  [Desc]  [Prix]  [ACHETER]      │  │
-#   │  └───────────────────────────────────────────────────┘  │
-#   └─ Bouton FERMER ───────────────────────────────────────┘
 # =============================================================
 
 class_name Shop
@@ -25,24 +17,31 @@ const COLOR_PANEL := Color(0.04, 0.08,  0.12, 0.97)
 const COLOR_DIM   := Color(0.45, 0.5,   0.55, 1.0)
 const FONT_PATH   := "res://ui_theme/fonts/Xolonium-Regular.ttf"
 
-# Noms affichables des upgrades (clé → [nom, description])
+# Noms affichables des upgrades (clé → [clé_nom, clé_description])
 const UPGRADE_LABELS: Dictionary = {
-	"hp_max":           ["HP Maximum",          "+5 HP max par palier"],
-	"move_speed":       ["Vitesse",              "+5 % vitesse de déplacement"],
-	"damage_reduction": ["Réduction dégâts",     "−5 % dégâts reçus par palier"],
-	"pickup_radius":    ["Rayon collecte",        "+15 % portée des pièces"],
-	"shield_size":      ["Taille bouclier",       "+8 % rayon du bouclier"],
-	"shield_duration":  ["Durée activation",     "+10 % durée de parade active"],
-	"parry_damage":     ["Dégâts renvoi",         "+10 % dégâts balles renvoyées"],
-	"parry_window":     ["Fenêtre critique",      "+1 frame de fenêtre critique"],
-	"hp_regen":         ["Régén. HP",             "Palier 1→30s, 2→20s, 3→12s"],
-	"xp_bonus":         ["Bonus XP",              "+10 % XP par ennemi tué"],
-	"dash_cooldown":    ["Cooldown Dash",         "−10 % de rechargement du dash par palier"],
-	"stomp_damage":     ["Dégâts Stomp",          "+15 % de dégâts de saut écrasant par palier"],
-	"parry_heal":       ["Soin Parade",           "+1 HP soigné sur chaque parade critique"],
-	"reflect_speed":    ["Vitesse Renvoi",        "+20 % de vitesse des balles renvoyées"],
-	"coin_bonus":       ["Bonus Pièces",          "+1 pièce droppée par ennemi vaincu"],
-	"dash_armor":       ["Armure Dash",           "1: invincible pendant le dash, 2-3: +durée après"],
+	"hp_max":           ["SHOP_NAME_hp_max", "SHOP_DESC_hp_max"],
+	"move_speed":       ["SHOP_NAME_move_speed", "SHOP_DESC_move_speed"],
+	"damage_reduction": ["SHOP_NAME_damage_reduction", "SHOP_DESC_damage_reduction"],
+	"pickup_radius":    ["SHOP_NAME_pickup_radius", "SHOP_DESC_pickup_radius"],
+	"shield_size":      ["SHOP_NAME_shield_size", "SHOP_DESC_shield_size"],
+	"shield_duration":  ["SHOP_NAME_shield_duration", "SHOP_DESC_shield_duration"],
+	"parry_damage":     ["SHOP_NAME_parry_damage", "SHOP_DESC_parry_damage"],
+	"parry_window":     ["SHOP_NAME_parry_window", "SHOP_DESC_parry_window"],
+	"hp_regen":         ["SHOP_NAME_hp_regen", "SHOP_DESC_hp_regen"],
+	"xp_bonus":         ["SHOP_NAME_xp_bonus", "SHOP_DESC_xp_bonus"],
+	"dash_cooldown":    ["SHOP_NAME_dash_cooldown", "SHOP_DESC_dash_cooldown"],
+	"stomp_damage":     ["SHOP_NAME_stomp_damage", "SHOP_DESC_stomp_damage"],
+	"parry_heal":       ["SHOP_NAME_parry_heal", "SHOP_DESC_parry_heal"],
+	"reflect_speed":    ["SHOP_NAME_reflect_speed", "SHOP_DESC_reflect_speed"],
+	"coin_bonus":       ["SHOP_NAME_coin_bonus", "SHOP_DESC_coin_bonus"],
+	"dash_armor":       ["SHOP_NAME_dash_armor", "SHOP_DESC_dash_armor"],
+}
+
+# Upgrades verrouillées tant qu'un skill XP n'est pas obtenu.
+# Clé = upgrade_id  |  Valeur = skill_id requis dans XpManager
+const SKILL_REQUIRED: Dictionary = {
+	"dash_cooldown": "dash_unlock",
+	"dash_armor":    "dash_unlock",
 }
 
 const _SFX_BUY:   AudioStream = preload("res://audio/sfx/ui/shop_buy.wav")
@@ -51,6 +50,8 @@ const _SFX_HOVER:   AudioStream = preload("res://audio/sfx/ui/btn_hover.wav")
 const _SFX_CLICK:   AudioStream = preload("res://audio/sfx/ui/btn_click.wav")
 const _SFX_CLOSE:   AudioStream = preload("res://audio/sfx/ui/shop_close.wav")
 var _sfx_player: AudioStreamPlayer = null
+
+var _M: float = 1.6 if OS.has_feature("mobile") else 1.0
 
 var _font: FontFile = null
 var _coin_label: Label = null
@@ -66,11 +67,11 @@ var _buy_rows: Dictionary = {}           # upgrade_id → { "tier_lbl", "price_l
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_WHEN_PAUSED
-	layer = 10   # s'affiche au-dessus du menu pause (layer 0 par défaut)
+	layer = 20   # au-dessus des contrôles mobiles (layer 10) et du menu pause
 	if ResourceLoader.exists(FONT_PATH):
 		_font = load(FONT_PATH)
 
-	_sfx_player             = AudioStreamPlayer.new()
+	_sfx_player              = AudioStreamPlayer.new()
 	_sfx_player.bus         = "SFX"
 	_sfx_player.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(_sfx_player)
@@ -97,15 +98,15 @@ func _build_ui() -> void:
 	add_child(center)
 
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(860, 670)
+	panel.custom_minimum_size = Vector2(860 * _M, 670 * _M)
 	var style := StyleBoxFlat.new()
 	style.bg_color    = COLOR_PANEL
 	style.border_color = COLOR_CYAN
 	style.set_border_width_all(2)
-	style.content_margin_left   = 28.0
-	style.content_margin_right  = 28.0
-	style.content_margin_top    = 20.0
-	style.content_margin_bottom = 20.0
+	style.content_margin_left   = 28.0 * _M
+	style.content_margin_right  = 28.0 * _M
+	style.content_margin_top    = 20.0 * _M
+	style.content_margin_bottom = 20.0 * _M
 	panel.add_theme_stylebox_override("panel", style)
 	center.add_child(panel)
 
@@ -117,15 +118,15 @@ func _build_ui() -> void:
 	var header := HBoxContainer.new()
 	root.add_child(header)
 
-	var title := _make_label("BOUTIQUE", 28, COLOR_CYAN)
+	var title := _make_label(tr("UI_SHOP_HEADER"), int(28 * _M), COLOR_CYAN)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(title)
 
 	var coin_box := HBoxContainer.new()
 	coin_box.add_theme_constant_override("separation", 6)
 	header.add_child(coin_box)
-	coin_box.add_child(_make_label("🪙", 20, COLOR_GOLD))
-	_coin_label = _make_label("0", 20, COLOR_GOLD)
+	coin_box.add_child(_make_label("🪙", int(20 * _M), COLOR_GOLD))
+	_coin_label = _make_label("0", int(20 * _M), COLOR_GOLD)
 	coin_box.add_child(_coin_label)
 
 	root.add_child(_make_separator())
@@ -135,9 +136,14 @@ func _build_ui() -> void:
 	tabs.add_theme_constant_override("separation", 8)
 	root.add_child(tabs)
 
+	var label_map := {
+		"joueur": "UI_SHOP_TAB_PLAYER", 
+		"bouclier": "UI_SHOP_TAB_SHIELD", 
+		"passifs": "UI_SHOP_TAB_PASSIVES"
+	}
+	
 	for cat in ["joueur", "bouclier", "passifs"]:
-		var label_map := {"joueur": "JOUEUR", "bouclier": "BOUCLIER", "passifs": "PASSIFS"}
-		var btn := _make_tab_button(label_map[cat], cat)
+		var btn := _make_tab_button(tr(label_map[cat]), cat)
 		tabs.add_child(btn)
 		_tab_buttons[cat] = btn
 
@@ -154,8 +160,8 @@ func _build_ui() -> void:
 	root.add_child(_make_separator())
 
 	# ── Bouton fermer ────────────────────────────────────────
-	var close_btn := _make_button("FERMER", _on_close)
-	close_btn.custom_minimum_size = Vector2(160, 40)
+	var close_btn := _make_button(tr("UI_SHOP_CLOSE"), _on_close)
+	close_btn.custom_minimum_size = Vector2(160 * _M, 40 * _M)
 	var close_center := CenterContainer.new()
 	close_center.add_child(close_btn)
 	root.add_child(close_center)
@@ -179,7 +185,7 @@ func _switch_tab(cat: String) -> void:
 			btn.add_theme_color_override("font_color", COLOR_DIM)
 			btn.modulate = Color(0.7, 0.7, 0.7, 1)
 
-	# Vider la liste et la reconstruire (free() immédiat, pas queue_free())
+	# Vider la liste et la reconstruire
 	for child in _list_container.get_children():
 		child.queue_free()
 
@@ -197,9 +203,9 @@ func _switch_tab(cat: String) -> void:
 # =============================================================
 
 func _build_upgrade_row(id: String, _entry: Dictionary) -> Control:
-	var labels: Array   = UPGRADE_LABELS.get(id, [id, ""])
-	var name_str: String = labels[0]
-	var desc_str: String = labels[1]
+	var keys: Array   = UPGRADE_LABELS.get(id, ["", ""])
+	var name_str: String = tr(keys[0])
+	var desc_str: String = tr(keys[1])
 	var max_tier: int    = SaveData.CATALOG[id]["max_tier"]
 
 	var panel := PanelContainer.new()
@@ -222,19 +228,20 @@ func _build_upgrade_row(id: String, _entry: Dictionary) -> Control:
 	info_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info_vbox.add_theme_constant_override("separation", 2)
 	hbox.add_child(info_vbox)
-	info_vbox.add_child(_make_label(name_str, 14, Color(0.92, 0.97, 1.0)))
-	var desc_lbl := _make_label(desc_str, 10, COLOR_DIM)
+	info_vbox.add_child(_make_label(name_str, int(14 * _M), Color(0.92, 0.97, 1.0)))
+	var desc_lbl := _make_label(desc_str, int(10 * _M), COLOR_DIM)
 	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc_lbl.set_meta("base_text", desc_str)   # sauvegarde le texte d'origine
 	info_vbox.add_child(desc_lbl)
 
 	# ── Barre de progression + compteur ─────────────────────────
 	var bar_vbox := VBoxContainer.new()
-	bar_vbox.custom_minimum_size = Vector2(130, 0)
-	bar_vbox.add_theme_constant_override("separation", 4)
+	bar_vbox.custom_minimum_size = Vector2(130 * _M, 0)
+	bar_vbox.add_theme_constant_override("separation", int(4 * _M))
 	bar_vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	hbox.add_child(bar_vbox)
 
-	var tier_lbl := _make_label("", 10, COLOR_DIM)
+	var tier_lbl := _make_label("", int(10 * _M), COLOR_DIM)
 	tier_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	bar_vbox.add_child(tier_lbl)
 
@@ -244,32 +251,50 @@ func _build_upgrade_row(id: String, _entry: Dictionary) -> Control:
 	bar_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	bar_vbox.add_child(bar_row)
 
-	var seg_w: int = clamp(int(126.0 / max_tier) - 2, 6, 26)
+	var seg_w: int = clamp(int(126.0 * _M / max_tier) - 2, int(6 * _M), int(26 * _M))
 	var segments: Array = []
 	for _i in max_tier:
 		var seg := ColorRect.new()
-		seg.custom_minimum_size = Vector2(seg_w, 7)
+		seg.custom_minimum_size = Vector2(seg_w, int(7 * _M))
 		seg.color = Color(0.12, 0.18, 0.24)
 		bar_row.add_child(seg)
 		segments.append(seg)
 
 	# ── Prix ─────────────────────────────────────────────────────
-	var price_lbl := _make_label("", 13, COLOR_GOLD)
-	price_lbl.custom_minimum_size = Vector2(72, 0)
+	# Conteneur qui affiche SOIT le prix texte, SOIT l'icône cadenas
+	var price_wrap := Control.new()
+	price_wrap.custom_minimum_size = Vector2(72 * _M, 28 * _M)
+	hbox.add_child(price_wrap)
+
+	var price_lbl := _make_label("", int(13 * _M), COLOR_GOLD)
+	price_lbl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	price_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hbox.add_child(price_lbl)
+	price_lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	price_wrap.add_child(price_lbl)
+
+	var lock_icon := _LockIcon.new()
+	lock_icon.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	lock_icon.custom_minimum_size = Vector2(20 * _M, 20 * _M)
+	lock_icon.offset_left   = -10.0 * _M
+	lock_icon.offset_right  =  10.0 * _M
+	lock_icon.offset_top    = -10.0 * _M
+	lock_icon.offset_bottom =  10.0 * _M
+	lock_icon.visible = false
+	price_wrap.add_child(lock_icon)
 
 	# ── Bouton acheter ────────────────────────────────────────────
-	var btn := _make_button("ACHETER", func(): _on_buy(id))
-	btn.custom_minimum_size = Vector2(90, 34)
+	var btn := _make_button(tr("UI_SHOP_BUY"), func(): _on_buy(id))
+	btn.custom_minimum_size = Vector2(90 * _M, 34 * _M)
 	hbox.add_child(btn)
 
 	_buy_rows[id] = {
 		"tier_lbl":  tier_lbl,
 		"price_lbl": price_lbl,
+		"lock_icon": lock_icon,
 		"btn":       btn,
 		"segments":  segments,
 		"max_tier":  max_tier,
+		"desc_lbl":  desc_lbl,
 	}
 	_refresh_row(id)
 	return panel
@@ -289,6 +314,15 @@ func _refresh_coins() -> void:
 		_refresh_row(id)
 
 
+func _is_unlocked_for(upgrade_id: String) -> bool:
+	if not SKILL_REQUIRED.has(upgrade_id):
+		return true
+	var skill_id: String = SKILL_REQUIRED[upgrade_id]
+	if not get_tree().root.has_node("XpManager"):
+		return false
+	return XpManager.has_skill(skill_id)
+
+
 func _refresh_row(id: String) -> void:
 	if not _buy_rows.has(id):
 		return
@@ -299,10 +333,38 @@ func _refresh_row(id: String) -> void:
 	var price: int        = SaveData.get_next_tier_price(id)
 	var coins: int        = SaveData.get_coins()
 
-	var tier_lbl:  Label  = row["tier_lbl"]
-	var price_lbl: Label  = row["price_lbl"]
-	var btn:       Button = row["btn"]
+	var tier_lbl:  Label   = row["tier_lbl"]
+	var price_lbl: Label   = row["price_lbl"]
+	var lock_icon: Control = row.get("lock_icon")
+	var btn:       Button  = row["btn"]
 	var segments:  Array  = row["segments"]
+	var desc_lbl:  Label  = row.get("desc_lbl")
+
+	# ── Skill prérequis non obtenu → verrouillé ──────────────────
+	if not _is_unlocked_for(id):
+		tier_lbl.text = "%d / %d" % [tier, max_tier]
+		tier_lbl.add_theme_color_override("font_color", COLOR_DIM)
+		for seg: ColorRect in segments:
+			seg.color = Color(0.08, 0.10, 0.13)
+		price_lbl.text = ""
+		if lock_icon: lock_icon.visible = true
+		price_lbl.add_theme_color_override("font_color", COLOR_DIM)
+		btn.disabled = true
+		btn.modulate = Color(0.35, 0.35, 0.35, 0.6)
+		if desc_lbl:
+			desc_lbl.text = tr("UI_SHOP_LOCKED_DASH")
+			desc_lbl.add_theme_color_override("font_color", Color(0.9, 0.65, 0.2, 0.85))
+		return
+
+	# Cadenas caché quand l'upgrade est accessible
+	if lock_icon: lock_icon.visible = false
+
+	# Restaurer la description d'origine si elle avait été remplacée par le message de verrou
+	if desc_lbl and desc_lbl.has_meta("base_text"):
+		var base: String = desc_lbl.get_meta("base_text")
+		if desc_lbl.text != base:
+			desc_lbl.text = base
+			desc_lbl.add_theme_color_override("font_color", COLOR_DIM)
 
 	tier_lbl.text = "%d / %d" % [tier, max_tier]
 
@@ -316,7 +378,7 @@ func _refresh_row(id: String) -> void:
 			seg.color = Color(0.12, 0.18, 0.24)
 
 	if price < 0:
-		price_lbl.text = "MAX"
+		price_lbl.text = tr("UI_SHOP_MAX")
 		price_lbl.add_theme_color_override("font_color", COLOR_GREEN)
 		btn.disabled = true
 		btn.modulate = Color(0.5, 0.5, 0.5, 0.7)
@@ -345,8 +407,7 @@ func _on_buy(id: String) -> void:
 		if player:
 			player.refresh_upgrades()
 
-		# Son d'achat : pitch qui monte progressiveme(nt avec le palier
-		# (palier 1 = grave, palier max-1 = aigu) → shop_buy_max à l'ultime palier
+		# Son d'achat : pitch qui monte progressivement avec le palier
 		var new_tier: int = SaveData.get_upgrade_tier(id)
 		var max_tier: int = SaveData.CATALOG[id]["max_tier"]
 		if new_tier >= max_tier:
@@ -366,7 +427,6 @@ func _on_buy(id: String) -> void:
 
 
 func _on_close() -> void:
-	# Son de fermeture boutique — floating player car queue_free() suit immédiatement
 	if _SFX_CLOSE != null:
 		var p := AudioStreamPlayer.new()
 		p.stream      = _SFX_CLOSE
@@ -386,10 +446,10 @@ func _on_close() -> void:
 func _make_tab_button(text: String, cat: String) -> Button:
 	var btn := Button.new()
 	btn.text = text
-	btn.custom_minimum_size = Vector2(110, 36)
+	btn.custom_minimum_size = Vector2(110 * _M, 36 * _M)
 	if _font:
 		btn.add_theme_font_override("font", _font)
-	btn.add_theme_font_size_override("font_size", 14)
+	btn.add_theme_font_size_override("font_size", int(14 * _M))
 	btn.add_theme_color_override("font_color", COLOR_DIM)
 	var style := StyleBoxFlat.new()
 	style.bg_color    = Color(0.0, 0.12, 0.2, 0.7)
@@ -405,7 +465,7 @@ func _make_button(text: String, callback: Callable) -> Button:
 	btn.text = text
 	if _font:
 		btn.add_theme_font_override("font", _font)
-	btn.add_theme_font_size_override("font_size", 13)
+	btn.add_theme_font_size_override("font_size", int(13 * _M))
 	btn.add_theme_color_override("font_color", COLOR_CYAN)
 	var style := StyleBoxFlat.new()
 	style.bg_color    = Color(0.0, 0.12, 0.2, 0.85)
@@ -424,8 +484,6 @@ func _make_button(text: String, callback: Callable) -> Button:
 			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
 			_sfx_player.play()
 	)
-	# Son de click connecté AVANT le callback : le callback (qui peut jouer
-	# un son d'achat distinct) se connecte en dernier et s'entend en dernier.
 	btn.pressed.connect(func():
 		if _sfx_player and _SFX_CLICK:
 			_sfx_player.stream      = _SFX_CLICK
@@ -463,5 +521,26 @@ func _make_separator() -> HSeparator:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel") and not event.is_echo():
 		_on_close()
-		get_viewport().set_input_as_handled() # Indique à Godot que l'action a été traitée
-                                                                                      
+		get_viewport().set_input_as_handled()
+
+
+# =============================================================
+# ICÔNE CADENAS — dessinée (compatible toutes plateformes)
+# =============================================================
+
+class _LockIcon extends Control:
+	func _draw() -> void:
+		var c   := size * 0.5
+		var s   := minf(size.x, size.y) * 0.42
+		var col := Color(0.85, 0.65, 0.1)
+		# Corps du cadenas
+		draw_polygon(PackedVector2Array([
+			c + Vector2(-s * 0.72,  0.0),
+			c + Vector2( s * 0.72,  0.0),
+			c + Vector2( s * 0.72,  s * 0.88),
+			c + Vector2(-s * 0.72,  s * 0.88),
+		]), PackedColorArray([col, col, col, col]))
+		# Anse (arc épais au-dessus)
+		draw_arc(c + Vector2(0.0, s * 0.05), s * 0.52, PI, TAU, 16, col, s * 0.28)
+		# Trou de serrure
+		draw_circle(c + Vector2(0.0, s * 0.40), s * 0.20, Color(0.2, 0.12, 0.0))

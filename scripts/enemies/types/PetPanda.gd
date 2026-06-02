@@ -18,6 +18,7 @@
 #   └── [Modèle animal-panda.glb]
 #   (Pas de WeaponMount — dégâts via Area3D créée en code)
 # =============================================================
+@tool
 class_name PetPanda
 extends Enemy
 

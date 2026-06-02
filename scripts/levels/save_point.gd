@@ -160,12 +160,18 @@ func _process(delta: float) -> void:
 		_hover_ring2.rotation.z = sin(_pulse_time * 0.9) * 0.25
 
 # =============================================================
-# TEXTURE DU FLAG
+# TEXTURE DU FLAG (platformerkit/colormap.png)
 # =============================================================
+# Applique la colormap sur chaque MeshInstance3D du flag.glb.
+# Un nouveau StandardMaterial3D est créé par surface → indépendant
+# des matériaux dupliqués des Visuals (ring, beam, caps, etc.).
 
 func _apply_flag_texture() -> void:
+	if _flag_model == null:
+		push_warning("SavePoint: _flag_model est null — vérifiez que $Flag existe dans la scène")
+		return
 	if not ResourceLoader.exists(TEXTURE_PATH):
-		push_warning("SavePoint: texture colormap introuvable — " + TEXTURE_PATH)
+		push_warning("SavePoint: colormap introuvable — " + TEXTURE_PATH)
 		return
 	var tex: Texture2D = load(TEXTURE_PATH)
 	_apply_texture_recursive(_flag_model, tex)
@@ -173,10 +179,18 @@ func _apply_flag_texture() -> void:
 
 func _apply_texture_recursive(node: Node, tex: Texture2D) -> void:
 	if node is MeshInstance3D:
+		var mi := node as MeshInstance3D
 		var mat := StandardMaterial3D.new()
 		mat.albedo_texture = tex
-		mat.texture_filter  = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-		node.material_override = mat
+		mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+		# set_surface_override_material par surface est plus fiable que
+		# material_override pour les GLB avec plusieurs surfaces.
+		var surface_count := mi.get_surface_override_material_count()
+		if surface_count == 0:
+			mi.material_override = mat
+		else:
+			for s in surface_count:
+				mi.set_surface_override_material(s, mat)
 	for child in node.get_children():
 		_apply_texture_recursive(child, tex)
 
@@ -204,8 +218,13 @@ func _on_player_entered(body: Node3D) -> void:
 
 
 func _do_save(player_node: Node3D) -> void:
+	# En mode debug (éditeur sans passer par le menu), on active le slot 0
+	# automatiquement pour pouvoir tester sans crash silencieux.
 	if SaveData.active_slot < 0:
-		return
+		if OS.is_debug_build():
+			SaveData.new_game(0)
+		else:
+			return
 
 	var lname: String = level_name
 	if lname == "":
@@ -214,13 +233,18 @@ func _do_save(player_node: Node3D) -> void:
 	SaveData.set_checkpoint(checkpoint_id)
 	SaveData.set_current_level(lname)
 
-	var spawn_pos := global_position + Vector3(0, 0.1, 0)
-	SaveData.set_player_position(spawn_pos)
+	# Sauvegarder la position RÉELLE du joueur, pas celle du save_point.
+	SaveData.set_player_position(player_node.global_position)
 
-	# --- MODIFICATION ICI ---
-	# On récupère "current_hp" au lieu de "max_hp"
-	if player_node.get("current_hp") != null:
-		SaveData.set_player_hp(int(player_node.get("current_hp")))
+	# Cast direct vers Player — Object.get() sur propriété typée GDScript 4
+	# peut retourner null même quand la propriété existe.
+	var p := player_node as Player
+	if p != null:
+		SaveData.set_player_hp(p.current_hp)
+		print("[SavePoint] Sauvegarde : pos=", player_node.global_position, " hp=", p.current_hp, " slot=", SaveData.active_slot, " checkpoint=", checkpoint_id)
+	else:
+		push_warning("[SavePoint] Cast Player échoué — HP non sauvegardé ! player_node type : " + player_node.get_class())
+		print("[SavePoint] Sauvegarde sans HP : pos=", player_node.global_position, " slot=", SaveData.active_slot)
 
 	SaveData.save_current()
 	save_triggered.emit()
@@ -382,3 +406,4 @@ func _spawn_shockwave(color: Color) -> void:
 	tw.tween_property(mi, "scale", Vector3(3.5, 1.0, 3.5), 0.6).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tw.tween_property(mat, "albedo_color:a", 0.0, 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.tween_callback(mi.queue_free).set_delay(0.6)
+                                                                                                                                                                                                                                                                                                                                                                               

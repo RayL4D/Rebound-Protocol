@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://bvynr2secmj6y"]
 
-[ext_resource type="Script" path="res://scripts/ui/slot_select.gd" id="1_slot"]
+[ext_resource type="Script" uid="uid://bffd8xoolgddg" path="res://scripts/ui/slot_select.gd" id="1_slot"]
 
-[node name="SlotSelect" type="CanvasLayer"]
+[node name="SlotSelect" type="CanvasLayer" unique_id=730691913]
 script = ExtResource("1_slot")

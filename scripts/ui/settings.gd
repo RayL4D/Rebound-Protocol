@@ -5,6 +5,11 @@
 class_name Settings
 extends Control
 
+## Valeur runtime lue depuis le ConfigFile.
+## Accessible globalement via Settings.auto_target_enabled.
+## true par défaut : activé sur mobile à la première installation.
+static var auto_target_enabled: bool = true
+
 const SETTINGS_PATH := "user://settings.cfg"
 
 # Chemin de la police pour rester cohérent avec le menu principal
@@ -13,15 +18,21 @@ const FONT_PATH := "res://ui_theme/fonts/Xolonium-Regular.ttf"
 const COLOR_CYAN   := Color(0.0,  0.851, 1.0, 1.0)
 const COLOR_BG     := Color(0.168, 0.212, 0.259, 1.0)
 const COLOR_PANEL  := Color(0.08,  0.11,  0.14,  0.95)
+const COLOR_DIM    := Color(0.55,  0.60,  0.65,  1.0)
+const COLOR_GOLD   := Color(1.0,   0.82,  0.0,   1.0)
 
 # Refs UI
 var _volume_slider:     HSlider
 var _music_slider:      HSlider
 var _sfx_slider:        HSlider
 var _fullscreen_check:  CheckButton
+var _auto_target_check: CheckButton = null  # null sur desktop (section cachée)
 var _lang_buttons:      Dictionary = {}  # "fr" / "en" / "es" → Button
 
 var _font: FontFile = null
+
+# Overlay de confirmation changement de langue
+var _confirm_overlay: ColorRect = null
 
 # --- Audio ------------------------------------------------------
 const _SFX_HOVER: AudioStream = preload("res://audio/sfx/ui/btn_hover.wav")
@@ -116,6 +127,13 @@ func _build_ui() -> void:
 	# --- Section Langue ---
 	_add_section_label(inner, "SETTINGS_SECTION_LANGUAGE")
 	_add_language_buttons(inner)
+
+	# --- Section Mobile (visible uniquement sur mobile) ---
+	if OS.has_feature("mobile"):
+		inner.add_child(HSeparator.new())
+		_add_section_label(inner, "SETTINGS_SECTION_MOBILE")
+		_auto_target_check = _add_check(inner, "SETTINGS_AUTO_TARGET")
+		_auto_target_check.toggled.connect(_on_auto_target_toggled)
 
 	# --- Bouton retour (hors du panneau) ---
 	vbox.add_child(_make_button("SETTINGS_BACK", _on_back_pressed))
@@ -315,10 +333,136 @@ func _on_fullscreen_toggled(pressed: bool) -> void:
 	_save_settings()
 
 
-func _change_language(locale: String) -> void:
-	TranslationServer.set_locale(locale)
-	_refresh_lang_buttons()
+func _on_auto_target_toggled(pressed: bool) -> void:
+	Settings.auto_target_enabled = pressed
 	_save_settings()
+
+
+func _change_language(locale: String) -> void:
+	# Ne rien faire si c'est déjà la langue active
+	if TranslationServer.get_locale().begins_with(locale):
+		return
+	_show_language_confirm_dialog(locale)
+
+
+func _show_language_confirm_dialog(new_locale: String) -> void:
+	if _confirm_overlay != null:
+		_confirm_overlay.queue_free()
+
+	var previous_locale := TranslationServer.get_locale()
+
+	var overlay := ColorRect.new()
+	overlay.color = Color(0.0, 0.0, 0.0, 0.65)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(center)
+
+	var panel := PanelContainer.new()
+	var pstyle := StyleBoxFlat.new()
+	pstyle.bg_color            = COLOR_PANEL
+	pstyle.border_color        = COLOR_CYAN
+	pstyle.set_border_width_all(2)
+	pstyle.content_margin_left   = 40.0
+	pstyle.content_margin_right  = 40.0
+	pstyle.content_margin_top    = 32.0
+	pstyle.content_margin_bottom = 32.0
+	panel.add_theme_stylebox_override("panel", pstyle)
+	center.add_child(panel)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 14)
+	panel.add_child(vbox)
+
+	# Titre
+	vbox.add_child(_make_dialog_label(tr("UI_LANG_DIALOG_TITLE"), 16, COLOR_CYAN, true))
+	# Message principal
+	vbox.add_child(_make_dialog_label(tr("UI_LANG_DIALOG_MSG"), 15, Color(0.9, 0.9, 1.0), false))
+	# Avertissement (en or)
+	vbox.add_child(_make_dialog_label(tr("UI_LANG_DIALOG_WARN"), 12, COLOR_GOLD, false))
+	# Conseil relance (gris discret)
+	vbox.add_child(_make_dialog_label(tr("UI_LANG_DIALOG_RESTART"), 11, COLOR_DIM, false))
+
+	var hbox := HBoxContainer.new()
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	hbox.add_theme_constant_override("separation", 20)
+	vbox.add_child(hbox)
+
+	# Bouton ANNULER — restaure la langue précédente
+	var cancel_btn := _make_dialog_button(tr("UI_LANG_DIALOG_CANCEL"), COLOR_DIM, false, func():
+		overlay.queue_free()
+		_confirm_overlay = null
+		TranslationServer.set_locale(previous_locale)
+		_refresh_lang_buttons()
+	)
+	cancel_btn.custom_minimum_size = Vector2(150, 44)
+	hbox.add_child(cancel_btn)
+
+	# Bouton CONTINUER — valide le changement via SceneManager (émet language_changed)
+	var confirm_btn := _make_dialog_button(tr("UI_LANG_DIALOG_CONFIRM"), COLOR_CYAN, true, func():
+		overlay.queue_free()
+		_confirm_overlay = null
+		SceneManager.update_language(new_locale)
+		_refresh_lang_buttons()
+		_save_settings()
+	)
+	confirm_btn.custom_minimum_size = Vector2(150, 44)
+	hbox.add_child(confirm_btn)
+
+	_confirm_overlay = overlay
+	add_child(_confirm_overlay)
+
+
+func _make_dialog_label(text: String, size: int, color: Color, outlined: bool) -> Label:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl.custom_minimum_size = Vector2(380, 0)
+	if _font:
+		lbl.add_theme_font_override("font", _font)
+	lbl.add_theme_font_size_override("font_size", size)
+	lbl.add_theme_color_override("font_color", color)
+	if outlined:
+		lbl.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.8))
+		lbl.add_theme_constant_override("outline_size", 2)
+	return lbl
+
+
+func _make_dialog_button(text: String, color: Color, primary: bool, callback: Callable) -> Button:
+	var btn := Button.new()
+	btn.text = text
+	if _font:
+		btn.add_theme_font_override("font", _font)
+	btn.add_theme_font_size_override("font_size", 14)
+	btn.add_theme_color_override("font_color", color)
+	var sn := StyleBoxFlat.new()
+	sn.bg_color    = Color(0.0, 0.12, 0.20, 0.90) if primary else Color(0.08, 0.08, 0.10, 0.90)
+	sn.border_color = color
+	sn.set_border_width_all(1)
+	btn.add_theme_stylebox_override("normal", sn)
+	var sh := StyleBoxFlat.new()
+	sh.bg_color    = Color(0.0, 0.22, 0.36, 0.95) if primary else Color(0.14, 0.14, 0.18, 0.95)
+	sh.border_color = color
+	sh.set_border_width_all(1)
+	btn.add_theme_stylebox_override("hover", sh)
+	btn.mouse_entered.connect(func():
+		if _sfx_player and _SFX_HOVER:
+			_sfx_player.stream      = _SFX_HOVER
+			_sfx_player.volume_db   = 2.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
+	btn.pressed.connect(func():
+		if _sfx_player and _SFX_CLICK:
+			_sfx_player.stream      = _SFX_CLICK
+			_sfx_player.volume_db   = 5.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
+	btn.pressed.connect(callback)
+	return btn
 
 
 func _on_back_pressed() -> void:
@@ -349,6 +493,7 @@ func _save_settings() -> void:
 	cfg.set_value("audio",   "sfx_volume",    _sfx_slider.value)
 	cfg.set_value("display", "fullscreen",    _fullscreen_check.button_pressed)
 	cfg.set_value("locale",  "language",      TranslationServer.get_locale())
+	cfg.set_value("mobile",  "auto_target",   Settings.auto_target_enabled)
 	cfg.save(SETTINGS_PATH)
 
 
@@ -376,8 +521,8 @@ func _load_and_apply_settings() -> void:
 	_apply_bus_volume("Music",  music)
 	_apply_bus_volume("SFX",    sfx)
 
-	# Affichage
-	var fs: bool = cfg.get_value("display", "fullscreen", false)
+	# Affichage — plein écran activé par défaut
+	var fs: bool = cfg.get_value("display", "fullscreen", true)
 	_fullscreen_check.set_pressed_no_signal(fs)
 	if fs:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
@@ -386,6 +531,12 @@ func _load_and_apply_settings() -> void:
 	var lang: String = cfg.get_value("locale", "language", "fr")
 	TranslationServer.set_locale(lang)
 	_refresh_lang_buttons()
+
+	# Ciblage auto (mobile uniquement — activé par défaut)
+	var at: bool = cfg.get_value("mobile", "auto_target", true)
+	Settings.auto_target_enabled = at
+	if _auto_target_check != null:
+		_auto_target_check.set_pressed_no_signal(at)
 
 
 # =============================================================
@@ -396,6 +547,7 @@ func _load_and_apply_settings() -> void:
 static func apply_saved_settings() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load("user://settings.cfg") != OK:
+		# Pas de fichier config → les valeurs par défaut des vars statiques sont déjà correctes
 		return
 
 	# Audio
@@ -413,11 +565,14 @@ static func apply_saved_settings() -> void:
 	if idx_s != -1:
 		AudioServer.set_bus_volume_db(idx_s, linear_to_db(sfx / 100.0) if sfx > 0.0 else -80.0)
 
-	# Affichage
-	var fs: bool = cfg.get_value("display", "fullscreen", false)
+	# Affichage — plein écran activé par défaut
+	var fs: bool = cfg.get_value("display", "fullscreen", true)
 	if fs:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 
 	# Langue
 	var lang: String = cfg.get_value("locale", "language", "fr")
 	TranslationServer.set_locale(lang)
+
+	# Ciblage auto mobile — activé par défaut
+	Settings.auto_target_enabled = cfg.get_value("mobile", "auto_target", true)
