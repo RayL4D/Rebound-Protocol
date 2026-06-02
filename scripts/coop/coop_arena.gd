@@ -36,6 +36,10 @@ var _host_left_overlay: CanvasLayer = null
 # ── Cycle de vie ───────────────────────────────────────────────────────────────
 
 func _ready() -> void:
+	# ── INITIALISATION DU SYSTÈME DE SCORE ────────────────────────────────────
+	# Prépare les structures de score pour le nombre exact de joueurs connectés
+	ScoreManager.start_level(NetworkManager.players.size())
+
 	_prewarm_bullet_shaders()
 	# ── Supprime le joueur statique placé dans la scène (test/prévisualisation)
 	# Il entrerait en conflit avec les joueurs spawnés dynamiquement.
@@ -104,8 +108,18 @@ func _prewarm_bullet_shaders() -> void:
 
 
 func _process(_delta: float) -> void:
+	if _returning_to_menu:
+		return
+
+	# 💀 DÉTECTION DU GAME OVER (VAGUES INFINIES SUR LE SERVEUR)
+	# Si la partie a commencé et que la liste des survivants est vide -> Fin de partie !
+	if multiplayer.is_server():
+		if not _player_nodes.is_empty() and get_alive_players().is_empty():
+			_rpc_return_to_menu.rpc(ScoreManager.players_stats, ScoreManager.waves_cleared, ScoreManager.time_elapsed)
+			return
+
 	# ── Voie 3 – polling de secours (WebRTC peut ne pas émettre les signaux) ──
-	if _returning_to_menu or multiplayer.is_server():
+	if multiplayer.is_server():
 		return
 
 	var peer := multiplayer.multiplayer_peer
@@ -287,7 +301,8 @@ func _build_host_left_overlay() -> CanvasLayer:
 	title_row.add_child(lbl_title)
 
 	# Espace
-	var sp1 := Control.new(); sp1.custom_minimum_size = Vector2(0, 16)
+	var sp1 := Control.new()
+	sp1.custom_minimum_size = Vector2(0, 16)
 	inner_vb.add_child(sp1)
 
 	# Séparateur cyan subtil
@@ -297,7 +312,8 @@ func _build_host_left_overlay() -> CanvasLayer:
 	inner_vb.add_child(sep)
 
 	# Espace
-	var sp2 := Control.new(); sp2.custom_minimum_size = Vector2(0, 16)
+	var sp2 := Control.new()
+	sp2.custom_minimum_size = Vector2(0, 16)
 	inner_vb.add_child(sp2)
 
 	# Message principal
@@ -310,11 +326,11 @@ func _build_host_left_overlay() -> CanvasLayer:
 	inner_vb.add_child(lbl_msg)
 
 	# Espace
-	var sp3 := Control.new(); sp3.custom_minimum_size = Vector2(0, 22)
+	var sp3 := Control.new()
+	sp3.custom_minimum_size = Vector2(0, 22)
 	inner_vb.add_child(sp3)
 
 	# ── Barre de compte à rebours ────────────────────────────────────────────
-	# bar_container : hauteur fixe, s'étire en largeur dans le VBox
 	var bar_container := Control.new()
 	bar_container.custom_minimum_size = Vector2(0, 5)
 	bar_container.size_flags_horizontal = Control.SIZE_FILL
@@ -326,7 +342,7 @@ func _build_host_left_overlay() -> CanvasLayer:
 	bar_bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	bar_container.add_child(bar_bg)
 
-	# Remplissage rouge (anchor_right 1→0 = barre qui se vide de droite à gauche)
+	# Remplissage rouge (anchor_right 1→0 = barre qui se vide)
 	var bar_fill := ColorRect.new()
 	bar_fill.color = Color(0.85, 0.16, 0.16)
 	bar_fill.anchor_left   = 0.0
@@ -340,7 +356,8 @@ func _build_host_left_overlay() -> CanvasLayer:
 	bar_container.add_child(bar_fill)
 
 	# Espace
-	var sp4 := Control.new(); sp4.custom_minimum_size = Vector2(0, 13)
+	var sp4 := Control.new()
+	sp4.custom_minimum_size = Vector2(0, 13)
 	inner_vb.add_child(sp4)
 
 	# Sous-titre
@@ -365,29 +382,39 @@ func _build_host_left_overlay() -> CanvasLayer:
 
 func _on_player_left(id: int) -> void:
 	if _player_nodes.has(id):
-		# Variable non typée : évite l'erreur si le nœud est déjà freed.
 		var node = _player_nodes[id]
 		_player_nodes.erase(id)
 		if is_instance_valid(node):
 			node.queue_free()
-	_check_game_over()
+	
+	# Si un joueur quitte brusquement la partie réseau, on relance la vérification sur le serveur
+	if multiplayer.is_server() and not _returning_to_menu:
+		if _player_nodes.is_empty() or get_alive_players().is_empty():
+			_rpc_return_to_menu.rpc(ScoreManager.players_stats, ScoreManager.waves_cleared, ScoreManager.time_elapsed)
 
 
-func _check_game_over() -> void:
-	if not multiplayer.is_server():
-		return
-	if _player_nodes.is_empty():
-		_rpc_return_to_menu.rpc()
+# ── FIN DE PARTIE ET SYNCHRONISATION ──────────────────────────────────────────
 
-
+## Cet RPC reçoit les données exactes du serveur pour écraser les données locales
+## avant d'ouvrir les tableaux de scores. Indispensable pour éviter la désynchronisation.
 @rpc("authority", "call_local", "reliable")
-func _rpc_return_to_menu() -> void:
+func _rpc_return_to_menu(final_stats: Array, final_waves: int, final_time: float) -> void:
 	if _returning_to_menu:
 		return
 	_returning_to_menu = true
+	
+	# Appliquer les statistiques officielles calculées par l'hôte à tous les clients
+	ScoreManager.players_stats = final_stats
+	ScoreManager.waves_cleared = final_waves
+	ScoreManager.time_elapsed = final_time
+	
 	await get_tree().create_timer(2.5).timeout
+	
+	# On coupe proprement la connexion réseau
 	NetworkManager.disconnect_from_game()
-	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
+	
+	# On ouvre l'écran de fin (ScoreManager s'occupera d'ouvrir score_summary)
+	ScoreManager.end_level()
 
 
 # ── Correction matériaux nuls ─────────────────────────────────────────────────
