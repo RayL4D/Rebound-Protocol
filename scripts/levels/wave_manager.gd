@@ -214,10 +214,23 @@ func _spawn_dropship(pos: Vector3, enemy_count: int) -> void:
 # CALLBACKS
 # =============================================================
 
+func _highlight_remaining_enemies() -> void:
+	# On récupère les nœuds grâce au groupe "enemies" que tu as défini dans Enemy.gd
+	var active_enemies := get_tree().get_nodes_in_group("enemies")
+	
+	for enemy in active_enemies:
+		# On s'assure que l'ennemi possède la méthode et qu'il n'est pas déjà mort/en train de mourir
+		if enemy.has_method("toggle_highlight") and not enemy.get("is_dead"):
+			enemy.toggle_highlight(true)
+			
+			
 func _on_enemy_died() -> void:
 	_enemies_alive -= 1
 	_enemies_alive = max(0, _enemies_alive) # Sécurité pour ne pas passer en négatif
 	_update_enemies_label()
+	
+	if _enemies_alive <= 3 and _enemies_alive > 0:
+		_highlight_remaining_enemies()
 	
 	if _enemies_alive <= 0 and not _wave_completed:
 		_complete_wave()
