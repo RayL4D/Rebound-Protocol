@@ -26,6 +26,7 @@ AmbientManager="*res://scripts/autoloads/ambient_manager.gd"
 XpManager="*res://scripts/autoloads/xp_manager.gd"
 NetworkManager="*res://scripts/autoloads/network_manager.gd"
 ScoreManager="*res://scripts/autoloads/scoreManager.gd"
+EasyChat="*uid://vawrmcgvyho4"
 
 [display]
 
@@ -34,7 +35,7 @@ window/size/mode=2
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/virtual_joystick/plugin.cfg")
+enabled=PackedStringArray("res://addons/easychat/plugin.cfg", "res://addons/virtual_joystick/plugin.cfg")
 
 [input]
 
