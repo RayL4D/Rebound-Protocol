@@ -167,7 +167,8 @@ func _build_main_panel() -> void:
 
 	_add_field_label(vb, tr("UI_YOUR_NAME"))
 	_add_spacer(vb, 5)
-	_entry_name = _make_line_edit("John Doe", 20)
+	# Génère un nom de robot aléatoire
+	_entry_name = _make_line_edit(NetworkManager.generate_random_name(), 20)
 	vb.add_child(_entry_name)
 	_add_spacer(vb, 12)
 
@@ -387,9 +388,11 @@ func _set_join_mode(mode: JoinMode, btn_code: Button, btn_ip: Button) -> void:
 
 func _on_host_lan_pressed() -> void:
 	var n := _entry_name.text.strip_edges()
+	# Si le champ est vide, on génère un nom et on l'affiche dans l'UI
 	if n.is_empty():
-		_set_status(tr("UI_ERROR_NAME"), true)
-		return
+		n = NetworkManager.generate_random_name()
+		_entry_name.text = n
+		
 	_set_status(tr("UI_SALON_CREATION"), false)
 	NetworkManager.host_lan(n)
 
@@ -397,21 +400,26 @@ func _on_host_lan_pressed() -> void:
 func _on_join_lan_pressed() -> void:
 	var n := _entry_name.text.strip_edges()
 	var ip := _entry_ip.text.strip_edges()
+	
 	if n.is_empty():
-		_set_status(tr("UI_ERROR_NAME"), true)
-		return
+		n = NetworkManager.generate_random_name()
+		_entry_name.text = n
+		
 	if ip.is_empty():
 		_set_status(tr("UI_ENTER_IP"), true)
 		return
+		
 	_set_status(tr("UI_CONNEXION_AT") % ip, false)
 	NetworkManager.join_lan(ip, n)
 
 
 func _on_host_pressed() -> void:
 	var n := _entry_name.text.strip_edges()
+	
 	if n.is_empty():
-		_set_status(tr("UI_ERROR_NAME"), true)
-		return
+		n = NetworkManager.generate_random_name()
+		_entry_name.text = n
+		
 	_set_status(tr("UI_SALON_CREATION"), false)
 	NetworkManager.host_game(n)
 
@@ -419,12 +427,15 @@ func _on_host_pressed() -> void:
 func _on_join_pressed() -> void:
 	var n := _entry_name.text.strip_edges()
 	var c := _entry_code.text.strip_edges().to_upper()
+	
 	if n.is_empty():
-		_set_status(tr("UI_ERROR_NAME"), true)
-		return
+		n = NetworkManager.generate_random_name()
+		_entry_name.text = n
+		
 	if c.length() != 6:
 		_set_status(tr("UI_ERROR_CODE"), true)
 		return
+		
 	_set_status(tr("UI_CONNEXION_LOADING"), false)
 	NetworkManager.join_game(c, n)
 
