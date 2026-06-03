@@ -493,6 +493,28 @@ func _on_connection_failed() -> void:
 func _on_server_disconnected() -> void:
 	players.clear()
 	connection_failed.emit("Connexion perdue avec l'hôte.")
+	
+
+## Génère un pseudo sci-fi/cyberpunk unique si le joueur n'en a pas choisi
+func generate_random_name() -> String:
+	var prefixes: Array[String] = [
+		"Cyber", "Neon", "Quantum", "Vector", "Matrix", 
+		"Proto", "Glitch", "Alpha", "Omega", "Spectral"
+	]
+	var suffixes: Array[String] = [
+		"Bot", "Runner", "Sentinel", "Protocol", "Ghost", 
+		"Operator", "Striker", "Shell", "Stalker", "Core"
+	]
+	
+	var random_prefix = prefixes[randi() % prefixes.size()]
+	var random_suffix = suffixes[randi() % suffixes.size()]
+	
+	# Matricule aléatoire
+	var serial: int = randi_range(10, 999)
+	if serial == 404 or serial == 777:
+		return "%s_%s_%d" % [random_prefix, random_suffix, serial]
+		
+	return "%s_%s_%02d" % [random_prefix, random_suffix, serial % 100]
 
 
 # ── RPC ────────────────────────────────────────────────────────────────────────
