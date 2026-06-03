@@ -96,6 +96,17 @@ func _ready() -> void:
 		await get_tree().create_timer(0.3).timeout
 		_spawn_all_players()
 
+	# ── ACTIVATION DU CHAT UNIQUEMENT EN MULTIJOUEUR ──────────────────────────
+	if multiplayer.has_multiplayer_peer() and NetworkManager.players.size() > 1:
+		var local_id := multiplayer.get_unique_id()
+		var local_info: Dictionary = NetworkManager.players.get(local_id, {})
+		var local_name: String = local_info.get("name", "Joueur %d" % local_id)
+		
+		# Vérification de sécurité pour atteindre ton nœud EasyChat dans le HUD
+		if has_node("HUD/WaveContainer/EasyChat"):
+			$HUD/WaveContainer/EasyChat.set_player_name(local_name)
+			$HUD/WaveContainer/EasyChat.enable()
+
 
 func _prewarm_bullet_shaders() -> void:
 	const SCENE = preload("res://scenes/projectiles/bullet_enemy.tscn")
