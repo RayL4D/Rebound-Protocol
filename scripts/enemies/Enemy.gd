@@ -110,7 +110,7 @@ func _ready() -> void:
 	add_to_group("enemies")
 	collision_layer = 16
 	collision_mask  = 21   # 5 (géométrie + joueur) | 16 (autres ennemis)
-	player = get_tree().get_first_node_in_group("player")
+	player = _find_closest_player()
 	_setup_model()
 	_sfx_player     = AudioStreamPlayer.new()
 	_sfx_player.bus = "SFX"
@@ -123,6 +123,18 @@ func _ready() -> void:
 	_nav_agent.target_desired_distance = 0.5
 	_nav_agent.avoidance_enabled       = true
 	add_child(_nav_agent)
+
+	# Synchronisation multijoueur — le serveur est autorité, les clients reçoivent
+	if multiplayer.has_multiplayer_peer():
+		var sync := MultiplayerSynchronizer.new()
+		sync.name = "EnemySync"
+		var config := SceneReplicationConfig.new()
+		config.add_property(NodePath(".:position"))
+		config.add_property(NodePath(".:rotation"))
+		config.add_property(NodePath(".:current_hp"))   # HP visible côté clients
+		sync.replication_config = config
+		sync.set_multiplayer_authority(1)  # peer 1 = serveur/hôte
+		add_child(sync)
 
 	# ⚠️ Attendre un frame que la navmesh soit prête avant le 1er calcul
 	await get_tree().physics_frame
@@ -230,6 +242,37 @@ func _on_ready() -> void:
 	pass
 
 
+## Retourne le joueur vivant le plus proche de cet ennemi.
+## Appelé à l'init et périodiquement pour re-cibler en coop.
+func _find_closest_player() -> Player:
+	var closest: Player = null
+	var min_dist_sq := INF
+	for p in get_tree().get_nodes_in_group("player"):
+		if not (p is Player) or not is_instance_valid(p):
+			continue
+		# Ignorer les joueurs morts (coop) — l'ennemi doit re-cibler un vivant
+		if (p as Player).is_dead:
+			continue
+		var d := global_position.distance_squared_to((p as Player).global_position)
+		if d < min_dist_sq:
+			min_dist_sq = d
+			closest = p as Player
+	return closest
+
+
+## Met à jour la cible de tous les WeaponComponent enfants (récursif).
+func _update_weapon_targets() -> void:
+	if player == null:
+		return
+	_update_weapon_targets_recursive(self)
+
+func _update_weapon_targets_recursive(node: Node) -> void:
+	if node is WeaponComponent:
+		(node as WeaponComponent)._target = player
+	for child in node.get_children():
+		_update_weapon_targets_recursive(child)
+
+
 func _physics_process(delta: float) -> void:
 	if Engine.is_editor_hint() or player == null:
 		return
@@ -240,6 +283,21 @@ func _physics_process(delta: float) -> void:
 	if use_detection:
 		_update_detection()
 
+	# Retarget immédiat si la cible actuelle est morte (coop)
+	if player != null and player.is_dead:
+		var alive := _find_closest_player()
+		if alive != null:
+			player = alive
+			_update_weapon_targets()
+			_nav_timer = 0.0  # forcer la mise à jour du nav agent ce frame
+		else:
+			# Tous les joueurs sont morts → rester immobile
+			velocity.x = 0.0
+			velocity.z = 0.0
+			move_and_slide()
+			_update_animation()
+			return
+
 	# Mise à jour de la cible de navigation
 	# Si use_detection est actif, on ne met à jour que si le joueur est détecté.
 	var chasing := not use_detection or _player_detected
@@ -247,6 +305,11 @@ func _physics_process(delta: float) -> void:
 		_nav_timer -= delta
 		if _nav_timer <= 0.0:
 			_nav_timer = NAV_UPDATE_INTERVAL
+			# Re-cibler le joueur le plus proche (crucial en coop)
+			var closest := _find_closest_player()
+			if closest != null and closest != player:
+				player = closest
+				_update_weapon_targets()
 			_nav_agent.target_position = player.global_position
 		_update_movement(delta)
 		_face_player()
@@ -422,36 +485,78 @@ func _update_animation() -> void:
 # SANTÉ
 # =============================================================
 
+## RPC : un client transfère des dégâts au serveur (autorité des ennemis).
+@rpc("any_peer", "reliable")
+func _rpc_take_damage(amount: int, silent_hurt: bool) -> void:
+	if not multiplayer.is_server():
+		return   # sécurité — seul le serveur applique
+	take_damage(amount, silent_hurt)
+
+
+## RPC : déclenche la séquence de mort sur tous les pairs en même temps.
+@rpc("authority", "call_local", "reliable")
+func _rpc_die_sync() -> void:
+	_play_death_sequence()
+
+
+## RPC : affiche les chiffres de dégâts + effets visuels sur tous les pairs.
+## "unreliable" suffit — effets purement cosmétiques.
+@rpc("authority", "call_local", "unreliable")
+func _rpc_show_hit(amount: int, is_silent: bool) -> void:
+	_spawn_damage_number(amount)
+	if current_hp > 0:
+		var flash_col: Color
+		if amount >= 20:   flash_col = Color(1.0, 0.4,  0.0)
+		elif amount >= 10: flash_col = Color(1.0, 0.85, 0.2)
+		else:              flash_col = Color(1.0, 1.0,  1.0)
+		_flash_hit(flash_col, 0.12)
+		_hit_jolt()
+		if not is_silent and _sfx_player and _SFX_HURT:
+			_sfx_player.stream      = _SFX_HURT
+			_sfx_player.volume_db   = -8.0 + randf_range(-1.5, 1.5)
+			_sfx_player.pitch_scale = randf_range(0.92, 1.08)
+			_sfx_player.play()
+
+
 ## silent_hurt : passer true pour supprimer le son hurt (ex. stomp/dash — le joueur a son propre son d'impact)
 func take_damage(amount: int, silent_hurt: bool = false) -> void:
 	if not is_inside_tree():
 		return
+
+	# En coop : les clients ne calculent pas les dégâts eux-mêmes.
+	# Ils forwarden vers le serveur (autorité) via RPC et s'arrêtent là.
+	if multiplayer.has_multiplayer_peer() and not multiplayer.is_server():
+		_rpc_take_damage.rpc_id(1, amount, silent_hurt)
+		return
+
 	# Un ennemi pré-placé qui reçoit un coup détecte toujours le joueur,
 	# même s'il était hors champ de vision.
 	if use_detection:
 		_set_player_detected()
 	current_hp = max(0, current_hp - amount)
-	_spawn_damage_number(amount)
+
+	# Effets visuels (chiffres, flash, jolt, son) sur tous les pairs.
+	# En solo appel direct, en coop via RPC unreliable (cosmétique).
+	if multiplayer.has_multiplayer_peer():
+		_rpc_show_hit.rpc(amount, silent_hurt)
+	else:
+		_spawn_damage_number(amount)
+		if current_hp > 0:
+			var flash_col: Color
+			if amount >= 20:   flash_col = Color(1.0, 0.4,  0.0)
+			elif amount >= 10: flash_col = Color(1.0, 0.85, 0.2)
+			else:              flash_col = Color(1.0, 1.0,  1.0)
+			_flash_hit(flash_col, 0.12)
+			_hit_jolt()
+			if not silent_hurt and _sfx_player and _SFX_HURT:
+				_sfx_player.stream      = _SFX_HURT
+				_sfx_player.volume_db   = -8.0 + randf_range(-1.5, 1.5)
+				_sfx_player.pitch_scale = randf_range(0.92, 1.08)
+				_sfx_player.play()
+
 	if current_hp <= 0:
 		_die()
 		return
-
-	if not silent_hurt and _sfx_player and _SFX_HURT:
-		_sfx_player.stream      = _SFX_HURT
-		_sfx_player.volume_db   = -8.0 + randf_range(-1.5, 1.5)
-		_sfx_player.pitch_scale = randf_range(0.92, 1.08)
-		_sfx_player.play()
-
-	# Flash coloré selon l'intensité du coup
-	var flash_col: Color
-	if amount >= 20:
-		flash_col = Color(1.0, 0.4, 0.0)   # orange — gros dégât
-	elif amount >= 10:
-		flash_col = Color(1.0, 0.85, 0.2)  # jaune — dégât moyen
-	else:
-		flash_col = Color(1.0, 1.0, 1.0)   # blanc — dégât léger
-	_flash_hit(flash_col, 0.12)
-	_hit_jolt()
 
 
 func _spawn_damage_number(amount: int) -> void:
@@ -508,11 +613,13 @@ func _die() -> void:
 	enemy_died.emit()
 	if has_node("/root/ScoreManager"):
 		ScoreManager.add_kill()
-		print("✅ Enemy died - Score updated")
-	_drop_coins()
-	# Drop XP — seulement si XpManager est présent (pas toujours en menu)
-	if get_tree() != null and get_tree().root.has_node("XpManager"):
-		XpManager.add_xp(xp_reward)
+
+	# En mode solo : XP et pièces gérés directement ici.
+	# En coop : CoopArena intercepte enemy_died et distribue XP + pièces physiques via RPC.
+	if not multiplayer.has_multiplayer_peer():
+		_drop_coins()
+		if get_tree() != null and get_tree().root.has_node("XpManager"):
+			XpManager.add_xp(xp_reward)
 
 	# Player flottant pour que le son survive au queue_free de l'ennemi
 	if _SFX_DIE != null:
@@ -525,7 +632,12 @@ func _die() -> void:
 		p.play()
 		p.finished.connect(p.queue_free)
 
-	_play_death_sequence()
+	# En coop : déclenche la mort sur TOUS les pairs via RPC.
+	# En solo : appel direct.
+	if multiplayer.has_multiplayer_peer():
+		_rpc_die_sync.rpc()
+	else:
+		_play_death_sequence()
 
 
 # Dans Enemy.gd
@@ -588,9 +700,15 @@ func _play_death_sequence() -> void:
 	# Burst de particules procédurales
 	_spawn_death_burst()
 
+	# En coop : seul le serveur appelle queue_free().
+	# Les clients jouent l'animation puis attendent le despawn du MultiplayerSpawner.
+	# Appeler queue_free() côté client sur un nœud géré par le spawner → ERR_UNAUTHORIZED.
+	var _should_free := not multiplayer.has_multiplayer_peer() or multiplayer.is_server()
+
 	if _model == null:
 		await get_tree().create_timer(0.55).timeout
-		queue_free()
+		if _should_free:
+			queue_free()
 		return
 
 	# Tween de mort : squash → spin → rétrécissement
@@ -617,7 +735,8 @@ func _play_death_sequence() -> void:
 	tw.tween_property(_model, "scale", Vector3.ZERO, 0.25) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 
-	tw.tween_callback(queue_free)
+	if _should_free:
+		tw.tween_callback(queue_free)
 
 
 func _spawn_death_burst() -> void:
@@ -757,20 +876,29 @@ func _collect_meshes(node: Node, out: Array[MeshInstance3D]) -> void:
 
 
 func _get_move_direction() -> Vector3:
-	if _nav_agent == null or _nav_agent.is_navigation_finished():
-		return Vector3.ZERO
+	# ── Navigation via NavMesh ─────────────────────────────────────────────────
+	if _nav_agent != null and not _nav_agent.is_navigation_finished():
+		# Détection de blocage
+		_stuck_timer += get_physics_process_delta_time()
+		if _stuck_timer >= 0.5:
+			_stuck_timer = 0.0
+			if global_position.distance_to(_last_position) < 0.05:
+				# Impulsion aléatoire pour se débloquer
+				var rng := Vector3(randf_range(-1, 1), 0, randf_range(-1, 1))
+				return rng.normalized()
+			_last_position = global_position
 
-	# Détection de blocage
-	_stuck_timer += get_physics_process_delta_time()
-	if _stuck_timer >= 0.5:
-		_stuck_timer = 0.0
-		if global_position.distance_to(_last_position) < 0.05:
-			# Impulsion aléatoire pour se débloquer
-			var rng := Vector3(randf_range(-1, 1), 0, randf_range(-1, 1))
-			return rng.normalized()
-		_last_position = global_position
+		var next := _nav_agent.get_next_path_position()
+		var dir  := (next - global_position)
+		dir.y     = 0.0
+		if dir.length_squared() > 0.001:
+			return dir.normalized()
 
-	var next := _nav_agent.get_next_path_position()
-	var dir  := (next - global_position)
-	dir.y     = 0.0
-	return dir.normalized()
+	# ── Fallback : direction directe vers le joueur (NavMesh absent ou fini) ──
+	if player != null:
+		var direct := player.global_position - global_position
+		direct.y = 0.0
+		if direct.length_squared() > 0.01:
+			return direct.normalized()
+
+	return Vector3.ZERO

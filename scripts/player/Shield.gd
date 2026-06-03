@@ -406,6 +406,17 @@ func _spawn_reflected_bullet(bullet_damage: int, is_critical: bool = false) -> v
 		get_tree().current_scene.add_child(bullet3)
 		bullet3.init(global_position, -_shield_direction, final_dmg, false, true)
 
+	# ── Synchronisation multijoueur : spawner les répliques visuelles ──
+	# sur les machines des autres joueurs via RPC (balle principale + variantes).
+	if multiplayer.has_multiplayer_peer() and player is Player:
+		var p := player as Player
+		p.rpc_spawn_reflected_bullet.rpc(global_position, _shield_direction, final_dmg, is_critical)
+		if has_xp and XpManager.has_skill("double_bullet"):
+			var dir2b := _shield_direction.rotated(Vector3.UP, PI / 12.0)
+			p.rpc_spawn_reflected_bullet.rpc(global_position, dir2b, final_dmg, is_critical)
+		if has_xp and XpManager.has_skill("omni_bullet"):
+			p.rpc_spawn_reflected_bullet.rpc(global_position, -_shield_direction, final_dmg, false)
+
 
 # =============================================================
 # SON DE BLOCK

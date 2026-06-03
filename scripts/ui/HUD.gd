@@ -114,6 +114,17 @@ var _xp_level_label: Label     = null
 var _xp_current_fill: float    = 0.0
 var _xp_target_fill:  float    = 0.0
 
+# --- Indicateurs alliés hors-écran ----------------------------
+## Couleur par player_slot (0=cyan, 1=vert, 2=orange, 3=violet)
+const _ALLY_COLORS: Array[Color] = [
+	Color(1.00, 0.12, 0.12),  # slot 0 — rouge
+	Color(0.15, 1.00, 0.45),  # slot 1 — vert
+	Color(0.70, 0.18, 1.00),  # slot 2 — violet
+	Color(0.00, 0.85, 1.00),  # slot 3 — cyan
+]
+## { Player node -> _AllyArrow }
+var _ally_arrows: Dictionary = {}
+
 
 # =============================================================
 # LIFECYCLE
@@ -148,6 +159,22 @@ func _ready() -> void:
 
 	# --- Connexion au changement de langue ---
 	SceneManager.language_changed.connect(_on_language_changed)
+
+
+## Appelé depuis CoopArena quand le joueur local est spawné après le HUD.
+## Permet de brancher la barre HP/XP sans attendre _ready().
+func connect_to_player(p: Player) -> void:
+	if _player != null:
+		return  # Déjà connecté
+	_player        = p
+	_camera        = get_viewport().get_camera_3d()
+	_target_fill   = float(_player.current_hp) / float(_player.max_hp)
+	_current_fill  = _target_fill
+	_prev_hp       = _player.current_hp
+	_refresh_bar(_current_fill)
+	_update_label(_player.current_hp)
+	_player.hp_changed.connect(_on_hp_changed)
+	_player.player_died.connect(_on_player_died)
 
 
 func _process(delta: float) -> void:
@@ -201,6 +228,10 @@ func _process(delta: float) -> void:
 			_guide_icon.show()
 	elif _guide_icon != null and _guide_icon.visible:
 		_guide_icon.hide()
+
+	# --- Indicateurs alliés hors-écran (coop uniquement) ---
+	if multiplayer.has_multiplayer_peer():
+		_update_ally_indicators()
 
 
 # =============================================================
@@ -944,3 +975,126 @@ class _CoinIcon extends Control:
 
 		# Reflet clair en haut à gauche
 		draw_circle(c + Vector2(-r * 0.22, -r * 0.22), r * 0.42, Color(1.0, 0.96, 0.55, 0.50))
+
+
+# =============================================================
+# INDICATEURS ALLIÉS HORS-ÉCRAN
+# =============================================================
+
+## Met à jour (ou crée) une flèche de bord d'écran pour chaque allié
+## qui n'est pas visible dans le frustum de la caméra.
+## Appelé chaque frame uniquement en mode multijoueur.
+func _update_ally_indicators() -> void:
+	if _camera == null:
+		_camera = get_viewport().get_camera_3d()
+		if _camera == null:
+			return
+
+	var vp_size: Vector2 = get_viewport().get_visible_rect().size
+	var margin:  float   = 50.0 * _M   # distance du bord de l'écran
+	var center:  Vector2 = vp_size * 0.5
+	var arrow_sz: float  = 52.0 * _M
+
+	# ── Supprimer les entrées obsolètes (joueur déconnecté) ─────
+	for key in _ally_arrows.keys():
+		if not is_instance_valid(key):
+			(_ally_arrows[key] as Node).queue_free()
+			_ally_arrows.erase(key)
+
+	# ── Lister les alliés actifs (tous sauf le joueur local) ────
+	var alive_allies: Array = []
+	for p: Node in get_tree().get_nodes_in_group("player"):
+		if p is Player and is_instance_valid(p) and p != _player:
+			alive_allies.append(p)
+
+	# Masquer les flèches des alliés absents de la liste
+	for key in _ally_arrows.keys():
+		if key not in alive_allies:
+			(_ally_arrows[key] as Node).hide()
+
+	for ally: Node in alive_allies:
+		var slot:  int   = clampi(int(ally.get("player_slot")), 0, _ALLY_COLORS.size() - 1)
+		var color: Color = _ALLY_COLORS[slot]
+
+		# Créer la flèche si elle n'existe pas encore
+		if not _ally_arrows.has(ally):
+			var arrow := _AllyArrow.new()
+			arrow.arrow_color  = color
+			arrow.ally_slot    = slot
+			arrow.size         = Vector2(arrow_sz, arrow_sz)
+			arrow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			arrow.z_index      = 20
+			add_child(arrow)
+			_ally_arrows[ally] = arrow
+
+		var arrow: _AllyArrow = _ally_arrows[ally]
+
+		# ── Projection 3D → 2D ───────────────────────────────────
+		var target_pos: Vector3 = (ally as Node3D).global_position + Vector3(0.0, 0.8, 0.0)
+		var is_behind:  bool    = _camera.is_position_behind(target_pos)
+		var screen_pos: Vector2
+
+		if is_behind:
+			# Derrière la caméra : inverser par rapport au centre pour que
+			# la flèche pointe vers l'opposé du joueur.
+			screen_pos = _camera.unproject_position(target_pos)
+			screen_pos = center + (center - screen_pos) * 1.5
+		else:
+			screen_pos = _camera.unproject_position(target_pos)
+
+		# ── Visible à l'écran ? → masquer la flèche ─────────────
+		var inner := Rect2(margin, margin, vp_size.x - margin * 2.0, vp_size.y - margin * 2.0)
+		if not is_behind and inner.has_point(screen_pos):
+			arrow.hide()
+			continue
+
+		# ── Positionner la flèche sur le bord de l'écran ────────
+		arrow.show()
+
+		var dir := screen_pos - center
+		var angle := atan2(dir.y, dir.x)
+
+		# Clamper sur le bord intérieur (rectangle - marge)
+		var half_w := vp_size.x * 0.5 - margin
+		var half_h := vp_size.y * 0.5 - margin
+		var abs_dx := absf(dir.x)
+		var abs_dy := absf(dir.y)
+		var scale_: float
+		if abs_dx < 0.001 and abs_dy < 0.001:
+			scale_ = 0.0
+		elif abs_dx / maxf(half_w, 0.001) > abs_dy / maxf(half_h, 0.001):
+			scale_ = half_w / abs_dx
+		else:
+			scale_ = half_h / abs_dy
+		var edge_pos := center + dir * scale_
+
+		arrow.direction_angle = angle
+		arrow.position = edge_pos - arrow.size * 0.5
+		arrow.queue_redraw()
+
+
+# ── Flèche d'indicateur allié ─────────────────────────────────
+
+class _AllyArrow extends Control:
+	var arrow_color:    Color = Color.WHITE
+	var ally_slot:      int   = 0
+	var direction_angle: float = 0.0  # angle vers l'allié (rad, 0 = droite)
+
+	func _draw() -> void:
+		var c  := size * 0.5
+		var r  := minf(size.x, size.y) * 0.38
+
+		# Fond circulaire sombre (lisibilité sur tout fond)
+		draw_circle(c, r * 1.22, Color(0.0, 0.03, 0.10, 0.75))
+		draw_arc(c, r * 1.22, 0.0, TAU, 32, Color(arrow_color, 0.45), 1.5)
+
+		# Triangle flèche pointant dans direction_angle
+		var fwd  := Vector2(cos(direction_angle), sin(direction_angle))
+		var perp := Vector2(-fwd.y, fwd.x)
+		var tip  := c + fwd  * r
+		var bl   := c - fwd  * r * 0.30 + perp * r * 0.58
+		var br   := c - fwd  * r * 0.30 - perp * r * 0.58
+
+		draw_colored_polygon(PackedVector2Array([tip, bl, br]), Color(arrow_color, 0.93))
+		draw_polyline(PackedVector2Array([tip, bl, br, tip]),
+					  Color(1.0, 1.0, 1.0, 0.55), 1.2)

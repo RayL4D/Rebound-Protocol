@@ -32,6 +32,25 @@ func _ready() -> void:
 		push_error("Dropship : AnimationPlayer introuvable !")
 		return
 
+	# ── Synchronisation multijoueur ─────────────────────────────────────────
+	# Le serveur est autorité sur la position du vaisseau et de son container
+	# (animé par "landing"/"takeoff"). Les clients reçoivent les mises à jour.
+	if multiplayer.has_multiplayer_peer():
+		var sync := MultiplayerSynchronizer.new()
+		sync.name = "DropshipSync"
+		var config := SceneReplicationConfig.new()
+		config.add_property(NodePath(".:position"))
+		config.add_property(NodePath("Dropship_container:position"))
+		config.add_property(NodePath("Dropship_container:rotation"))
+		sync.replication_config = config
+		sync.set_multiplayer_authority(1)
+		add_child(sync)
+
+	# ── Séquence d'atterrissage : serveur uniquement ─────────────────────────
+	# Les clients voient l'animation via le MultiplayerSynchronizer ci-dessus.
+	if not multiplayer.is_server():
+		return
+
 	if dropship_mesh:
 		_swap_mesh(dropship_mesh)
 
@@ -81,6 +100,10 @@ func _start_delivery_sequence() -> void:
 
 
 func _spawn_mobs() -> void:
+	# Uniquement le serveur spawne les mobs — le MultiplayerSpawner les réplique aux clients
+	if not multiplayer.is_server():
+		return
+
 	if not mob_scene:
 		push_warning("Dropship : Aucune scène de mob assignée !")
 		return
@@ -89,7 +112,9 @@ func _spawn_mobs() -> void:
 		var mob = mob_scene.instantiate()
 		if enemy_died_callback.is_valid() and mob.has_signal("enemy_died"):
 			mob.enemy_died.connect(enemy_died_callback)
-		get_parent().add_child(mob)
+		# true = force_readable_name → évite les noms réservés (@CharacterBody3D@N)
+		# qui font échouer le MultiplayerSpawner
+		get_parent().add_child(mob, true)
 
 		var offset := Vector3(randf_range(-2.0, 2.0), 0, randf_range(-2.0, 2.0))
 		mob.global_position = spawn_point.global_position + offset
