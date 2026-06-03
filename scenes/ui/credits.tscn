@@ -56,7 +56,7 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_bottom = -3.0
+offset_bottom = -1.0
 grow_horizontal = 2
 grow_vertical = 2
 horizontal_scroll_mode = 0
@@ -264,6 +264,37 @@ theme_override_fonts/font = ExtResource("1_font")
 theme_override_font_sizes/font_size = 18
 text = "godotengine.org"
 horizontal_alignment = 1
+
+[node name="Spacer11" type="Control" parent="ScrollContainer/CreditsVBox" unique_id=1208225371]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+
+[node name="AddonsSection" type="Label" parent="ScrollContainer/CreditsVBox" unique_id=110877634]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0.8509804, 1, 1)
+text = "CREDITS_ADDONS"
+label_settings = SubResource("LabelSettings_section")
+horizontal_alignment = 1
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="ScrollContainer/CreditsVBox" unique_id=703969711]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="TextureRect" type="TextureRect" parent="ScrollContainer/CreditsVBox/HBoxContainer3" unique_id=1464758053]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+texture = ExtResource("3_pqmjv")
+expand_mode = 2
+
+[node name="LinkButton2" type="LinkButton" parent="ScrollContainer/CreditsVBox/HBoxContainer3" unique_id=1935609606]
+layout_mode = 2
+theme_override_colors/font_hover_color = Color(0.77083945, 0.7708394, 0.77084005, 1)
+theme_override_fonts/font = ExtResource("1_font")
+theme_override_font_sizes/font_size = 20
+text = "EasyChat"
+underline = 2
+uri = "https://github.com/IUXGames/EasyChat"
 
 [node name="Spacer7" type="Control" parent="ScrollContainer/CreditsVBox" unique_id=1022844693]
 custom_minimum_size = Vector2(0, 100)

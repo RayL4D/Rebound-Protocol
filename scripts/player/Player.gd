@@ -635,18 +635,24 @@ func _physics_process(delta: float) -> void:
 
 	_apply_gravity(delta)
 	_check_land_anticipation()
-	_handle_jump()
-	_handle_camera_orbit(delta)
-	_handle_movement()
-	_handle_dash(delta)
+
+	# ── SÉCURITÉ CHAT : Bloquer les mouvements si le chat est ouvert ──
+	if EasyChat.is_open():
+		# On fige immédiatement les vitesses horizontales pour couper l'inertie
+		velocity.x = 0.0
+		velocity.z = 0.0
+	else:
+		_handle_jump()
+		_handle_camera_orbit(delta)
+		_handle_movement()
+		_handle_dash(delta)
 
 	# Sauvegarder velocity.y avant toute modification (stomp / snap)
 	_pre_slide_velocity_y = velocity.y
 
-	# Stomp : raycast AVANT move_and_slide() pour que le rebond soit appliqué
-	# en amont — Jolt Physics ne retourne pas toujours les CharacterBody3D
-	# dans get_slide_collision() lors d'atterrissages successifs sur le même ennemi.
-	_check_stomp()
+	# Stomp : uniquement si le chat est fermé
+	if not EasyChat.is_open():
+		_check_stomp()
 
 	# Désactiver le snap sol si le joueur remonte (saut, rebond stomp…)
 	if velocity.y > 0.0:
@@ -666,7 +672,9 @@ func _physics_process(delta: float) -> void:
 	if OS.has_feature("mobile") and Settings.auto_target_enabled:
 		_update_auto_target()
 
-	_rotate_toward_mouse(delta)
+	# ── SÉCURITÉ CHAT : Bloquer la rotation vers la souris si le chat est ouvert ──
+	if not EasyChat.is_open():
+		_rotate_toward_mouse(delta)
 
 	# Indicateurs visuels des ennemis (visibles seulement si auto-target activé)
 	if OS.has_feature("mobile"):
@@ -679,7 +687,9 @@ func _physics_process(delta: float) -> void:
 	# is_action_just_pressed("parry") est ignoré car "Emulate Mouse From Touch"
 	# le déclencherait sur chaque tap d'écran (parry = left mouse button).
 	var keyboard_parry := Input.is_action_just_pressed("parry") and not OS.has_feature("mobile")
-	if keyboard_parry or mobile_parry:
+	
+	# ── SÉCURITÉ CHAT : Bloquer la parade si le chat est ouvert ──
+	if (keyboard_parry or mobile_parry) and not EasyChat.is_open():
 		_parry_requested = true
 		parried.emit()
 		_trigger_parry_sfx_combo()
@@ -720,6 +730,10 @@ func _input(event: InputEvent) -> void:
 	if is_dead:
 		return   # Bloquer tout input caméra/zoom pendant l'animation de mort
 
+	# ─── SÉCURITÉ CHAT : Intercepter et bloquer la caméra si le chat est ouvert ───
+	if EasyChat.is_open():
+		return
+
 	if event is InputEventMouseButton:
 		match event.button_index:
 			MOUSE_BUTTON_WHEEL_UP:
@@ -736,7 +750,7 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and _rmb_held:
 		_target_pitch -= event.relative.y * cam_sensitivity
 		_target_pitch  = clamp(_target_pitch, cam_pitch_min, cam_pitch_max)
-		_target_snap_yaw -= event.relative.x * cam_sensitivity  # ← ajouter cette ligne
+		_target_snap_yaw -= event.relative.x * cam_sensitivity
 
 	# Orbite par snap de 90° — détection ici pour éviter la répétition du held
 	if event is InputEventKey and event.pressed and not event.echo:
