@@ -106,6 +106,41 @@ func _ready() -> void:
 		if has_node("HUD/WaveContainer/EasyChat"):
 			$HUD/WaveContainer/EasyChat.set_player_name(local_name)
 			$HUD/WaveContainer/EasyChat.enable()
+			
+		# ── ENREGISTREMENT DES ÉMOTES SUR EASYCHAT (MÉTHODE NATIVE) ───────────
+		var chat_node = $HUD/WaveContainer/EasyChat
+		
+		# Sécurité : s'assurer que la ressource de configuration de l'add-on existe
+		if chat_node.config == null:
+			chat_node.config = load("res://addons/easychat/easychat_config.gd").new()
+
+		var emotes = {
+			"fire": "🔥",
+			"gg": "👍",
+			"rip": "💀",
+			"love": "❤️",
+			"sixseven": "⁶🤷‍♂️⁷"
+		}
+		
+		for cmd_name in emotes:
+			var emote_text = emotes[cmd_name]
+			
+			# On crée une ressource de commande officielle attendue par l'add-on
+			var new_cmd = ChatCommand.new()
+			new_cmd.command_name = cmd_name
+			new_cmd.description = "Affiche l'hologramme " + emote_text
+			
+			# On connecte son signal d'exécution avec la recherche dynamique du joueur
+			new_cmd.executed.connect(func(_args): 
+				var my_id := multiplayer.get_unique_id()
+				var local_player = _player_nodes.get(my_id)
+				
+				if is_instance_valid(local_player):
+					local_player.trigger_emote(emote_text)
+			)
+			
+			# On l'injecte directement dans la liste officielle de l'add-on
+			chat_node.config.commands.append(new_cmd)
 
 
 func _prewarm_bullet_shaders() -> void:
@@ -329,7 +364,7 @@ func _build_host_left_overlay() -> CanvasLayer:
 
 	# Message principal
 	var lbl_msg := Label.new()
-	lbl_msg.text = "L'hôte a quitté la partie."
+	lbl_msg.text = tr("UI_HOST_LEFT")
 	lbl_msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl_msg.add_theme_font_size_override("font_size", 14)
 	lbl_msg.add_theme_color_override("font_color", Color(0.78, 0.84, 0.90))
@@ -373,7 +408,7 @@ func _build_host_left_overlay() -> CanvasLayer:
 
 	# Sous-titre
 	var lbl_sub := Label.new()
-	lbl_sub.text = "Retour au menu principal…"
+	lbl_sub.text = tr("UI_BACK_MAIN_MENU")
 	lbl_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl_sub.add_theme_font_size_override("font_size", 11)
 	lbl_sub.add_theme_color_override("font_color", Color(0.0, 0.85, 1.0, 0.50))
