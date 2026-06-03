@@ -72,6 +72,9 @@ const _PARRY_COMBO_MAX:    int   = 5     # Nombre de hits max pour la montée de
 var _parry_combo:       int   = 0
 var _parry_combo_timer: float = 0.0
 
+# --- Emote --------
+var _emote_label: Label3D = null
+
 # --- Pas de course -------------------------------------------------
 # Intervalle entre deux pas — à ajuster selon la cadence de l'animation sprint
 const _STEP_INTERVAL: float = 0.38
@@ -363,6 +366,18 @@ func _ready() -> void:
 		call_deferred("emit_signal", "hp_changed", current_hp)
 	else:
 		_restore_pending = true
+		
+	# ── CONFIGURATION DU LABEL D'ÉMOTE HOLOGRAPHIQUE ──────────────────────────
+	_emote_label = Label3D.new()
+	_emote_label.name = "EmoteLabel"
+	_emote_label.text = ""
+	_emote_label.position = Vector3(0.0, 2.3, 0.0) # Placé juste au-dessus du NameLabel
+	_emote_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_emote_label.no_depth_test = true # Visible même s'il y a un obstacle
+	_emote_label.font_size = 72  
+	_emote_label.outline_size = 12
+	_emote_label.modulate.a = 0.0     # Invisible au départ
+	add_child(_emote_label)
 
 
 # =============================================================
@@ -1760,3 +1775,39 @@ func _spawn_fire_zone() -> void:
 	fade_tw.tween_interval(FIRE_DURATION - 0.5)
 	fade_tw.tween_property(mat, "albedo_color:a", 0.0, 0.5)
 	fade_tw.tween_callback(zone_node.queue_free)
+	
+# ── GESTION DES ÉMOTES RÉSEAU ────────────────────────────────────────────────
+
+## Fonction appelée localement par le chat du joueur
+func trigger_emote(emote_text: String) -> void:
+	# L'invité (ou l'hôte) envoie sa demande au serveur
+	_rpc_server_receive_emote.rpc(emote_text)
+
+
+## Le serveur intercepte la demande de l'invité
+@rpc("any_peer", "call_local", "reliable")
+func _rpc_server_receive_emote(emote_text: String) -> void:
+	if multiplayer.is_server():
+		# Le serveur diffuse l'ordre d'affichage à ABSOLUMENT TOUT LE MONDE
+		_rpc_client_display_emote.rpc(emote_text)
+
+
+## Tout le monde (l'hôte + tous les invités) exécute l'animation de l'émote
+@rpc("authority", "call_local", "reliable")
+func _rpc_client_display_emote(emote_text: String) -> void:
+	if _emote_label == null:
+		return
+		
+	_emote_label.text = emote_text
+	_emote_label.scale = Vector3(0.0, 0.0, 0.0)
+	_emote_label.modulate.a = 1.0
+	
+	# Animation Cyberpunk (Pop-up avec rebond)
+	var tw = create_tween().set_parallel(true)
+	tw.tween_property(_emote_label, "scale", Vector3(1.2, 1.2, 1.2), 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	
+	# Attendre 2 secondes puis faire disparaître l'émote en fondu
+	var tw_fade = create_tween()
+	tw_fade.tween_interval(2.0)
+	tw_fade.tween_property(_emote_label, "modulate:a", 0.0, 0.4)
+	tw_fade.parallel().tween_property(_emote_label, "scale", Vector3(0.0, 0.0, 0.0), 0.4)
