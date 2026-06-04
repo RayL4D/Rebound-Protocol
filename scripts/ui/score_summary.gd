@@ -1,5 +1,5 @@
 # =============================================================
-# score_summary.gd — VERSION STYLÉE AVEC FOND ANIMÉ
+# score_summary.gd — INFRASTRUCTURE ADAPTÉE AUX VAGUES INFINIES
 # =============================================================
 extends CanvasLayer
 
@@ -62,7 +62,6 @@ func _process(delta: float) -> void:
 
 func _build_animated_background() -> void:
 	var fx := AnimatedBackground.new()
-	# Important : On force le fond à s'animer même si le jeu est en pause
 	fx.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(fx)
 	move_child(fx, 1)
@@ -80,55 +79,57 @@ func _populate_detailed_stats() -> void:
 	print("=== POPULATION DES STATS DÉTAILLÉES ===")
 	
 	var sm = ScoreManager
+	var p_idx = sm.current_viewing_player
 	
-	# Stats de base
-	var enemies_killed = sm.enemies_killed
+	if sm.players_stats.is_empty():
+		sm.players_stats.append({"name": "JOUEUR 1", "enemies_killed": sm.enemies_killed, "deaths": 0, "survival_time": sm.time_elapsed, "is_alive": false})
+	
+	var p_data = sm.players_stats[p_idx]
+	main_title.text = p_data["name"]
+	
+	var enemies_killed = p_data["enemies_killed"]
 	var waves_cleared = sm.waves_cleared
-	var time_elapsed = sm.time_elapsed
+	var survival_time = p_data["survival_time"]
+	var deaths = p_data["deaths"]
 	
-	# Stats dérivées
 	var kills_per_wave = float(enemies_killed) / max(1, waves_cleared)
-	var kills_per_minute = (float(enemies_killed) / max(1.0, time_elapsed)) * 60.0
-	var avg_time_per_wave = time_elapsed / max(1, waves_cleared)
+	var kills_per_minute = (float(enemies_killed) / max(1.0, survival_time)) * 60.0
 	
 	# SECTION COMBAT
 	_add_stat_row(combat_stats, tr("UI_STAT_ENEMIES_KILLED"), str(enemies_killed), sm.PTS_PER_KILL * enemies_killed)
 	_add_stat_row(combat_stats, tr("UI_STAT_KILLS_PER_WAVE"), "%.1f" % kills_per_wave, 0, false)
 	_add_stat_row(combat_stats, tr("UI_STAT_KILLS_PER_MIN"), "%.1f" % kills_per_minute, 0, false)
 	
-	# SECTION PROGRESSION
+	# SECTION PROGRESSION (Temps survécu individuel)
 	_add_stat_row(progress_stats, tr("UI_STAT_WAVES_CLEARED"), str(waves_cleared), sm.PTS_PER_WAVE * waves_cleared)
-	_add_stat_row(progress_stats, tr("UI_STAT_TIME_PER_WAVE"), "%d s" % int(avg_time_per_wave), 0, false)
-	_add_stat_row(progress_stats, tr("UI_STAT_SURVIVAL_TIME"), _format_time(time_elapsed), int(time_elapsed) * sm.PTS_PER_SECOND)
 	
-	# SECTION PERFORMANCE
-	var total_score = sm.get_total_score()
-	var efficiency = (float(total_score) / max(1.0, time_elapsed)) * 60.0
-	var survival_rate = (float(waves_cleared) / max(1.0, time_elapsed / 60.0))
+	var time_pts = int(survival_time) * sm.PTS_PER_SECOND_SURVIVED
+	_add_stat_row(progress_stats, "Temps survécu", _format_time(survival_time), time_pts)
 	
+	# SECTION PERFORMANCE (Bonus de Résistance dégressif)
+	var total_score = sm.get_player_total_score(p_idx)
+	var efficiency = (float(total_score) / max(1.0, survival_time)) * 60.0
 	_add_stat_row(performance_stats, tr("UI_STAT_EFFICIENCY"), "%d pts/min" % int(efficiency), 0, false)
-	_add_stat_row(performance_stats, tr("UI_STAT_WAVES_PER_MIN"), "%.2f" % survival_rate, 0, false)
-	_add_stat_row(performance_stats, tr("UI_STAT_AVG_DURATION"), "%d s/kill" % int(max(1.0, time_elapsed / max(1, enemies_killed))), 0, false)
 	
-	# Score total et rang
+	var survival_bonus = max(0, sm.MAX_SURVIVAL_BONUS - (deaths * sm.PENALTY_PER_DEATH))
+	var death_text = str(deaths) + " mort(s)" if deaths > 0 else "Aucune mort !"
+	_add_stat_row(performance_stats, "Bonus de Résistance", death_text, survival_bonus)
+	
+	# Score total et rang final
 	var rank = _calculate_rank(total_score)
 	score_label.text = tr("UI_SCORE_TOTAL") % total_score
 	rank_label.text = tr("UI_SCORE_RANK") % rank
-	
-	print("✅ Stats affichées - Score total: %d, Rang: %s" % [total_score, rank])
 
 func _add_stat_row(container: VBoxContainer, label_text: String, value_text: String, score: int, show_score: bool = true) -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 20)
 	
-	# Nom de la stat
 	var lbl := Label.new()
 	lbl.text = label_text
 	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lbl.add_theme_color_override("font_color", COLOR_WHITE)
 	lbl.add_theme_font_size_override("font_size", 18)
 	
-	# Valeur
 	var val_lbl := Label.new()
 	val_lbl.text = value_text
 	val_lbl.custom_minimum_size = Vector2(120, 0)
@@ -139,7 +140,6 @@ func _add_stat_row(container: VBoxContainer, label_text: String, value_text: Str
 	row.add_child(lbl)
 	row.add_child(val_lbl)
 	
-	# Score (optionnel)
 	if show_score and score > 0:
 		var score_lbl := Label.new()
 		score_lbl.text = "+ %d" % score
@@ -152,11 +152,11 @@ func _add_stat_row(container: VBoxContainer, label_text: String, value_text: Str
 	container.add_child(row)
 
 func _calculate_rank(score: int) -> String:
-	if score >= 10000: return "S+"
-	elif score >= 7500: return "S"
-	elif score >= 5000: return "A"
-	elif score >= 3000: return "B"
-	elif score >= 1500: return "C"
+	if score >= 12000: return "S+"
+	elif score >= 9000: return "S"
+	elif score >= 6500: return "A"
+	elif score >= 4000: return "B"
+	elif score >= 2000: return "C"
 	else: return "D"
 
 func _format_time(seconds: float) -> String:
@@ -165,11 +165,10 @@ func _format_time(seconds: float) -> String:
 	return "%d:%02d" % [mins, secs]
 
 # =============================================================
-# BOUTONS
+# BOUTONS ET NAVIGATION MULTIJOUEURS
 # =============================================================
 
 func _setup_buttons() -> void:
-	# Style hover
 	var hover_style := StyleBoxFlat.new()
 	hover_style.bg_color = Color(0.0, 0.851, 1.0, 0.12)
 	hover_style.border_color = Color(0.0, 0.851, 1.0, 0.75)
@@ -182,7 +181,6 @@ func _setup_buttons() -> void:
 	for btn in [btn_menu]:
 		btn.add_theme_stylebox_override("hover", hover_style)
 		
-		# Animations hover
 		btn.mouse_entered.connect(func():
 			_play_sfx(SFX_HOVER)
 			var tw: Tween = btn.create_tween()
@@ -198,23 +196,30 @@ func _setup_buttons() -> void:
 			tw.parallel().tween_property(btn, "scale", Vector2(1.0, 1.0), 0.13)
 		)
 	
-	# Connexions
+	var sm = ScoreManager
+	if sm.players_stats.size() > 1 and sm.current_viewing_player < sm.players_stats.size() - 1:
+		btn_menu.text = "JOUEUR SUIVANT"
+	elif sm.players_stats.size() > 1:
+		btn_menu.text = "VOIR LE PODIUM"
+	else:
+		btn_menu.text = "RETOUR AU MENU"
+		
 	btn_menu.pressed.connect(_on_menu)
-
-func _on_restart() -> void:
-	_play_sfx(SFX_CLICK)
-	print("🔄 Rejouer")
-	get_tree().paused = false
-	ScoreManager.is_tracking = false
-	# Adapter le chemin vers votre scène de jeu
-	get_tree().change_scene_to_file("res://scenes/levels/arena_first_level_1.tscn")
 
 func _on_menu() -> void:
 	_play_sfx(SFX_CLICK)
-	print("📋 Retour au menu")
 	get_tree().paused = false
-	ScoreManager.is_tracking = false
-	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
+	var sm = ScoreManager
+	
+	if sm.players_stats.size() > 1 and sm.current_viewing_player < sm.players_stats.size() - 1:
+		sm.current_viewing_player += 1
+		get_tree().change_scene_to_file("res://scenes/ui/score_summary.tscn")
+	else:
+		sm.is_tracking = false
+		if sm.players_stats.size() > 1:
+			get_tree().change_scene_to_file("res://scenes/ui/score_summary_coop.tscn")
+		else:
+			get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
 
 func _play_sfx(stream: AudioStream) -> void:
 	var p := AudioStreamPlayer.new()
@@ -231,7 +236,6 @@ func _play_sfx(stream: AudioStream) -> void:
 # =============================================================
 
 func _animate_entrance() -> void:
-	# Titre
 	main_title.modulate.a = 0.0
 	mission_status.modulate.a = 0.0
 	
@@ -243,14 +247,12 @@ func _animate_entrance() -> void:
 	tw_status.tween_interval(0.35)
 	tw_status.tween_property(mission_status, "modulate:a", 1.0, 0.38)
 	
-	# Panel stats
 	var stats_panel = $CenterContainer/MainVBox/StatsPanel
 	stats_panel.modulate.a = 0.0
 	var tw_stats := create_tween()
 	tw_stats.tween_interval(0.80)
 	tw_stats.tween_property(stats_panel, "modulate:a", 1.0, 0.65)
 	
-	# Score
 	var score_container = $CenterContainer/MainVBox/TotalScoreContainer
 	score_container.modulate.a = 0.0
 	var tw_score := create_tween()
@@ -258,7 +260,6 @@ func _animate_entrance() -> void:
 	tw_score.tween_property(score_container, "modulate:a", 1.0, 0.45)
 	tw_score.tween_callback(_start_score_pulse)
 	
-	# Boutons
 	btn_menu.modulate.a = 0.0
 	var tw_btns := create_tween()
 	tw_btns.tween_interval(2.0)
@@ -275,13 +276,7 @@ func _glitch_title() -> void:
 func _start_score_pulse() -> void:
 	if not is_inside_tree():
 		return
-	
-	# 1. On déclare et crée le Tween proprement
 	var tw: Tween = create_tween()
-	# 2. On applique les boucles sur une ligne séparée
 	tw.set_loops()
-	
-	tw.tween_property(score_label, "modulate",
-		Color(0.4, 1.0, 0.8, 1.0), 2.0).set_trans(Tween.TRANS_SINE)
-	tw.tween_property(score_label, "modulate",
-		COLOR_GREEN, 2.0).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(score_label, "modulate", Color(0.4, 1.0, 0.8, 1.0), 2.0).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(score_label, "modulate", COLOR_GREEN, 2.0).set_trans(Tween.TRANS_SINE)

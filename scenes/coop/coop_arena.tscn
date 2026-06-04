@@ -13,6 +13,7 @@
 [ext_resource type="PackedScene" uid="uid://cw87pir38gk1v" path="res://assets/models/environments/tutorial_and_first_level/machine_wirelessCable.glb" id="11_gm4p0"]
 [ext_resource type="PackedScene" uid="uid://0knuqo2qton5" path="res://assets/models/environments/tutorial_and_first_level/desk_computerScreen.glb" id="12_fkota"]
 [ext_resource type="PackedScene" uid="uid://dysysxe40a80g" path="res://assets/models/environments/tutorial_and_first_level/craft_speederB.glb" id="13_w4tb5"]
+[ext_resource type="PackedScene" uid="uid://chm01swb33150" path="res://scenes/ui/HUD.tscn" id="14_gm4p0"]
 
 [sub_resource type="NavigationMesh" id="NavigationMesh_e8lb5"]
 
@@ -287,3 +288,5 @@ shadow_enabled = true
 
 [node name="Player" parent="." unique_id=222719199 instance=ExtResource("2_ml5ki")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 359.4296, 761.0432, -517.84814)
+
+[node name="HUD" parent="." unique_id=1994348935 instance=ExtResource("14_gm4p0")]

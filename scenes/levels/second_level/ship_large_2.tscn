@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://csovlk7uytl7e"]
+
+[ext_resource type="PackedScene" uid="uid://ctm46n0nrwqwc" path="res://assets/models/environments/second_level/2/ship-large.glb" id="1_0xhvk"]
+[ext_resource type="Texture2D" uid="uid://ddifhh2t7chpg" path="res://assets/models/environments/second_level/2/fichier png/ship-large.png" id="2_7liyy"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8pqon"]
+albedo_color = Color(0.87066793, 0.34749514, 0.17721704, 1)
+albedo_texture = ExtResource("2_7liyy")
+
+[node name="ship-large2" unique_id=1602477363 instance=ExtResource("1_0xhvk")]
+
+[node name="ship-large" parent="." index="0" unique_id=1911884878]
+surface_material_override/0 = SubResource("StandardMaterial3D_8pqon")
