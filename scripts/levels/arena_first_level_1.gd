@@ -7,7 +7,8 @@ extends Node3D
 @onready var wave_manager_zone1: WaveManager = $Wave_manager_container/WaveManager_Zone1
 @onready var wave_manager_zone2: WaveManager = $Wave_manager_container/WaveManager_Zone2
 @onready var level_exit: Node = $Zones/LevelExit
-@onready var hud: Node = $HUD
+@onready var hud = $HUD
+
 
 # Variables de contrôle
 var _zone1_triggered: bool = false

@@ -63,14 +63,17 @@ size = Vector3(50, 1, 35)
 [sub_resource type="BoxShape3D" id="BoxShape3D_ta00u"]
 size = Vector3(300, 1, 300)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ta00u"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hlidb"]
 albedo_color = Color(1, 0.6156863, 0.42745098, 1)
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_os1jq"]
-material = SubResource("StandardMaterial3D_ta00u")
+material = SubResource("StandardMaterial3D_hlidb")
 top_radius = 30.0
 bottom_radius = 30.0
 height = 83.05
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ta00u"]
+albedo_color = Color(1, 0.6156863, 0.42745098, 1)
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_xj8k5"]
 material = SubResource("StandardMaterial3D_ta00u")
@@ -655,7 +658,7 @@ transform = Transform3D(74.04797, -0.011694351, 112.0134, 0.009012266, 166.66702
 transform = Transform3D(74.04797, -0.011694351, 112.0134, 0.009012266, 166.66702, 0.0008510829, -67.207886, 0.009464733, 123.41352, -182.86476, -46.878998, -97.8627)
 
 [node name="rock_31" parent="WorldObjects_container/rock_container" unique_id=911632738 instance=ExtResource("2_xj8k5")]
-transform = Transform3D(74.04797, -0.011694351, 112.0134, 0.009012266, 166.66702, 0.0008510829, -67.207886, 0.009464733, 123.41352, -187.0153, -46.878998, 53.590164)
+transform = Transform3D(74.04797, -0.011694351, 112.0134, 0.009012266, 166.66702, 0.0008510829, -67.207886, 0.009464733, 123.41352, -187.0051, -46.839203, 53.564346)
 
 [node name="rock_32" parent="WorldObjects_container/rock_container" unique_id=652011462 instance=ExtResource("2_xj8k5")]
 transform = Transform3D(74.04797, -0.011694351, 112.0134, 0.009012266, 166.66702, 0.0008510829, -67.207886, 0.009464733, 123.41352, -252.32724, -77.21741, -16.022415)
