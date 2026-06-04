@@ -54,7 +54,7 @@ polygons = [PackedInt32Array(2, 1, 0), PackedInt32Array(3, 2, 0), PackedInt32Arr
 albedo_color = Color(1, 0.6156863, 0.42745098, 1)
 
 [sub_resource type="BoxMesh" id="BoxMesh_enpma"]
-material = SubResource("StandardMaterial3D_tbebd")
+material = SubResource("StandardMaterial3D_qsnft")
 size = Vector3(20, 1, 100)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jtgeh"]

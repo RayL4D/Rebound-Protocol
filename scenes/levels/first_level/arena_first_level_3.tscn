@@ -65,14 +65,17 @@ size = Vector3(50, 1, 35)
 [sub_resource type="BoxShape3D" id="BoxShape3D_ta00u"]
 size = Vector3(300, 1, 300)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ta00u"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hlidb"]
 albedo_color = Color(1, 0.6156863, 0.42745098, 1)
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_os1jq"]
-material = SubResource("StandardMaterial3D_ta00u")
+material = SubResource("StandardMaterial3D_hlidb")
 top_radius = 30.0
 bottom_radius = 30.0
 height = 83.05
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ta00u"]
+albedo_color = Color(1, 0.6156863, 0.42745098, 1)
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_xj8k5"]
 material = SubResource("StandardMaterial3D_ta00u")
