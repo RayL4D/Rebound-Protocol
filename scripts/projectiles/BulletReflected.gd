@@ -12,8 +12,8 @@ extends Area3D
 # Normale  → CYAN   (couleur identitaire du joueur / bouclier)
 # Critique → OR     (identique au flash bouclier en parade parfaite)
 #            JAMAIS rouge pour ne pas confondre avec l'ennemi
-const C_NORMAL   := Color(0.0,  0.85, 1.0)   # cyan
-const C_CRITICAL := Color(1.0,  0.78, 0.0)   # or
+const C_NORMAL   := Color(1.0,  0.50, 0.10)  # orange identique à la balle ennemie
+const C_CRITICAL := Color(1.0,  0.08, 0.05)  # rouge vif (parade critique)
 
 # --- Variables internes ------------------------------------------
 var direction: Vector3 = Vector3.ZERO
@@ -41,6 +41,8 @@ const _CLONE_DIST := 3.5             # unités avant spawn du clone
 func _ready() -> void:
 	$VisibleOnScreenNotifier3D.screen_exited.connect(_on_screen_exited)
 	body_entered.connect(_on_body_entered)
+	# Ajouter le layer world (layer 3, valeur 4) pour détecter les décors
+	collision_mask |= 4
 
 
 func _physics_process(delta: float) -> void:
@@ -88,6 +90,8 @@ func init(spawn_position: Vector3, target_direction: Vector3,
 
 	var color := C_CRITICAL if is_critical else (Color(0.6, 0.0, 1.0) if _is_phantom else C_NORMAL)
 	_setup_visuals(color, is_critical)
+	# Re-orienter après _setup_visuals() qui a ajouté l'enfant Trail
+	_orient_to_direction()
 
 
 # =============================================================
@@ -95,31 +99,55 @@ func init(spawn_position: Vector3, target_direction: Vector3,
 # =============================================================
 
 func _setup_visuals(color: Color, critical: bool) -> void:
+	# ── Corps : cube court, couleur de la balle ───────────────────
+	var box := BoxMesh.new()
+	box.size = Vector3(0.18, 0.18, 0.24)
+	$MeshInstance3D.mesh = box
+
+	# Émission plus sombre que l'albedo pour éviter la dérive vers le jaune
+	var emit_color := Color(color.r, color.g * 0.65, color.b * 0.4)
 	_mat = StandardMaterial3D.new()
 	_mat.albedo_color              = color
 	_mat.emission_enabled          = true
-	_mat.emission                  = color
-	_mat.emission_energy_multiplier = 4.0
+	_mat.emission                  = emit_color
+	_mat.emission_energy_multiplier = 2.8 if not critical else 4.0
 	$MeshInstance3D.set_surface_override_material(0, _mat)
-	"""
-	# Lumière dynamique — plus grande et brillante pour le critique
-	var light := OmniLight3D.new()
-	light.light_color  = color
-	light.light_energy = 4.0 if critical else 3.0
-	light.omni_range   = 3.5 if critical else 2.5
-	add_child(light)
-	"""
-	# Pulsation — critique plus rapide et plus contrastée
-	var lo  := 3.5 if not critical else 5.0
-	var hi  := 7.0 if not critical else 12.0
-	var dur := 0.20 if not critical else 0.10
-	var tw := create_tween().set_loops()
-	tw.tween_method(_set_emission.bind(_mat), lo, hi, dur)
-	tw.tween_method(_set_emission.bind(_mat), hi, lo, dur)
+
+	# ── Traînée conique ────────────────────────────────────────────
+	var cone := CylinderMesh.new()
+	cone.top_radius     = 0.0       # pointu à l'arrière (+Z)
+	cone.bottom_radius  = 0.080     # large côté balle   (-Z)
+	cone.height         = 0.90 if not critical else 1.10
+	cone.radial_segments = 8
+	cone.rings           = 1
+
+	var trail_mat := StandardMaterial3D.new()
+	trail_mat.albedo_color              = Color(color.r, color.g, color.b, 0.88)
+	trail_mat.emission_enabled          = true
+	trail_mat.emission                  = emit_color
+	trail_mat.emission_energy_multiplier = 2.5 if not critical else 4.0
+	trail_mat.transparency              = BaseMaterial3D.TRANSPARENCY_ALPHA
+	trail_mat.cull_mode                 = BaseMaterial3D.CULL_DISABLED
+
+	var trail := MeshInstance3D.new()
+	trail.name       = "Trail"
+	trail.mesh       = cone
+	trail.rotation.x = PI * 0.5
+	trail.position   = Vector3(0.0, 0.0, 0.50)
+	trail.set_surface_override_material(0, trail_mat)
+	add_child(trail)
+	# Pas de pulsation — rendu propre et stable
 
 
 func _set_emission(value: float, mat: StandardMaterial3D) -> void:
 	mat.emission_energy_multiplier = value
+
+
+func _orient_to_direction() -> void:
+	if direction.length_squared() < 0.01:
+		return
+	var up := Vector3.UP if abs(direction.dot(Vector3.UP)) < 0.95 else Vector3.RIGHT
+	look_at(global_position + direction, up)
 
 
 # =============================================================
@@ -128,6 +156,12 @@ func _set_emission(value: float, mat: StandardMaterial3D) -> void:
 
 func _on_body_entered(body: Node3D) -> void:
 	if not body.is_in_group("enemies"):
+		# Décor / géométrie : arrêter la balle sauf si un rebond mural est encore disponible
+		# (le raycast de _check_wall_bounce devrait avoir changé la direction avant,
+		# mais on vérifie par sécurité)
+		if _wall_bounces <= 0:
+			_spawn_impact()
+			queue_free()
 		return
 
 	body.take_damage(damage)
@@ -262,6 +296,7 @@ func _redirect_to(target: Node3D) -> void:
 	var to_target := target.global_position - global_position
 	to_target.y   = 0.0
 	direction      = to_target.normalized()
+	_orient_to_direction()   # Traînée suit la nouvelle cible
 	# Petit flash blanc pour indiquer le rebond
 	if is_inside_tree():
 		_spawn_spark(get_tree().current_scene, global_position,
@@ -316,6 +351,7 @@ func _check_wall_bounce() -> void:
 	normal = normal.normalized()
 	direction = direction.bounce(normal)
 	_wall_bounces -= 1
+	_orient_to_direction()   # La traînée suit la nouvelle direction
 
 	# Flash cyan sur le point d'impact mural
 	_spawn_spark(get_tree().current_scene, result["position"],

@@ -16,6 +16,7 @@
 #   │   ├── [Modèle blaster-d.glb]
 #   │   └── WeaponBullet (Node3D) ← script WeaponBullet.gd
 # =============================================================
+@tool
 class_name PetBunny
 extends Enemy
 
@@ -51,15 +52,13 @@ func _on_ready() -> void:
 
 
 # =============================================================
-# MOUVEMENT — fonce vers le joueur en zigzaguant
+# MOUVEMENT — fonce vers le joueur en zigzaguant via navmesh
 # =============================================================
 
 func _update_movement(delta: float) -> void:
 	_strafe_time += delta
 
-	var to_player := player.global_position - global_position
-	to_player.y   = 0.0
-	var dist      := to_player.length()
+	var dist := global_position.distance_to(player.global_position)
 
 	if dist < 0.1:
 		return
@@ -70,15 +69,18 @@ func _update_movement(delta: float) -> void:
 		velocity.z = 0.0
 		return
 
-	var to_player_n := to_player.normalized()
+	# Direction navmesh vers le joueur (évite les obstacles)
+	var nav_dir := _get_move_direction()
+	if nav_dir == Vector3.ZERO:
+		return
 
-	# Direction latérale perpendiculaire
-	var strafe_dir := Vector3(-to_player_n.z, 0.0, to_player_n.x)
+	# Direction latérale perpendiculaire au chemin navmesh
+	var strafe_dir := Vector3(-nav_dir.z, 0.0, nav_dir.x)
 
 	# Oscillation sinusoïdale avec phase aléatoire
 	var zigzag := sin(_strafe_time * strafe_freq * TAU + _strafe_offset) * strafe_amp
 
-	var move_dir := (to_player_n + strafe_dir * zigzag)
+	var move_dir := (nav_dir + strafe_dir * zigzag)
 	if move_dir.length_squared() > 0.01:
 		move_dir = move_dir.normalized()
 

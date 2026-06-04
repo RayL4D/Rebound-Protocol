@@ -2,7 +2,26 @@
 
 [ext_resource type="Script" uid="uid://dtemtoqfgarfw" path="res://scripts/player/Player.gd" id="1_8afob"]
 [ext_resource type="PackedScene" uid="uid://bx87d68g68wkc" path="res://scenes/player/shield.tscn" id="3_gmlin"]
-[ext_resource type="PackedScene" uid="uid://dvct7n48fh007" path="res://assets/models/player/character-g.glb" id="4_lvxji"]
+[ext_resource type="Texture2D" uid="uid://bt3ulje4kt33s" path="res://assets/textures/player/texture0001.png" id="3_lvxji"]
+[ext_resource type="PackedScene" uid="uid://du8ywnsdenni0" path="res://assets/models/player/character0001.glb" id="4_lvxji"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_p47bc"]
+albedo_texture = ExtResource("3_lvxji")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_75vfm"]
+albedo_texture = ExtResource("3_lvxji")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0owmy"]
+albedo_texture = ExtResource("3_lvxji")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_qek5x"]
+albedo_texture = ExtResource("3_lvxji")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5gtgg"]
+albedo_texture = ExtResource("3_lvxji")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h17s1"]
+albedo_texture = ExtResource("3_lvxji")
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_8afob"]
 radius = 0.25
@@ -57,8 +76,7 @@ jump_force = 5.0
 fall_multiplier = 3.5
 
 [node name="SpringArm3D" type="SpringArm3D" parent="." unique_id=2018840139]
-transform = Transform3D(1, 0, 0, 0, 0.57357645, 0.81915206, 0, -0.81915206, 0.57357645, 0, 0, 0)
-collision_mask = 0
+transform = Transform3D(1, 0, 0, 0, 0.90630776, 0.42261827, 0, -0.42261827, 0.90630776, 0, 0, 0)
 spring_length = 8.0
 
 [node name="Camera3D" type="Camera3D" parent="SpringArm3D" unique_id=1796041781]
@@ -66,17 +84,26 @@ spring_length = 8.0
 [node name="RobotModel" parent="." unique_id=1575018680 instance=ExtResource("4_lvxji")]
 transform = Transform3D(0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, -0.8, 0)
 
-[node name="torso" parent="RobotModel/character-g/root" parent_id_path=PackedInt32Array(1575018680, 91212867) index="2" unique_id=1572204047]
-transform = Transform3D(1, 0, 0, 0, 0.99968076, -0.025260165, 0, 0.025260165, 0.99968076, 0, 0.7, 0)
+[node name="leg-left" parent="RobotModel/character-g/root" parent_id_path=PackedInt32Array(1575018680, 1408074147) index="0" unique_id=1705877626]
+surface_material_override/0 = SubResource("StandardMaterial3D_p47bc")
 
-[node name="arm-left" parent="RobotModel/character-g/root/torso" index="0" unique_id=1539902478]
-transform = Transform3D(1, 0, 0, 0, 0.99712926, -0.07571603, 0, 0.07571603, 0.99712926, 0.4000001, 1.1, -0.099999905)
+[node name="leg-right" parent="RobotModel/character-g/root" parent_id_path=PackedInt32Array(1575018680, 1408074147) index="1" unique_id=863640749]
+surface_material_override/0 = SubResource("StandardMaterial3D_75vfm")
 
-[node name="arm-right" parent="RobotModel/character-g/root/torso" index="1" unique_id=822799953]
-transform = Transform3D(1, 0, 0, 0, 0.99712926, -0.07571603, 0, 0.07571603, 0.99712926, -0.4000001, 1.1, -0.099999905)
+[node name="torso" parent="RobotModel/character-g/root" parent_id_path=PackedInt32Array(1575018680, 1408074147) index="2" unique_id=1357798909]
+transform = Transform3D(1, 0, 0, 0, 0.99999964, 0, 0, 0, 0.99999964, 0, 0.7, 0)
+surface_material_override/0 = SubResource("StandardMaterial3D_0owmy")
 
-[node name="head" parent="RobotModel/character-g/root/torso" index="2" unique_id=793382359]
-transform = Transform3D(0.099712946, 0, -0.007571605, 0, 0.1, 0, 0.007571605, 0, 0.099712946, 0, 1.2, 0)
+[node name="arm-left" parent="RobotModel/character-g/root/torso" index="0" unique_id=368911694]
+transform = Transform3D(1, 0, 0, 0, 0.99999976, 0, 0, 0, 0.99999976, 0.4000001, 1.1, -0.099999905)
+surface_material_override/0 = SubResource("StandardMaterial3D_qek5x")
+
+[node name="arm-right" parent="RobotModel/character-g/root/torso" index="1" unique_id=1850906922]
+transform = Transform3D(1, 0, 0, 0, 0.99999976, 0, 0, 0, 0.99999976, -0.4000001, 1.1, -0.099999905)
+surface_material_override/0 = SubResource("StandardMaterial3D_5gtgg")
+
+[node name="head" parent="RobotModel/character-g/root/torso" index="2" unique_id=794268023]
+surface_material_override/0 = SubResource("StandardMaterial3D_h17s1")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=836211236]
 shape = SubResource("CapsuleShape3D_8afob")

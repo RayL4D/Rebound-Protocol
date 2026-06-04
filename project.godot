@@ -11,6 +11,8 @@ config_version=5
 [application]
 
 config/name="Rebound Protocol"
+run/main_scene="res://scenes/ui/splash_screen.tscn"
+run/disable_stdout=true
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="uid://b3c1onv2sximu"
 
@@ -22,6 +24,9 @@ CollisionManager="*res://scripts/levels/collision_manager.gd"
 MusicManager="*res://scripts/autoloads/music_manager.gd"
 AmbientManager="*res://scripts/autoloads/ambient_manager.gd"
 XpManager="*res://scripts/autoloads/xp_manager.gd"
+NetworkManager="*res://scripts/autoloads/network_manager.gd"
+ScoreManager="*res://scripts/autoloads/scoreManager.gd"
+EasyChat="*uid://vawrmcgvyho4"
 
 [display]
 
@@ -30,7 +35,7 @@ window/size/mode=2
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/virtual_joystick/plugin.cfg")
+enabled=PackedStringArray("res://addons/easychat/plugin.cfg", "res://addons/virtual_joystick/plugin.cfg")
 
 [input]
 
@@ -99,6 +104,9 @@ dash={
 "take boat"={
 "deadzone": 0.2,
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":0,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":70,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+interact={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":70,"key_label":0,"unicode":102,"location":0,"echo":false,"script":null)
 ]
 }
 

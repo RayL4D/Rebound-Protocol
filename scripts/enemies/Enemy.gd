@@ -9,6 +9,7 @@
 # Composition : chaque ennemi a un nœud WeaponComponent enfant
 #               qui gère la logique de tir indépendamment.
 # =============================================================
+@tool
 class_name Enemy
 extends CharacterBody3D
 
@@ -47,6 +48,7 @@ var player: Player          = null
 var _model: Node3D          = null
 var _anim_player: AnimationPlayer = null  # trouvé automatiquement dans _setup_model
 var _gesture_active: bool = false         # true pendant une animation de geste (bloque idle/walk/run)
+var is_dead: bool = false
 
 # Matériaux originaux mémorisés à l'init — restaurés après chaque flash.
 # Clé : MeshInstance3D  Valeur : Material original
@@ -56,32 +58,98 @@ var _orig_mats: Dictionary = {}
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
+# --- SYSTÈME DE SILHOUETTE (X-RAY) -----------------------------
+var _highlight_material: ShaderMaterial = null
+
 # --- Signal (compatible avec EnemyPlaceholder) ------------------
 signal enemy_died
 
 
+var _nav_agent: NavigationAgent3D = null
+const NAV_UPDATE_INTERVAL := 0.3  # recalcule le chemin toutes les 0.3s
+var _nav_timer: float = 0.0
+
+var _stuck_timer: float = 0.0
+var _last_position: Vector3 = Vector3.ZERO
+
+# --- Détection du joueur ----------------------------------------
+## Activer sur les ennemis pré-placés (pas les vagues) pour qu'ils ne
+## poursuivent le joueur que s'il entre dans leur champ de vision.
+## Laisser false pour les ennemis de vague (comportement inchangé).
+@export_group("Détection")
+@export var use_detection:    bool  = false
+@export var detection_range:  float = 12.0   # portée en mètres
+@export var detection_fov:    float = 110.0  # champ de vision en degrés
+## Rayon de perte de cible : le joueur est "perdu" au-delà de cette distance.
+@export var lose_range_mult:  float = 2.0
+
+@export_group("Patrouille")
+## Activer pour que l'ennemi fasse des rondes avant de détecter le joueur.
+## Fonctionne avec use_detection = true : patrouille → combat à la détection.
+@export var patrol_enabled:   bool  = false
+## Distance aller-retour de chaque côté du point de spawn (en mètres).
+@export var patrol_distance:  float = 6.0
+## Vitesse de patrouille relative à move_speed (0.0 – 1.0).
+@export var patrol_speed:     float = 0.55
+
+@export_group("")
+var _player_detected: bool = false
+
+# --- État patrouille -------------------------------------------
+var _patrol_origin:    Vector3 = Vector3.ZERO
+var _patrol_waypoints: Array[Vector3] = []
+var _patrol_idx:       int     = 0
+var _patrol_wait:      float   = 0.0   # pause courte à chaque extrémité
 # =============================================================
 # LIFECYCLE
 # =============================================================
 
 func _ready() -> void:
+	# En mode éditeur : uniquement le visuel (texture + scale)
+	if Engine.is_editor_hint():
+		_setup_model()
+		return
+
 	current_hp = max_hp
 	add_to_group("enemies")
-
-	# Couche 5 (valeur 16) = même couche qu'EnemyPlaceholder
-	# → bullet_reflected a collision_mask = 16, donc elle détectera tous les ennemis
-	# Mask = couche 1 (player=1) + couche 3 (world=4) = 5
 	collision_layer = 16
-	collision_mask  = 5
-
+	collision_mask  = 21   # 5 (géométrie + joueur) | 16 (autres ennemis)
 	player = get_tree().get_first_node_in_group("player")
 	_setup_model()
-
 	_sfx_player     = AudioStreamPlayer.new()
 	_sfx_player.bus = "SFX"
 	add_child(_sfx_player)
 
-	_on_ready()  # Hook pour les sous-classes
+	# NavigationAgent3D — ajouté avant _on_ready pour que les sous-classes
+	# puissent déjà appeler _get_move_direction() dans leur _on_ready
+	_nav_agent = NavigationAgent3D.new()
+	_nav_agent.path_desired_distance   = 0.5
+	_nav_agent.target_desired_distance = 0.5
+	_nav_agent.avoidance_enabled       = true
+	add_child(_nav_agent)
+
+	# ⚠️ Attendre un frame que la navmesh soit prête avant le 1er calcul
+	await get_tree().physics_frame
+
+	if player != null:
+		_nav_agent.target_position = player.global_position
+
+	# Initialisation de la patrouille si activée
+	if patrol_enabled and use_detection:
+		_patrol_origin = global_position
+		# Direction de patrouille = axe Z local (avant/arrière depuis la rotation initiale)
+		var fwd := -global_transform.basis.z
+		fwd.y = 0.0
+		if fwd.length_squared() < 0.01:
+			fwd = Vector3(0, 0, 1)
+		fwd = fwd.normalized()
+		_patrol_waypoints = [
+			_patrol_origin + fwd * patrol_distance,
+			_patrol_origin - fwd * patrol_distance,
+		]
+		_patrol_idx = 0
+
+	_on_ready()
 
 
 # =============================================================
@@ -115,10 +183,15 @@ func _setup_model() -> void:
 	# Mémoriser les matériaux originaux APRÈS leur application,
 	# pour pouvoir les restaurer correctement même si plusieurs flash
 	# se chevauchent (race condition).
+	# On stocke un Array de matériaux par mesh (une entrée par surface).
 	var meshes: Array[MeshInstance3D] = []
 	_collect_meshes(_model, meshes)
 	for mesh in meshes:
-		_orig_mats[mesh] = mesh.get_surface_override_material(0)
+		var surface_count := mesh.mesh.get_surface_count() if mesh.mesh else 1
+		var mats: Array = []
+		for i in surface_count:
+			mats.append(mesh.get_surface_override_material(i))
+		_orig_mats[mesh] = mats
 
 	# Trouver l'AnimationPlayer dans le GLB importé (recherche récursive)
 	_anim_player = _find_anim_player(_model)
@@ -140,11 +213,16 @@ func _find_anim_player(node: Node) -> AnimationPlayer:
 
 # Même logique que Player.gd : parcourt tous les MeshInstance3D
 # de façon récursive et applique la texture sur chacun.
+# On itère sur toutes les surfaces pour éviter les erreurs "material is null"
+# sur les meshes multi-surfaces (Kenney GLB en ont souvent plusieurs).
 func _apply_texture_recursive(node: Node, texture: Texture2D) -> void:
 	if node is MeshInstance3D:
+		var mi := node as MeshInstance3D
 		var mat := StandardMaterial3D.new()
 		mat.albedo_texture = texture
-		node.set_surface_override_material(0, mat)
+		var count := mi.mesh.get_surface_count() if mi.mesh else 1
+		for i in count:
+			mi.set_surface_override_material(i, mat)
 	for child in node.get_children():
 		_apply_texture_recursive(child, texture)
 
@@ -157,14 +235,137 @@ func _on_ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if player == null:
+	if Engine.is_editor_hint() or player == null:
 		return
 
 	_apply_gravity(delta)
-	_update_movement(delta)
+
+	# --- Détection (uniquement pour les ennemis pré-placés) ---
+	if use_detection:
+		_update_detection()
+
+	# Mise à jour de la cible de navigation
+	# Si use_detection est actif, on ne met à jour que si le joueur est détecté.
+	var chasing := not use_detection or _player_detected
+	if chasing:
+		_nav_timer -= delta
+		if _nav_timer <= 0.0:
+			_nav_timer = NAV_UPDATE_INTERVAL
+			_nav_agent.target_position = player.global_position
+		_update_movement(delta)
+		_face_player()
+	elif patrol_enabled and not _patrol_waypoints.is_empty():
+		_update_patrol(delta)
+	else:
+		# Ennemi au repos sans patrouille : immobile
+		velocity.x = 0.0
+		velocity.z = 0.0
+
 	move_and_slide()
-	_face_player()
 	_update_animation()
+
+
+# =============================================================
+# PATROUILLE — va-et-vient entre deux waypoints autour du spawn
+# =============================================================
+
+func _update_patrol(delta: float) -> void:
+	# Pause courte à chaque extrémité avant de repartir
+	if _patrol_wait > 0.0:
+		_patrol_wait -= delta
+		velocity.x = 0.0
+		velocity.z = 0.0
+		return
+
+	var target  := _patrol_waypoints[_patrol_idx]
+	var to_tgt  := target - global_position
+	to_tgt.y    = 0.0
+	var dist    := to_tgt.length()
+
+	if dist < 0.8:
+		# Waypoint atteint : pause puis passer au suivant
+		_patrol_wait = 0.6
+		_patrol_idx  = (_patrol_idx + 1) % _patrol_waypoints.size()
+		velocity.x   = 0.0
+		velocity.z   = 0.0
+		return
+
+	# Déplacement direct vers le waypoint (pas de nav mesh — plus robuste en patrol)
+	var dir     := to_tgt.normalized()
+	var speed   := move_speed * patrol_speed
+	velocity.x   = dir.x * speed
+	velocity.z   = dir.z * speed
+
+	# Orientation dans la direction de marche
+	rotation.y   = atan2(dir.x, dir.z)
+
+
+# =============================================================
+# DÉTECTION DU JOUEUR (champ de vision + portée + raycast)
+# =============================================================
+
+func _update_detection() -> void:
+	var dist := global_position.distance_to(player.global_position)
+
+	if _player_detected:
+		# Perte de cible si le joueur s'éloigne trop
+		if dist > detection_range * lose_range_mult:
+			_player_detected = false
+		return
+
+	# (suite : vérifications portée + FOV + raycast)
+
+	# ── 1. Portée ──────────────────────────────────────────────────
+	if dist > detection_range:
+		return
+
+	# ── 2. Champ de vision ─────────────────────────────────────────
+	# _face_player() / _update_patrol() orientent le +Z local vers la direction
+	# regardée → basis.z = avant visuel de l'ennemi (pas -basis.z).
+	var to_player := (player.global_position - global_position)
+	to_player.y   = 0.0
+	if to_player.length_squared() > 0.01:
+		var forward  := global_transform.basis.z
+		forward.y    = 0.0
+		if forward.length_squared() > 0.001:
+			var angle := rad_to_deg(forward.normalized().angle_to(to_player.normalized()))
+			if angle > detection_fov * 0.5:
+				return  # Hors champ de vision
+
+	# ── 3. Ligne de vue (raycast) ───────────────────────────────────
+	var space := get_world_3d().direct_space_state
+	var eye_offset := Vector3(0.0, 0.9, 0.0)   # hauteur des yeux de l'ennemi
+	var query := PhysicsRayQueryParameters3D.create(
+		global_position + eye_offset,
+		player.global_position + eye_offset,
+		0b10101   # layers 1 + 3 + 5 (géométrie + joueur)
+	)
+	query.exclude = [self]
+	var hit := space.intersect_ray(query)
+	# Détecté uniquement si le ray touche le joueur (pas un mur entre les deux)
+	if not hit.is_empty() and hit.get("collider") != player:
+		return
+
+	_set_player_detected()
+
+
+## Alerte immédiate quand l'ennemi reçoit un coup (même hors champ de vision).
+func alert() -> void:
+	_set_player_detected()
+
+
+## Déclenche la détection et notifie les sous-classes (ex. pour activer l'arme).
+func _set_player_detected() -> void:
+	if _player_detected:
+		return
+	_player_detected = true
+	_on_player_detected()
+
+
+## Hook surchargeable : appelé UNE SEULE FOIS quand le joueur est détecté.
+## Utiliser pour activer l'arme sur les ennemis pré-placés (use_detection = true).
+func _on_player_detected() -> void:
+	pass
 
 
 # =============================================================
@@ -227,11 +428,18 @@ func _update_animation() -> void:
 
 ## silent_hurt : passer true pour supprimer le son hurt (ex. stomp/dash — le joueur a son propre son d'impact)
 func take_damage(amount: int, silent_hurt: bool = false) -> void:
-	if not is_inside_tree():
+	# 🛠️ Si l'ennemi est déjà mort ou hors de l'arbre, on ignore complètement
+	if is_dead or not is_inside_tree():
 		return
+	# Un ennemi pré-placé qui reçoit un coup détecte toujours le joueur,
+	# même s'il était hors champ de vision.
+	if use_detection:
+		_set_player_detected()
 	current_hp = max(0, current_hp - amount)
 	_spawn_damage_number(amount)
+	
 	if current_hp <= 0:
+		is_dead = true # 🛠️ On verrouille immédiatement avant d'appeler _die()
 		_die()
 		return
 
@@ -305,6 +513,9 @@ func _spawn_damage_number(amount: int) -> void:
 
 func _die() -> void:
 	enemy_died.emit()
+	if has_node("/root/ScoreManager"):
+		ScoreManager.add_kill()
+		print("✅ Enemy died - Score updated")
 	_drop_coins()
 	# Drop XP — seulement si XpManager est présent (pas toujours en menu)
 	if get_tree() != null and get_tree().root.has_node("XpManager"):
@@ -437,7 +648,7 @@ func _spawn_death_burst() -> void:
 			Color(1.0, 0.9, 0.2))   # jaune vif
 
 
-func _spawn_burst_particle(parent: Node, origin: Vector3,
+static func _spawn_burst_particle(parent: Node, origin: Vector3,
 		direction: Vector3, speed: float, color: Color) -> void:
 	var sphere_mesh := SphereMesh.new()
 	sphere_mesh.radius         = 0.055
@@ -511,18 +722,25 @@ func _flash_hit(color: Color, duration: float) -> void:
 	var meshes: Array[MeshInstance3D] = []
 	_collect_meshes(_model, meshes)
 	for mesh in meshes:
-		# Toujours restaurer vers le matériau original mémorisé à l'init,
-		# pas vers le matériau courant (qui peut déjà être un flash précédent).
-		var orig_mat: Material = _orig_mats.get(mesh, null)
+		# Toujours restaurer vers les matériaux originaux mémorisés à l'init,
+		# pas vers les matériaux courants (qui peuvent déjà être un flash précédent).
+		var orig_mats: Array = _orig_mats.get(mesh, [])
 		var flash    := StandardMaterial3D.new()
 		flash.albedo_color               = color
 		flash.emission_enabled           = true
 		flash.emission                   = color
 		flash.emission_energy_multiplier = 1.5
-		mesh.set_surface_override_material(0, flash)
+		var surface_count := mesh.mesh.get_surface_count() if mesh.mesh else 1
+		for i in surface_count:
+			mesh.set_surface_override_material(i, flash)
 		var tw := create_tween()
 		tw.tween_interval(duration)
-		tw.tween_callback(func(): mesh.set_surface_override_material(0, orig_mat))
+		tw.tween_callback(func():
+			if not is_instance_valid(mesh):
+				return
+			for i in orig_mats.size():
+				mesh.set_surface_override_material(i, orig_mats[i])
+		)
 
 
 # Jolt de scale : micro-impulsion qui donne de l'impact au hit.
@@ -543,3 +761,55 @@ func _collect_meshes(node: Node, out: Array[MeshInstance3D]) -> void:
 		out.append(node as MeshInstance3D)
 	for child in node.get_children():
 		_collect_meshes(child, out)
+
+
+func _get_move_direction() -> Vector3:
+	if _nav_agent == null or _nav_agent.is_navigation_finished():
+		return Vector3.ZERO
+
+	# Détection de blocage
+	_stuck_timer += get_physics_process_delta_time()
+	if _stuck_timer >= 0.5:
+		_stuck_timer = 0.0
+		if global_position.distance_to(_last_position) < 0.05:
+			# Impulsion aléatoire pour se débloquer
+			var rng := Vector3(randf_range(-1, 1), 0, randf_range(-1, 1))
+			return rng.normalized()
+		_last_position = global_position
+
+	var next := _nav_agent.get_next_path_position()
+	var dir  := (next - global_position)
+	dir.y     = 0.0
+	return dir.normalized()
+
+## Active ou désactive la silhouette à travers les murs
+func toggle_highlight(enabled: bool) -> void:
+	if _model == null:
+		return
+
+	# On crée le matériau de silhouette au premier appel si besoin
+	if enabled and _highlight_material == null:
+		var shader := Shader.new()
+		shader.code = """
+		shader_type spatial;
+		render_mode unshaded, depth_test_disabled;
+		
+		uniform vec4 silhouette_color : source_color = vec4(1.0, 0.35, 0.0, 0.5);
+		
+		void fragment() {
+			ALBEDO = silhouette_color.rgb;
+			ALPHA = silhouette_color.a;
+		}
+		"""
+		_highlight_material = ShaderMaterial.new()
+		_highlight_material.shader = shader
+
+	# On applique ou on retire le overlay sur tous les sous-meshes de l'ennemi
+	var meshes: Array[MeshInstance3D] = []
+	_collect_meshes(_model, meshes)
+	
+	for mesh in meshes:
+		if enabled:
+			mesh.material_overlay = _highlight_material
+		else:
+			mesh.material_overlay = null

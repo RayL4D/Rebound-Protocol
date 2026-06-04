@@ -17,6 +17,7 @@
 #   │   └── WeaponBurst (Node3D) ← script WeaponBurst.gd
 #   └── (pas de ShootTimer — géré par WeaponComponent)
 # =============================================================
+@tool
 class_name PetCat
 extends Enemy
 
@@ -44,7 +45,13 @@ func _on_ready() -> void:
 		return
 	if player == null:
 		return
-	weapon.activate(player)
+	if not use_detection:
+		weapon.activate(player)
+
+
+func _on_player_detected() -> void:
+	if weapon != null and player != null:
+		weapon.activate(player)
 
 	# Animation gesture-negative (grognement) à chaque début de rafale
 	weapon.fired.connect(_on_burst_fired)
@@ -67,28 +74,32 @@ func _on_animation_finished(anim_name: StringName) -> void:
 
 
 # =============================================================
-# MOUVEMENT — orbite serrée autour du joueur
+# MOUVEMENT — orbite serrée autour du joueur via navmesh
 # =============================================================
 
 func _update_movement(_delta: float) -> void:
-	var to_player := player.global_position - global_position
-	to_player.y   = 0.0
-	var dist      := to_player.length()
+	var dist := global_position.distance_to(player.global_position)
 
 	if dist < 0.1:
 		return
 
-	var to_player_n := to_player.normalized()
+	var to_player_n := (player.global_position - global_position)
+	to_player_n.y    = 0.0
+	to_player_n      = to_player_n.normalized()
 
-	# Composante radiale : ajustement de la distance préférée
+	# Composante radiale : ajustement de la distance préférée via navmesh
 	var radial := Vector3.ZERO
 	var margin := 1.2
 	if dist < preferred_distance - margin:
-		radial = -to_player_n  # trop proche → reculer
+		# Trop proche → reculer (direction opposée au joueur)
+		radial = -to_player_n
 	elif dist > preferred_distance + margin:
-		radial = to_player_n   # trop loin → avancer
+		# Trop loin → avancer via navmesh
+		var nav_dir := _get_move_direction()
+		if nav_dir != Vector3.ZERO:
+			radial = nav_dir
 
-	# Composante orbitale (strafe latéral)
+	# Composante orbitale (strafe latéral — pas impacté par les obstacles)
 	var strafe_dir := Vector3(-to_player_n.z, 0.0, to_player_n.x) * _orbit_sign
 
 	var move_dir := (radial + strafe_dir * orbit_speed_mult)

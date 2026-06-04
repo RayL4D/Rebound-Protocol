@@ -10,7 +10,7 @@ extends Area3D
 @export var damage: int   = 10
 
 # --- Palette : rouge-orangé menaçant ----------------------------
-const C_BULLET := Color(1.0, 0.18, 0.0)
+const C_BULLET := Color(1.0, 0.50, 0.10)
 
 # --- Variables internes ------------------------------------------
 var direction: Vector3 = Vector3.ZERO
@@ -22,6 +22,7 @@ var _mat: StandardMaterial3D = null
 # =============================================================
 
 func _ready() -> void:
+	add_to_group("bullets")   # Détectable par Player._find_nearest_threat() (auto-face mobile)
 	$VisibleOnScreenNotifier3D.screen_exited.connect(_on_screen_exited)
 	body_entered.connect(_on_body_entered)
 	_setup_visuals()
@@ -40,23 +41,42 @@ func _physics_process(delta: float) -> void:
 # =============================================================
 
 func _setup_visuals() -> void:
-	# Matériau émissif rouge-orangé
+	# ── Corps : cube orange vif ───────────────────────────────────
+	var box := BoxMesh.new()
+	box.size = Vector3(0.18, 0.18, 0.24)
+	$MeshInstance3D.mesh = box
+
 	_mat = StandardMaterial3D.new()
-	_mat.albedo_color              = C_BULLET
+	_mat.albedo_color              = Color(1.0, 0.50, 0.10)   # orange pur
 	_mat.emission_enabled          = true
-	_mat.emission                  = C_BULLET
-	_mat.emission_energy_multiplier = 3.5
+	_mat.emission                  = Color(1.0, 0.38, 0.0)    # orange profond
+	_mat.emission_energy_multiplier = 2.8                      # réduit pour éviter le halo
 	$MeshInstance3D.set_surface_override_material(0, _mat)
-	"""
-	# Lumière ambiante rouge-orangée
-	var light := OmniLight3D.new()
-	light.light_color  = C_BULLET
-	light.light_energy = 2.5
-	light.omni_range   = 2.2
-	add_child(light)
-	"""
-	# Pulsation d'émission
-	_pulse(_mat, 2.5, 5.0, 0.22)
+
+	# ── Traînée conique (large côté balle, effilée à l'arrière) ──
+	var cone := CylinderMesh.new()
+	cone.top_radius     = 0.0      # pointu à l'arrière
+	cone.bottom_radius  = 0.080    # large contre le cube
+	cone.height         = 0.90
+	cone.radial_segments = 8
+	cone.rings           = 1
+
+	var trail_mat := StandardMaterial3D.new()
+	trail_mat.albedo_color              = Color(1.0, 0.42, 0.06, 0.88)
+	trail_mat.emission_enabled          = true
+	trail_mat.emission                  = Color(0.95, 0.28, 0.0)
+	trail_mat.emission_energy_multiplier = 2.5
+	trail_mat.transparency              = BaseMaterial3D.TRANSPARENCY_ALPHA
+	trail_mat.cull_mode                 = BaseMaterial3D.CULL_DISABLED
+
+	var trail := MeshInstance3D.new()
+	trail.name       = "Trail"
+	trail.mesh       = cone
+	trail.rotation.x = PI * 0.5        # CylinderMesh vertical → orienté sur Z
+	trail.position   = Vector3(0.0, 0.0, 0.50)   # centre du cône derrière le cube
+	trail.set_surface_override_material(0, trail_mat)
+	add_child(trail)
+	# Pas de pulsation — rendu propre et stable comme dans le splash screen
 
 
 func _pulse(mat: StandardMaterial3D, lo: float, hi: float, dur: float) -> void:
@@ -76,6 +96,16 @@ func _set_emission(value: float, mat: StandardMaterial3D) -> void:
 func init(spawn_position: Vector3, target_direction: Vector3) -> void:
 	global_position = spawn_position
 	direction       = target_direction.normalized()
+	# Orienter le nœud : look_at fait pointer -Z vers la cible,
+	# donc +Z (= arrière) est opposé au tir → la traînée suit automatiquement.
+	_orient_to_direction()
+
+
+func _orient_to_direction() -> void:
+	if direction.length_squared() < 0.01:
+		return
+	var up := Vector3.UP if abs(direction.dot(Vector3.UP)) < 0.95 else Vector3.RIGHT
+	look_at(global_position + direction, up)
 
 
 # =============================================================
@@ -86,7 +116,10 @@ func _on_body_entered(body: Node3D) -> void:
 	if body is Player:
 		body.take_damage(damage)
 		_spawn_impact(C_BULLET, 6)
-		queue_free()
+	else:
+		# Décor / géométrie statique : impact réduit et destruction
+		_spawn_impact(C_BULLET, 3)
+	queue_free()
 
 
 func _on_screen_exited() -> void:

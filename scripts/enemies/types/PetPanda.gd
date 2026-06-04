@@ -18,6 +18,7 @@
 #   └── [Modèle animal-panda.glb]
 #   (Pas de WeaponMount — dégâts via Area3D créée en code)
 # =============================================================
+@tool
 class_name PetPanda
 extends Enemy
 
@@ -107,12 +108,8 @@ func _check_melee() -> void:
 # =============================================================
 
 func _update_movement(_delta: float) -> void:
-	var dir := player.global_position - global_position
-	dir.y    = 0.0
-
-	if dir.length_squared() < 0.01:
+	var dir := _get_move_direction()
+	if dir == Vector3.ZERO:
 		return
-
-	dir = dir.normalized()
 	velocity.x = dir.x * move_speed
 	velocity.z = dir.z * move_speed

@@ -112,11 +112,14 @@ func _draw() -> void:
 		Vector2(c.x + r * 0.42, sy),
 		C_SEP_P if p else C_SEP, 1.5, true)
 
-	# 7. Label "J  U  M  P"
+	# 7. Label localisé — auto-fit pour que ça rentre quelle que soit la langue
 	var tc  := C_TAG_P if p else C_TAG
 	var fnt := get_theme_default_font()
+	var lbl := tr("BTN_JUMP")
 	var fsz : int   = maxi(int(r * 0.21), 9)
-	var lbl := "J  U  M  P"
+	var max_w : float = r * 0.90
+	while fsz > 7 and fnt.get_string_size(lbl, HORIZONTAL_ALIGNMENT_LEFT, -1, fsz).x > max_w:
+		fsz -= 1
 	var tw  : float = fnt.get_string_size(lbl, HORIZONTAL_ALIGNMENT_LEFT, -1, fsz).x
 	draw_string(fnt,
 		Vector2(c.x - tw * 0.5, sy + r * 0.25 + fsz),

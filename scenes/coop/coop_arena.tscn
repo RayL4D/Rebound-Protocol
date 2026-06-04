@@ -1,0 +1,287 @@
+[gd_scene format=3 uid="uid://bp60v57ol6ybs"]
+
+[ext_resource type="Script" uid="uid://hq5vxwps0fd4" path="res://scripts/coop/coop_arena.gd" id="1_arena"]
+[ext_resource type="PackedScene" uid="uid://cp8oo218ghcj" path="res://scenes/player/player.tscn" id="2_ml5ki"]
+[ext_resource type="PackedScene" uid="uid://dtenrqcyval18" path="res://assets/models/environments/tutorial_and_first_level/rock_largeA.glb" id="3_wblym"]
+[ext_resource type="PackedScene" uid="uid://csui6dw1nx06k" path="res://assets/models/environments/tutorial_and_first_level/hangar_roundA.glb" id="4_4x6bn"]
+[ext_resource type="PackedScene" uid="uid://c1stu4jqgvuns" path="res://assets/models/environments/tutorial_and_first_level/hangar_smallA.glb" id="5_4v65k"]
+[ext_resource type="PackedScene" uid="uid://y8k57erdl7in" path="res://assets/models/environments/tutorial_and_first_level/structure.glb" id="6_ykonm"]
+[ext_resource type="PackedScene" uid="uid://bc2g6cf1hocgb" path="res://assets/models/environments/tutorial_and_first_level/structure_diagonal.glb" id="7_l5wmq"]
+[ext_resource type="PackedScene" uid="uid://bpy6qvnhub4vp" path="res://assets/models/environments/tutorial_and_first_level/satelliteDish_detailed.glb" id="8_lqfs6"]
+[ext_resource type="PackedScene" uid="uid://dgaaan3vs5ujh" path="res://assets/models/environments/tutorial_and_first_level/machine_generator.glb" id="9_4v65k"]
+[ext_resource type="PackedScene" uid="uid://mwlayrnfs41m" path="res://assets/models/environments/tutorial_and_first_level/platform_large.glb" id="10_e8lb5"]
+[ext_resource type="PackedScene" uid="uid://cw87pir38gk1v" path="res://assets/models/environments/tutorial_and_first_level/machine_wirelessCable.glb" id="11_gm4p0"]
+[ext_resource type="PackedScene" uid="uid://0knuqo2qton5" path="res://assets/models/environments/tutorial_and_first_level/desk_computerScreen.glb" id="12_fkota"]
+[ext_resource type="PackedScene" uid="uid://dysysxe40a80g" path="res://assets/models/environments/tutorial_and_first_level/craft_speederB.glb" id="13_w4tb5"]
+[ext_resource type="PackedScene" uid="uid://chm01swb33150" path="res://scenes/ui/HUD.tscn" id="14_gm4p0"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_wblym"]
+sky_top_color = Color(0.04379709, 0.5018009, 0.59652394, 1)
+sky_horizon_color = Color(0.53580445, 0.6771073, 0.76950383, 1)
+sky_curve = 0.08615236
+ground_bottom_color = Color(0.9999998, 0.57025623, 0.35394204, 1)
+
+[sub_resource type="Sky" id="Sky_tm1id"]
+sky_material = SubResource("ProceduralSkyMaterial_wblym")
+
+[sub_resource type="Environment" id="Environment_sunsn"]
+background_mode = 2
+sky = SubResource("Sky_tm1id")
+ambient_light_source = 3
+ambient_light_color = Color(0.85948956, 0.32936612, 0.39245325, 1)
+reflected_light_source = 2
+glow_enabled = true
+glow_intensity = 0.8
+glow_bloom = 0.2
+fog_light_color = Color(1, 0.6156863, 0.42745098, 1)
+fog_light_energy = 0.34
+
+[sub_resource type="BoxShape3D" id="BoxShape_ground"]
+size = Vector3(269.23718, 0.5, 312.85596)
+
+[sub_resource type="PrismMesh" id="PrismMesh_sunsn"]
+left_to_right = 1.5
+size = Vector3(5, 5, 10)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_wblym"]
+size = Vector3(120, 50, 1)
+
+[node name="CoopArena" type="Node3D" unique_id=11884712]
+script = ExtResource("1_arena")
+
+[node name="Environment" type="Node3D" parent="." unique_id=1924389616]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Environment" unique_id=1692655591]
+environment = SubResource("Environment_sunsn")
+
+[node name="Sunlight" type="DirectionalLight3D" parent="Environment" unique_id=1995691697]
+transform = Transform3D(0.86443275, -0.1508613, 0.4795799, -0.50274837, -0.259393, 0.8245964, 0, -0.9539162, -0.3000731, -1.1239624, 927.43695, -546.0944)
+light_color = Color(1, 0.9411765, 0.8, 1)
+shadow_enabled = true
+
+[node name="Ground" type="StaticBody3D" parent="." unique_id=1115764951]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
+
+[node name="GroundCollision" type="CollisionShape3D" parent="Ground" unique_id=621124532]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 351.38654, 749.21686, -502.28418)
+shape = SubResource("BoxShape_ground")
+debug_color = Color(0.8524951, 0.0008430582, 0.8953956, 0.41960785)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground" unique_id=1758365258]
+transform = Transform3D(-0.00040146336, 0, -0.99999994, 0, 1, 0, 0.99999994, 0, -0.00040146336, 37.505947, 2.2326727, 1.7652731)
+mesh = SubResource("PrismMesh_sunsn")
+
+[node name="rock_05" parent="Ground" unique_id=2038082945 instance=ExtResource("3_wblym")]
+transform = Transform3D(-14.811234, -0.0039490596, 539.7968, 0.04866623, 1500, 0.0027575267, -539.7968, 0.13534321, -14.811234, -408.26132, -0.49757576, 595.7649)
+
+[node name="rock_06" parent="Ground" unique_id=1201733349 instance=ExtResource("3_wblym")]
+transform = Transform3D(-14.811234, -0.0039490596, 539.7968, 0.04866623, 1500, 0.0027575267, -539.7968, 0.13534321, -14.811234, -1436.0593, -0.49757576, 1853.7236)
+
+[node name="rock_07" parent="Ground" unique_id=223435942 instance=ExtResource("3_wblym")]
+transform = Transform3D(-14.811234, -0.0039490596, 539.7968, 0.04866623, 1500, 0.0027575267, -539.7968, 0.13534321, -14.811234, -2670.1895, -0.49769783, 922.4958)
+
+[node name="rock_08" parent="Ground" unique_id=1303831996 instance=ExtResource("3_wblym")]
+transform = Transform3D(-14.811234, -0.0039490596, 539.7968, 0.04866623, 1500, 0.0027575267, -539.7968, 0.13534321, -14.811234, -2309.858, -0.49769783, -1610.9581)
+
+[node name="rock_09" parent="Ground" unique_id=1052533890 instance=ExtResource("3_wblym")]
+transform = Transform3D(-14.811234, -0.0039490596, 539.7968, 0.04866623, 1500, 0.0027575267, -539.7968, 0.13534321, -14.811234, 73.80908, -0.49769783, -2065.882)
+
+[node name="rock_10" parent="Ground" unique_id=150728490 instance=ExtResource("3_wblym")]
+transform = Transform3D(-14.811234, -0.0039490596, 539.7968, 0.04866623, 1500, 0.0027575267, -539.7968, 0.13534321, -14.811234, 1794.0305, -0.4978199, 458.26685)
+
+[node name="rock_11" parent="Ground" unique_id=1107322487 instance=ExtResource("3_wblym")]
+transform = Transform3D(-14.811234, -0.0039490596, 539.7968, 0.04866623, 1500, 0.0027575267, -539.7968, 0.13534321, -14.811234, 749.44934, -0.4978199, 4206.335)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground" unique_id=1767859254]
+transform = Transform3D(0.85406876, 0, 0.5201601, 0, 1, 0, -0.52016014, 0, 0.8540687, 306.94623, 749.5636, -582.34)
+shape = SubResource("BoxShape3D_wblym")
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="Ground" unique_id=772831839]
+transform = Transform3D(0.8775314, 0, -0.47951934, 0, 1, 0, 0.47951934, 0, 0.87753135, 410.8624, 749.5636, -586.2283)
+shape = SubResource("BoxShape3D_wblym")
+
+[node name="CollisionShape3D3" type="CollisionShape3D" parent="Ground" unique_id=1817624654]
+transform = Transform3D(0.019389223, 0, -0.999812, 0, 1, 0, 0.99981207, 0, 0.019389195, 465.2389, 749.5636, -497.78104)
+shape = SubResource("BoxShape3D_wblym")
+
+[node name="CollisionShape3D4" type="CollisionShape3D" parent="Ground" unique_id=101505912]
+transform = Transform3D(-0.850141, 0, -0.5265552, 0, 1, 0, 0.5265551, 0, -0.8501409, 413.80362, 749.5636, -404.75)
+shape = SubResource("BoxShape3D_wblym")
+
+[node name="CollisionShape3D5" type="CollisionShape3D" parent="Ground" unique_id=1034725483]
+transform = Transform3D(-0.8735344, 0, 0.4867624, 0, 1, 0, -0.48676246, 0, -0.87353444, 311.9117, 749.5636, -404.2278)
+shape = SubResource("BoxShape3D_wblym")
+
+[node name="CollisionShape3D6" type="CollisionShape3D" parent="Ground" unique_id=1086702412]
+transform = Transform3D(-0.030398838, 0, 0.9995379, 0, 1, 0, -0.9995378, 0, -0.030398905, 257.58237, 749.5636, -493.70428)
+shape = SubResource("BoxShape3D_wblym")
+
+[node name="WorldObjects_container" type="Node3D" parent="." unique_id=692459020]
+
+[node name="Heliport_container" type="Node3D" parent="WorldObjects_container" unique_id=1474137808]
+
+[node name="Heliport" type="Node3D" parent="WorldObjects_container/Heliport_container" unique_id=1095068078]
+transform = Transform3D(0.62386596, -0.7815256, -0.003028101, 2.8107072e-10, -0.0038745748, 0.9999925, -0.7815314, -0.62386125, -0.0024172142, 452.76782, 749.78076, -665.4469)
+
+[node name="platform_large2" parent="WorldObjects_container/Heliport_container/Heliport" unique_id=1427062620 instance=ExtResource("10_e8lb5")]
+transform = Transform3D(3.9334898, -1.7462296e-09, -3.0866904, -3.086667, -0.01937287, -3.9334602, -0.01195961, 4.9999623, -0.0152406, -119.94167, 41.383743, -0.09487915)
+
+[node name="machine_wirelessCable2" parent="WorldObjects_container/Heliport_container/Heliport" unique_id=2115980519 instance=ExtResource("11_gm4p0")]
+transform = Transform3D(-3.838511, -1.7462297e-09, 3.2040339, 3.2040093, -0.019372871, 3.8384821, 0.012414266, 4.999963, 0.014872598, -115.5227, 10.618301, -0.23888206)
+
+[node name="desk_computerScreen2" parent="WorldObjects_container/Heliport_container/Heliport" unique_id=896334112 instance=ExtResource("12_fkota")]
+transform = Transform3D(-3.0600514, -1.7462297e-09, -3.9542482, -3.9542186, -0.019372871, 3.0600278, -0.015321031, 4.999963, 0.011856395, -101.309814, 27.83844, -0.2242527)
+
+[node name="Heliport2" type="Node3D" parent="WorldObjects_container/Heliport_container" unique_id=653777845]
+transform = Transform3D(0.62386596, -0.7815256, -0.003028101, 2.8107072e-10, -0.0038745748, 0.9999925, -0.7815314, -0.62386125, -0.0024172142, 435.76782, 749.78076, -656.4469)
+
+[node name="craft_speederB2" parent="WorldObjects_container/Heliport_container/Heliport2" unique_id=769162694 instance=ExtResource("13_w4tb5")]
+transform = Transform3D(1.1358598, -1.3969836e-09, -3.8353386, -3.8353093, -0.015498295, -1.1358516, -0.014860304, 3.99997, -0.004400976, -112.3973, 38.754486, 0.5797825)
+
+[node name="platform_large2" parent="WorldObjects_container/Heliport_container/Heliport2" unique_id=1395863123 instance=ExtResource("10_e8lb5")]
+transform = Transform3D(3.9334898, -1.7462296e-09, -3.0866904, -3.086667, -0.01937287, -3.9334602, -0.01195961, 4.9999623, -0.0152406, -119.94167, 41.383743, -0.09487915)
+
+[node name="machine_wirelessCable2" parent="WorldObjects_container/Heliport_container/Heliport2" unique_id=87764269 instance=ExtResource("11_gm4p0")]
+transform = Transform3D(-3.838511, -1.7462297e-09, 3.2040339, 3.2040093, -0.019372871, 3.8384821, 0.012414266, 4.999963, 0.014872598, -115.5227, 10.618301, -0.23888206)
+
+[node name="desk_computerScreen2" parent="WorldObjects_container/Heliport_container/Heliport2" unique_id=1176392510 instance=ExtResource("12_fkota")]
+transform = Transform3D(-3.0600514, -1.7462297e-09, -3.9542482, -3.9542186, -0.019372871, 3.0600278, -0.015321031, 4.999963, 0.011856395, -101.309814, 27.83844, -0.2242527)
+
+[node name="Heliport3" type="Node3D" parent="WorldObjects_container/Heliport_container" unique_id=1120291553]
+transform = Transform3D(0.62386596, -0.7815256, -0.003028101, 2.8107072e-10, -0.0038745748, 0.9999925, -0.7815314, -0.62386125, -0.0024172142, 415.76782, 749.78076, -646.4469)
+
+[node name="craft_speederB2" parent="WorldObjects_container/Heliport_container/Heliport3" unique_id=1747678792 instance=ExtResource("13_w4tb5")]
+transform = Transform3D(1.1358598, -1.3969836e-09, -3.8353386, -3.8353093, -0.015498295, -1.1358516, -0.014860304, 3.99997, -0.004400976, -112.3973, 38.754486, 0.5797825)
+
+[node name="platform_large2" parent="WorldObjects_container/Heliport_container/Heliport3" unique_id=488034765 instance=ExtResource("10_e8lb5")]
+transform = Transform3D(3.9334898, -1.7462296e-09, -3.0866904, -3.086667, -0.01937287, -3.9334602, -0.01195961, 4.9999623, -0.0152406, -119.94167, 41.383743, -0.09487915)
+
+[node name="machine_wirelessCable2" parent="WorldObjects_container/Heliport_container/Heliport3" unique_id=784554352 instance=ExtResource("11_gm4p0")]
+transform = Transform3D(-3.838511, -1.7462297e-09, 3.2040339, 3.2040093, -0.019372871, 3.8384821, 0.012414266, 4.999963, 0.014872598, -115.5227, 10.618301, -0.23888206)
+
+[node name="desk_computerScreen2" parent="WorldObjects_container/Heliport_container/Heliport3" unique_id=518547981 instance=ExtResource("12_fkota")]
+transform = Transform3D(-3.0600514, -1.7462297e-09, -3.9542482, -3.9542186, -0.019372871, 3.0600278, -0.015321031, 4.999963, 0.011856395, -101.309814, 27.83844, -0.2242527)
+
+[node name="Heliport4" type="Node3D" parent="WorldObjects_container/Heliport_container" unique_id=885013833]
+transform = Transform3D(0.62386596, -0.7815256, -0.003028101, 2.8107072e-10, -0.0038745748, 0.9999925, -0.7815314, -0.62386125, -0.0024172142, 467.76782, 749.78076, -643.4469)
+
+[node name="craft_speederB2" parent="WorldObjects_container/Heliport_container/Heliport4" unique_id=1511099185 instance=ExtResource("13_w4tb5")]
+transform = Transform3D(1.1358598, -1.3969836e-09, -3.8353386, -3.8353093, -0.015498295, -1.1358516, -0.014860304, 3.99997, -0.004400976, -112.3973, 38.754486, 0.5797825)
+
+[node name="platform_large2" parent="WorldObjects_container/Heliport_container/Heliport4" unique_id=1625473348 instance=ExtResource("10_e8lb5")]
+transform = Transform3D(3.9334898, -1.7462296e-09, -3.0866904, -3.086667, -0.01937287, -3.9334602, -0.01195961, 4.9999623, -0.0152406, -119.94167, 41.383743, -0.09487915)
+
+[node name="machine_wirelessCable2" parent="WorldObjects_container/Heliport_container/Heliport4" unique_id=1058817424 instance=ExtResource("11_gm4p0")]
+transform = Transform3D(-3.838511, -1.7462297e-09, 3.2040339, 3.2040093, -0.019372871, 3.8384821, 0.012414266, 4.999963, 0.014872598, -115.5227, 10.618301, -0.23888206)
+
+[node name="desk_computerScreen2" parent="WorldObjects_container/Heliport_container/Heliport4" unique_id=2072787443 instance=ExtResource("12_fkota")]
+transform = Transform3D(-3.0600514, -1.7462297e-09, -3.9542482, -3.9542186, -0.019372871, 3.0600278, -0.015321031, 4.999963, 0.011856395, -101.309814, 27.83844, -0.2242527)
+
+[node name="Heliport5" type="Node3D" parent="WorldObjects_container/Heliport_container" unique_id=1865167458]
+transform = Transform3D(0.62386596, -0.7815256, -0.003028101, 2.8107072e-10, -0.0038745748, 0.9999925, -0.7815314, -0.62386125, -0.0024172142, 444.76782, 749.78076, -630.4469)
+
+[node name="craft_speederB2" parent="WorldObjects_container/Heliport_container/Heliport5" unique_id=1736045509 instance=ExtResource("13_w4tb5")]
+transform = Transform3D(1.1358598, -1.3969836e-09, -3.8353386, -3.8353093, -0.015498295, -1.1358516, -0.014860304, 3.99997, -0.004400976, -112.3973, 38.754486, 0.5797825)
+
+[node name="platform_large2" parent="WorldObjects_container/Heliport_container/Heliport5" unique_id=616026398 instance=ExtResource("10_e8lb5")]
+transform = Transform3D(3.9334898, -1.7462296e-09, -3.0866904, -3.086667, -0.01937287, -3.9334602, -0.01195961, 4.9999623, -0.0152406, -119.94167, 41.383743, -0.09487915)
+
+[node name="machine_wirelessCable2" parent="WorldObjects_container/Heliport_container/Heliport5" unique_id=343095630 instance=ExtResource("11_gm4p0")]
+transform = Transform3D(-3.838511, -1.7462297e-09, 3.2040339, 3.2040093, -0.019372871, 3.8384821, 0.012414266, 4.999963, 0.014872598, -115.5227, 10.618301, -0.23888206)
+
+[node name="desk_computerScreen2" parent="WorldObjects_container/Heliport_container/Heliport5" unique_id=1948514574 instance=ExtResource("12_fkota")]
+transform = Transform3D(-3.0600514, -1.7462297e-09, -3.9542482, -3.9542186, -0.019372871, 3.0600278, -0.015321031, 4.999963, 0.011856395, -101.309814, 27.83844, -0.2242527)
+
+[node name="Heliport6" type="Node3D" parent="WorldObjects_container/Heliport_container" unique_id=1183563250]
+transform = Transform3D(0.62386596, -0.7815256, -0.003028101, 2.8107072e-10, -0.0038745748, 0.9999925, -0.7815314, -0.62386125, -0.0024172142, 420.76782, 749.78076, -618.4469)
+
+[node name="platform_large2" parent="WorldObjects_container/Heliport_container/Heliport6" unique_id=1423055666 instance=ExtResource("10_e8lb5")]
+transform = Transform3D(3.9334898, -1.7462296e-09, -3.0866904, -3.086667, -0.01937287, -3.9334602, -0.01195961, 4.9999623, -0.0152406, -119.94167, 41.383743, -0.09487915)
+
+[node name="machine_wirelessCable2" parent="WorldObjects_container/Heliport_container/Heliport6" unique_id=261593357 instance=ExtResource("11_gm4p0")]
+transform = Transform3D(-3.838511, -1.7462297e-09, 3.2040339, 3.2040093, -0.019372871, 3.8384821, 0.012414266, 4.999963, 0.014872598, -115.5227, 10.618301, -0.23888206)
+
+[node name="desk_computerScreen2" parent="WorldObjects_container/Heliport_container/Heliport6" unique_id=45254989 instance=ExtResource("12_fkota")]
+transform = Transform3D(-3.0600514, -1.7462297e-09, -3.9542482, -3.9542186, -0.019372871, 3.0600278, -0.015321031, 4.999963, 0.011856395, -101.309814, 27.83844, -0.2242527)
+
+[node name="Machine_container" type="Node3D" parent="WorldObjects_container" unique_id=814334176]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 56.140045, 709.125, -75.3916)
+
+[node name="machine_generator_03" parent="WorldObjects_container/Machine_container" unique_id=117709480 instance=ExtResource("9_4v65k")]
+transform = Transform3D(10, 0, 3.814698e-07, 0, 10, 0, -3.814698e-07, 0, 10, 294.82895, 40.49614, -345.17676)
+
+[node name="machine_generator_04" parent="WorldObjects_container/Machine_container" unique_id=355505925 instance=ExtResource("9_4v65k")]
+transform = Transform3D(10, 0, 3.814698e-07, 0, 10, 0, -3.814698e-07, 0, 10, 294.82895, 40.49614, -335.01654)
+
+[node name="machine_generator_05" parent="WorldObjects_container/Machine_container" unique_id=925009776 instance=ExtResource("9_4v65k")]
+transform = Transform3D(10, 0, 3.814698e-07, 0, 10, 0, -3.814698e-07, 0, 10, 282.2273, 40.49614, -335.01654)
+
+[node name="machine_generator_06" parent="WorldObjects_container/Machine_container" unique_id=697891967 instance=ExtResource("9_4v65k")]
+transform = Transform3D(10, 0, 3.814698e-07, 0, 10, 0, -3.814698e-07, 0, 10, 282.2273, 40.49614, -345.53027)
+
+[node name="Hangar_container" type="Node3D" parent="WorldObjects_container" unique_id=1080436283]
+
+[node name="hangar_round_02" parent="WorldObjects_container" unique_id=1087623766 instance=ExtResource("4_4x6bn")]
+transform = Transform3D(-4.7067337, 0, -1.6872011, 0, 4.9999995, 0, 1.6872011, 0, -4.7067337, 312.8774, 749.4526, -421.44876)
+
+[node name="hangar_smallA2" parent="WorldObjects_container/hangar_round_02" unique_id=1869559422 instance=ExtResource("5_4v65k")]
+transform = Transform3D(0.3335324, 0, -0.7271562, 0, 0.8, 0, 0.7271562, 0, 0.3335324, 1.2863045, 0, 0.14150333)
+
+[node name="hangar_round_03" parent="WorldObjects_container" unique_id=1899514442 instance=ExtResource("4_4x6bn")]
+transform = Transform3D(-4.617725, 0, 1.9174471, 0, 4.9999995, 0, -1.9174471, 0, -4.617725, 298.1863, 749.4526, -441.91476)
+
+[node name="hangar_smallA2" parent="WorldObjects_container/hangar_round_03" unique_id=297950047 instance=ExtResource("5_4v65k")]
+transform = Transform3D(0.3335324, 0, -0.7271562, 0, 0.8, 0, 0.7271562, 0, 0.3335324, 1.2863045, 0, 0.14150333)
+
+[node name="hangar_round_04" parent="WorldObjects_container" unique_id=562303741 instance=ExtResource("4_4x6bn")]
+transform = Transform3D(-0.90414083, 0, -4.917572, 0, 4.999999, 0, 4.917572, 0, -0.90414083, 341.02087, 749.4526, -428.48068)
+
+[node name="hangar_smallA2" parent="WorldObjects_container/hangar_round_04" unique_id=1743037990 instance=ExtResource("5_4v65k")]
+transform = Transform3D(0.3335324, 0, -0.7271562, 0, 0.8, 0, 0.7271562, 0, 0.3335324, 1.2863045, 0, 0.14150333)
+
+[node name="antenna_06" parent="WorldObjects_container" unique_id=1373634130 instance=ExtResource("6_ykonm")]
+transform = Transform3D(3.7800097, 0, -3.2728448, 0, 4.999999, 0, 3.2728448, 0, 3.7800097, 319.04337, 749.0851, -460.5913)
+
+[node name="structure_diagonal2" parent="WorldObjects_container/antenna_06" unique_id=155175684 instance=ExtResource("7_l5wmq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.97904015, 0)
+
+[node name="structure_diagonal3" parent="WorldObjects_container/antenna_06" unique_id=1700656253 instance=ExtResource("7_l5wmq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9648683, 0)
+
+[node name="satelliteDish_detailed2" parent="WorldObjects_container/antenna_06" unique_id=1929038177 instance=ExtResource("8_lqfs6")]
+transform = Transform3D(0.75293374, 0, -1.8528607, 0, 1.9999998, 0, 1.8528607, 0, 0.75293374, 3.1948547, 2.8891401, -3.3005562)
+
+[node name="antenna_07" parent="WorldObjects_container" unique_id=1492942847 instance=ExtResource("6_ykonm")]
+transform = Transform3D(3.7800097, 0, -3.2728448, 0, 4.999999, 0, 3.2728448, 0, 3.7800097, 294.7234, 749.0851, -566.793)
+
+[node name="structure_diagonal2" parent="WorldObjects_container/antenna_07" unique_id=1171419633 instance=ExtResource("7_l5wmq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.97904015, 0)
+
+[node name="structure_diagonal3" parent="WorldObjects_container/antenna_07" unique_id=1739757259 instance=ExtResource("7_l5wmq")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.9648683, 0)
+
+[node name="satelliteDish_detailed2" parent="WorldObjects_container/antenna_07" unique_id=1315343847 instance=ExtResource("8_lqfs6")]
+transform = Transform3D(0.75293374, 0, -1.8528607, 0, 1.9999998, 0, 1.8528607, 0, 0.75293374, 3.1948547, 2.8891401, -3.3005562)
+
+[node name="hangar_small_03" parent="WorldObjects_container" unique_id=1581825348 instance=ExtResource("5_4v65k")]
+transform = Transform3D(-0.14274894, 0, 4.9979615, 0, 4.999999, 0, -4.9979615, 0, -0.14274894, 444.97772, 749.11005, -449.79727)
+
+[node name="hangar_small_06" parent="WorldObjects_container" unique_id=297489210 instance=ExtResource("5_4v65k")]
+transform = Transform3D(-0.14274894, 0, 4.9979615, 0, 4.999999, 0, -4.9979615, 0, -0.14274894, 416.96313, 749.11005, -449.79727)
+
+[node name="hangar_small_04" parent="WorldObjects_container" unique_id=1367407508 instance=ExtResource("5_4v65k")]
+transform = Transform3D(-0.14274894, 0, 4.9979615, 0, 4.999999, 0, -4.9979615, 0, -0.14274894, 444.97772, 749.11005, -465.0129)
+
+[node name="hangar_small_07" parent="WorldObjects_container" unique_id=2138193131 instance=ExtResource("5_4v65k")]
+transform = Transform3D(-0.14274894, 0, 4.9979615, 0, 4.999999, 0, -4.9979615, 0, -0.14274894, 416.366, 749.11005, -465.0129)
+
+[node name="hangar_small_05" parent="WorldObjects_container" unique_id=1673477185 instance=ExtResource("5_4v65k")]
+transform = Transform3D(-0.14274894, 0, 4.9979615, 0, 4.999999, 0, -4.9979615, 0, -0.14274894, 444.97772, 749.11005, -479.35397)
+
+[node name="hangar_small_08" parent="WorldObjects_container" unique_id=41062381 instance=ExtResource("5_4v65k")]
+transform = Transform3D(-0.14274894, 0, 4.9979615, 0, 4.999999, 0, -4.9979615, 0, -0.14274894, 415.4336, 749.11005, -479.35397)
+
+[node name="Player" parent="." unique_id=222719199 instance=ExtResource("2_ml5ki")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 359.4296, 761.0432, -517.84814)
+
+[node name="HUD" parent="." unique_id=1994348935 instance=ExtResource("14_gm4p0")]

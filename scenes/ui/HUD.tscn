@@ -2,6 +2,9 @@
 
 [ext_resource type="Script" uid="uid://b2kldxtdv8abk" path="res://scripts/ui/HUD.gd" id="1_kw0id"]
 [ext_resource type="FontFile" uid="uid://ci0o36dhvuhqf" path="res://ui_theme/fonts/Xolonium-Regular.ttf" id="2_atyv1"]
+[ext_resource type="Script" uid="uid://5rupu7a53dwa" path="res://addons/easychat/easychat_node.gd" id="3_4ed8p"]
+[ext_resource type="Script" uid="uid://se76j65bvj8p" path="res://addons/easychat/chat_command.gd" id="4_rnyu1"]
+[ext_resource type="Script" uid="uid://dapyjr40b6572" path="res://addons/easychat/easychat_config.gd" id="5_jlufg"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_atyv1"]
 bg_color = Color(0.6, 0.6, 0.6, 0)
@@ -38,6 +41,10 @@ font_color = Color(0, 0.8509804, 1, 1)
 outline_size = 2
 outline_color = Color(0, 0, 0, 1)
 
+[sub_resource type="Resource" id="Resource_l20r4"]
+script = ExtResource("5_jlufg")
+input_placeholder_text = null
+
 [node name="HUD" type="CanvasLayer" unique_id=1994348935]
 script = ExtResource("1_kw0id")
 
@@ -53,6 +60,7 @@ grow_vertical = 2
 
 [node name="MessageLabel" type="Label" parent="WaveContainer" unique_id=1425318128]
 unique_name_in_owner = true
+auto_translate_mode = 1
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -82,6 +90,7 @@ columns = 3
 
 [node name="WaveLabel" type="Label" parent="WaveContainer/GridContainer" unique_id=355252361]
 unique_name_in_owner = true
+auto_translate_mode = 1
 layout_mode = 2
 text = "WAVE_HUD"
 label_settings = SubResource("LabelSettings_6ll6g")
@@ -96,6 +105,21 @@ horizontal_alignment = 1
 
 [node name="EnemiesLabel" type="Label" parent="WaveContainer/GridContainer" unique_id=1107192269]
 unique_name_in_owner = true
+auto_translate_mode = 1
 layout_mode = 2
 text = "ENEMIES_HUD"
 label_settings = SubResource("LabelSettings_ig75s")
+
+[node name="EasyChat" type="Control" parent="WaveContainer" unique_id=2007830209]
+custom_minimum_size = Vector2(500, 200)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 387.0
+offset_right = -638.0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("3_4ed8p")
+config = SubResource("Resource_l20r4")
+metadata/_custom_type_script = "uid://5rupu7a53dwa"

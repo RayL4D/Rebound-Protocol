@@ -1,0 +1,27 @@
+[gd_scene format=3 uid="uid://dtifgbtbsqu6s"]
+
+[ext_resource type="Script" uid="uid://8uy0krjlky72" path="res://scripts/levels/zones/hangar_exit.gd" id="1_jk2iy"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_em1sw"]
+size = Vector3(3.052208, 3.0622559, 0.6731262)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_80rfq"]
+albedo_color = Color(0, 0, 0, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_jk2iy"]
+material = SubResource("StandardMaterial3D_80rfq")
+size = Vector3(3, 3, 0)
+
+[node name="Hangar_exit" type="Area3D" unique_id=1812608498]
+script = ExtResource("1_jk2iy")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1907654976]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.007968903, 0.025024414, 0.24266052)
+shape = SubResource("BoxShape3D_em1sw")
+
+[node name="GuideTarget" type="Marker3D" parent="." unique_id=239549077]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.21416986, 0)
+
+[node name="Mesh_detector" type="MeshInstance3D" parent="." unique_id=2006965088]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.008865714, -0.032667637, 0.04934454)
+mesh = SubResource("BoxMesh_jk2iy")

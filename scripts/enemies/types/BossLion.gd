@@ -19,12 +19,16 @@
 #   │   └── WeaponShotgun          ← phase 2
 #   └── SummonTimer (Timer)
 # =============================================================
+@tool
 class_name BossLion
 extends Enemy
 
-# --- Signal émis à la mort (connecté par arena_base) ----------
+# --- Signaux ----------------------------------------------------
 signal boss_died
 signal boss_hp_changed(current_hp: int, max_hp: int)
+## Émis depuis _die() juste après avoir instancié la clé.
+## Permet aux niveaux de connecter key.key_collected sans référence directe au boss.
+signal key_spawned(key: Node3D)
 
 # --- Seuil de transition de phase (50 % HP) -------------------
 const PHASE2_THRESHOLD := 0.5
@@ -78,6 +82,32 @@ var _charge_state: ChargeState = ChargeState.IDLE
 var _charge_dir:   Vector3     = Vector3.ZERO
 var _charge_timer: float       = 0.0
 var _charge_cd:    float       = 3.0   # premier délai avant charge
+
+# --- Double charge --------------------------------------------
+const DOUBLE_CHARGE_CHANCE := 0.50   # 50 % de chance d'enchaîner
+var _double_charge_pending: bool = false
+
+# --- Dash d'esquive (phase 1) ---------------------------------
+const DASH_SPEED      := 10.0
+const DASH_DURATION   := 0.22
+const DASH_CD_MIN     := 4.0
+const DASH_CD_MAX     := 7.0
+var _dash_cd:     float = 3.0
+var _dash_timer:  float = 0.0
+var _is_dashing:  bool  = false
+var _dash_dir:    Vector3 = Vector3.ZERO
+
+# --- Rugissement (phase 1) ------------------------------------
+const ROAR_CD       := 18.0
+const ROAR_DURATION :=  1.2
+const ROAR_BUFF_DUR :=  5.0
+var _roar_cd:     float = 10.0
+var _roar_timer:  float = 0.0
+var _is_roaring:  bool  = false
+
+# --- Invocation d'urgence (25 % HP) ---------------------------
+const PHASE3_THRESHOLD := 0.25
+var _phase3_triggered: bool = false
 
 # --- État interne ---------------------------------------------
 var _phase: int = 1
@@ -155,39 +185,109 @@ func _update_movement(delta: float) -> void:
 	if player == null:
 		return
 	if _phase == 1:
-		_move_orbit(delta)
+		_move_phase1(delta)
 	else:
 		_move_phase2(delta)
 
 
-# Phase 1 : approche jusqu'à combat_distance, puis orbite
-func _move_orbit(_delta: float) -> void:
+# =============================================================
+# PHASE 1 : orbite + dash d'esquive + rugissement
+# =============================================================
+
+func _move_phase1(delta: float) -> void:
+	# Rugissement
+	_roar_cd -= delta
+	if _roar_cd <= 0.0 and not _is_roaring:
+		_begin_roar()
+
+	if _is_roaring:
+		_roar_timer -= delta
+		velocity.x = 0.0
+		velocity.z = 0.0
+		if _roar_timer <= 0.0:
+			_is_roaring = false
+			_roar_cd    = ROAR_CD
+		return
+
+	# Dash d'esquive latéral
+	_dash_cd -= delta
+	if _is_dashing:
+		_dash_timer -= delta
+		velocity.x = _dash_dir.x * DASH_SPEED
+		velocity.z = _dash_dir.z * DASH_SPEED
+		if _dash_timer <= 0.0:
+			_is_dashing = false
+			_dash_cd    = randf_range(DASH_CD_MIN, DASH_CD_MAX)
+		return
+
+	if _dash_cd <= 0.0:
+		_begin_dash()
+		return
+
+	_move_orbit()
+
+
+# Approche via navmesh puis orbite latérale
+func _move_orbit() -> void:
 	var to_player := player.global_position - global_position
 	to_player.y   = 0.0
 	var dist      := to_player.length()
 
 	if dist > combat_distance:
-		var dir    := to_player.normalized()
-		velocity.x  = dir.x * move_speed
-		velocity.z  = dir.z * move_speed
+		var nav_dir := _get_move_direction()
+		if nav_dir == Vector3.ZERO:
+			velocity.x = 0.0
+			velocity.z = 0.0
+			return
+		velocity.x = nav_dir.x * move_speed
+		velocity.z = nav_dir.z * move_speed
 	else:
 		var lateral := to_player.normalized().rotated(Vector3.UP, PI * 0.5)
 		velocity.x   = lateral.x * move_speed * 0.4
 		velocity.z   = lateral.z * move_speed * 0.4
 
 
-# Phase 2 : orbite + charge de taureau périodique
+func _begin_dash() -> void:
+	_is_dashing  = true
+	_dash_timer  = DASH_DURATION
+	# Dash perpendiculaire au joueur — esquive sans s'éloigner
+	var to_player := (player.global_position - global_position)
+	to_player.y   = 0.0
+	var perp      := to_player.normalized().rotated(Vector3.UP, PI * 0.5)
+	_dash_dir      = perp if randf() > 0.5 else -perp
+
+
+func _begin_roar() -> void:
+	_is_roaring = true
+	_roar_timer = ROAR_DURATION
+	if _anim_player and _anim_player.has_animation("gesture-taunt"):
+		_anim_player.play("gesture-taunt")
+	# Accélérer tous les chiens présents dans la scène
+	for node in get_tree().get_nodes_in_group("enemies"):
+		if node is not BossLion and node.has_method("_get_move_direction"):
+			var enemy := node as Enemy
+			# Buff temporaire : +50 % vitesse pendant ROAR_BUFF_DUR secondes
+			var base_speed := enemy.move_speed
+			enemy.move_speed *= 1.5
+			get_tree().create_timer(ROAR_BUFF_DUR).timeout.connect(
+				func(): if is_instance_valid(enemy): enemy.move_speed = base_speed
+			)
+
+
+# =============================================================
+# PHASE 2 : orbite + charge de taureau + double charge
+# =============================================================
+
 func _move_phase2(delta: float) -> void:
 	match _charge_state:
 
 		ChargeState.IDLE:
-			_move_orbit(delta)
+			_move_orbit()
 			_charge_cd -= delta
 			if _charge_cd <= 0.0:
 				_begin_windup()
 
 		ChargeState.WINDUP:
-			# S'arrête et vise le joueur — telegraphe la charge
 			velocity.x = 0.0
 			velocity.z = 0.0
 			_charge_timer -= delta
@@ -195,14 +295,16 @@ func _move_phase2(delta: float) -> void:
 				_begin_charge()
 
 		ChargeState.CHARGING:
+			# Légère correction de trajectoire vers le joueur (charge en arc)
+			var to_player := player.global_position - global_position
+			to_player.y   = 0.0
+			_charge_dir = _charge_dir.lerp(to_player.normalized(), 0.04)
 			velocity.x = _charge_dir.x * CHARGE_SPEED
 			velocity.z = _charge_dir.z * CHARGE_SPEED
 			_charge_timer -= delta
 
-			# Contact mêlée ?
-			var dist := (player.global_position - global_position)
-			dist.y    = 0.0
-			if dist.length() <= MELEE_RANGE:
+			var dist_to_player := to_player.length()
+			if dist_to_player <= MELEE_RANGE:
 				_begin_attack()
 				return
 
@@ -221,9 +323,14 @@ func _move_phase2(delta: float) -> void:
 			velocity.z = 0.0
 			_charge_timer -= delta
 			if _charge_timer <= 0.0:
-				_charge_state = ChargeState.IDLE
-				_charge_cd    = randf_range(CHARGE_CD_MIN, CHARGE_CD_MAX)
-				_gesture_active = false
+				# Double charge : enchaîne une 2e charge immédiatement
+				if _double_charge_pending:
+					_double_charge_pending = false
+					_begin_windup()
+				else:
+					_charge_state   = ChargeState.IDLE
+					_charge_cd      = randf_range(CHARGE_CD_MIN, CHARGE_CD_MAX)
+					_gesture_active = false
 
 
 # --- Transitions d'état ----------------------------------------
@@ -246,6 +353,8 @@ func _begin_windup() -> void:
 func _begin_charge() -> void:
 	_charge_state = ChargeState.CHARGING
 	_charge_timer = CHARGE_DURATION
+	# Décide maintenant si une double charge suivra
+	_double_charge_pending = randf() < DOUBLE_CHARGE_CHANCE
 
 
 func _begin_attack() -> void:
@@ -280,6 +389,7 @@ func take_damage(amount: int, silent_hurt: bool = false) -> void:
 	boss_hp_changed.emit(current_hp, max_hp)
 	if current_hp > 0:
 		_check_phase_transition()
+		_check_phase3()
 
 
 func _check_phase_transition() -> void:
@@ -287,6 +397,14 @@ func _check_phase_transition() -> void:
 		return
 	if float(current_hp) / float(max_hp) <= PHASE2_THRESHOLD:
 		_enter_phase2()
+
+
+func _check_phase3() -> void:
+	if _phase3_triggered:
+		return
+	if float(current_hp) / float(max_hp) <= PHASE3_THRESHOLD:
+		_phase3_triggered = true
+		_summon_dogs_emergency()
 
 
 func _enter_phase2() -> void:
@@ -310,15 +428,21 @@ func _enter_phase2() -> void:
 
 func _apply_phase2_shader(node: Node) -> void:
 	if node is MeshInstance3D:
+		var mi := node as MeshInstance3D
 		var shader := Shader.new()
 		shader.code = BOSS_SHADER_CODE
 		var mat := ShaderMaterial.new()
 		mat.shader = shader
 		mat.set_shader_parameter("albedo_tex", _enemy_texture)
-		(node as MeshInstance3D).set_surface_override_material(0, mat)
-		# Mettre à jour _orig_mats pour que _flash_hit restaure le shader
+		var count := mi.mesh.get_surface_count() if mi.mesh else 1
+		for i in count:
+			mi.set_surface_override_material(i, mat)
+		# Mettre à jour _orig_mats (Array) pour que _flash_hit restaure le shader
 		# de phase 2 (et non le colormap d'origine enregistré au démarrage).
-		_orig_mats[node] = mat
+		var mats: Array = []
+		for i in count:
+			mats.append(mat)
+		_orig_mats[node] = mats
 	for child in node.get_children():
 		_apply_phase2_shader(child)
 
@@ -333,10 +457,15 @@ func _die() -> void:
 	boss_died.emit()
 
 	# ── Drop de la clé de boss ────────────────────────────────
+	# IMPORTANT : positionner la clé AVANT add_child.
+	# _ready() de boss_key.gd calcule _base_y depuis global_position.
+	# Si on fait add_child() en premier, global_position vaut (0,0,0)
+	# et la clé finit spawner à l'origine de la scène au lieu d'ici.
 	var key_script: GDScript = load("res://scripts/pickups/boss_key.gd")
 	var key: Node3D = key_script.new()
+	key.position = global_position        # ← positionner AVANT add_child
 	get_tree().current_scene.add_child(key)
-	key.global_position = global_position
+	key_spawned.emit(key)                 # ← signal pour que le niveau ouvre le portail
 
 	# Player flottant — survit au queue_free du boss
 	if _SFX_BOSS_DIE != null:
@@ -354,6 +483,25 @@ func _die() -> void:
 # =============================================================
 # INVOCATION DES CHIENS
 # =============================================================
+
+func _summon_dogs_emergency() -> void:
+	if not is_inside_tree() or dog_scene == null:
+		return
+	if _sfx_player and _SFX_BOSS_SUMMON:
+		_sfx_player.stream      = _SFX_BOSS_SUMMON
+		_sfx_player.volume_db   = -2.0   # plus fort — signal de danger
+		_sfx_player.pitch_scale = 0.85   # plus grave — rugissement d'urgence
+		_sfx_player.play()
+	for i in range(3):   # 3 chiens au lieu de 2
+		var dog: CharacterBody3D = dog_scene.instantiate()
+		get_tree().current_scene.add_child(dog)
+		dog.coin_drop_min = 1
+		dog.coin_drop_max = 2
+		dog.xp_reward     = 5
+		var angle  := (TAU / 3.0) * float(i) + randf_range(-0.3, 0.3)
+		var radius := randf_range(2.0, 3.5)
+		dog.global_position = global_position + Vector3(cos(angle) * radius, 0.0, sin(angle) * radius)
+
 
 func _summon_dogs() -> void:
 	if not is_inside_tree() or dog_scene == null:

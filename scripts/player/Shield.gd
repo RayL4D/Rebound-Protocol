@@ -62,7 +62,16 @@ var _base_color: Color
 
 func _ready() -> void:
 	player = get_parent()
-	camera = get_viewport().get_camera_3d()
+	# La caméra est récupérée en lazy dans _orbit_toward_mouse() plutôt qu'ici,
+	# car au moment du spawn la caméra active du viewport peut être nulle ou
+	# appartenir à un autre joueur (en co-op, la caméra du joueur local n'est
+	# activée qu'à la fin de Player._ready(), après Shield._ready()).
+	camera = null
+
+	# Initialiser _shield_direction depuis le facing réel du joueur APRÈS que
+	# Player._ready() a eu le temps de s'exécuter (children avant parent,
+	# donc on diffère à la fin du frame courant via call_deferred).
+	call_deferred("_init_shield_direction")
 
 	# Player polyphonique pour les sons bouclier (block + reflect)
 	_sfx_shield = AudioStreamPlayer.new()
@@ -84,7 +93,15 @@ func _ready() -> void:
 		push_error("Shield: aucun ShaderMaterial trouvé sur ShieldMesh — vérifie l'éditeur.")
 		return
 
-	# Lire la couleur de base depuis le matériau (définie dans l'inspector)
+	# ==============================================================
+	# COULEURS CORRIGÉES : Vrai Bleu Cyan (Zéro rouge pour éviter le blanc)
+	# ==============================================================
+	_shield_mat.set_shader_parameter("shield_color", Color(0.0, 0.2, 0.8, 0.85)) # Bleu très profond pour le fond
+	_shield_mat.set_shader_parameter("border_color", Color(0.0, 0.8, 1.0, 1.0))  # Cyan pur et saturé pour les lignes
+	_shield_mat.set_shader_parameter("intensity", 3.0)                           # Un peu baissé pour garder la couleur
+	# ===============================================================
+
+	# Lire la couleur de base depuis le matériau (pour les clignotements de parade)
 	_base_color = _shield_mat.get_shader_parameter("shield_color")
 
 	# ── Stocker les valeurs de base AVANT d'appliquer les upgrades ──
@@ -93,6 +110,17 @@ func _ready() -> void:
 	_base_parry_window     = parry_timer.perfect_window
 	_base_max_parry_window = parry_timer.max_parry_window
 	_apply_save_upgrades()
+
+
+## Lit le facing initial du robot_model après que Player._ready() a terminé.
+## Évite que le bouclier apparaisse à la mauvaise position au premier frame.
+func _init_shield_direction() -> void:
+	var p := player as Player
+	if p == null or p.robot_model == null:
+		return
+	var fwd := p.robot_model.global_transform.basis.z
+	if fwd.length_squared() > 0.01:
+		_shield_direction = fwd.normalized()
 
 
 func _apply_save_upgrades() -> void:
@@ -126,6 +154,10 @@ func refresh_upgrades() -> void:
 
 
 func _process(delta: float) -> void:
+	# Multijoueur : le bouclier distant ne doit pas réagir à la souris locale.
+	# player.is_multiplayer_authority() retourne true en solo → aucun impact.
+	if not player.is_multiplayer_authority():
+		return
 	_orbit_toward_mouse()
 	# Décrémenter les timers de combo — reset quand la fenêtre expire
 	if _block_combo_timer > 0.0:
@@ -148,19 +180,50 @@ func _process(delta: float) -> void:
 # =============================================================
 
 func _orbit_toward_mouse() -> void:
+	# Lazy-get : récupère la caméra du joueur local au premier appel valide.
+	# On passe par player.$SpringArm3D/Camera3D plutôt que get_camera_3d()
+	# pour s'assurer d'utiliser la caméra de CE joueur, pas celle du viewport.
 	if camera == null:
-		return
+		var p := player as Player
+		if p != null:
+			camera = p.get_node_or_null("SpringArm3D/Camera3D") as Camera3D
+		if camera == null:
+			return
 
 	var dir := Vector3.ZERO
 
-	# --- Joystick mobile prioritaire ---
 	var p := player as Player
-	if p != null and p._joystick_aim_dir.length_squared() > 0.04:
+
+	# --- Auto-target mobile : bouclier suit la direction du personnage ---
+	# Quand auto-target est actif, le personnage fait face à l'ennemi ciblé.
+	# Le bouclier doit suivre cette même direction plutôt que le toucher d'écran.
+	if OS.has_feature("mobile") and Settings.auto_target_enabled and p != null:
+		# Si joystick droit actif → override manuel (même logique que Player)
+		if p._joystick_aim_dir.length_squared() > 0.04:
+			var cb        := camera.global_transform.basis
+			var cam_right := Vector3(cb.x.x, 0.0, cb.x.z).normalized()
+			var cam_fwd   := -Vector3(cb.z.x, 0.0, cb.z.z).normalized()
+			dir = cam_right * p._joystick_aim_dir.x - cam_fwd * p._joystick_aim_dir.y
+			dir.y = 0.0
+		else:
+			# Sinon : forward du robot_model (direction de l'auto-face)
+			# basis.z pointe dans la direction du regard (atan2(x,z) convention)
+			dir = p.robot_model.global_transform.basis.z
+			dir.y = 0.0
+
+	# --- Joystick mobile prioritaire (sans auto-target) ---
+	elif p != null and p._joystick_aim_dir.length_squared() > 0.04:
 		var cb        := camera.global_transform.basis
 		var cam_right := Vector3(cb.x.x, 0.0, cb.x.z).normalized()
 		var cam_fwd   := -Vector3(cb.z.x, 0.0, cb.z.z).normalized()
 		dir = cam_right * p._joystick_aim_dir.x - cam_fwd * p._joystick_aim_dir.y
 		dir.y = 0.0
+
+	elif OS.has_feature("mobile"):
+		# Mobile sans auto-target et joystick au repos :
+		# Utiliser la dernière direction connue (initialisée à FORWARD au spawn)
+		dir = _shield_direction
+
 	else:
 		# --- Souris (desktop) ---
 		var mouse_pos := get_viewport().get_mouse_position()
@@ -245,6 +308,7 @@ func _on_parry_resolved(state: ParryTimer.ParryState) -> void:
 
 		ParryTimer.ParryState.STANDARD:
 			_spawn_reflected_bullet(10, false)
+			_spawn_impact_vfx(_pending_bullet.global_position, false) # <--- NOUVEAU !
 			_pending_bullet.queue_free()
 			_flash_shield(Color(1.0, 1.0, 1.0, 1.0), 0.3)
 			_play_reflect_sfx()
@@ -256,6 +320,7 @@ func _on_parry_resolved(state: ParryTimer.ParryState) -> void:
 
 		ParryTimer.ParryState.CRITICAL:
 			_spawn_reflected_bullet(25, true)
+			_spawn_impact_vfx(_pending_bullet.global_position, true)
 			_pending_bullet.queue_free()
 			_flash_shield(Color(1.0, 0.75, 0.0, 1.0), 0.45)
 			_reflect_combo        = min(_reflect_combo + 1, _COMBO_MAX)
@@ -380,17 +445,24 @@ func _apply_parry_regen(has_xp: bool) -> void:
 func _do_shield_nova() -> void:
 	const NOVA_RANGE  := 9.0
 	const NOVA_DAMAGE := 15
+
+	# Capturer la position MAINTENANT pendant que le shield est dans l'arbre.
+	# global_position sur un nœud hors arbre génère une erreur Godot.
+	var nova_origin := global_position
+
 	var enemies := get_tree().get_nodes_in_group("enemies")
-	
 	for node: Node in enemies:
-		if not is_instance_valid(node) or not node.is_inside_tree() or not node.has_method("take_damage"):			
+		if not is_instance_valid(node) or not node.is_inside_tree() or not node.has_method("take_damage"):
 			continue
-			
-		var dist := (node as Node3D).global_position.distance_to(global_position)
+		var dist := (node as Node3D).global_position.distance_to(nova_origin)
 		if dist <= NOVA_RANGE:
 			(node as Enemy).take_damage(NOVA_DAMAGE, true)
 
 	# Visuel : anneau d'onde
+	# IMPORTANT : add_child() AVANT global_position.
+	# Un MeshInstance3D créé avec .new() n'est pas dans l'arbre ;
+	# accéder à global_position hors arbre lève l'erreur
+	# "!is_inside_tree()" dans get_global_transform().
 	var ring := MeshInstance3D.new()
 	var mesh := TorusMesh.new()
 	mesh.inner_radius  = 0.1
@@ -399,15 +471,15 @@ func _do_shield_nova() -> void:
 	mesh.ring_segments = 24
 	ring.mesh          = mesh
 	ring.rotation.x    = PI * 0.5
-	ring.global_position = global_position
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color              = Color(1.0, 0.80, 0.0, 0.9)
-	mat.emission_enabled          = true
-	mat.emission                  = Color(1.0, 0.70, 0.0)
+	mat.albedo_color               = Color(1.0, 0.80, 0.0, 0.9)
+	mat.emission_enabled           = true
+	mat.emission                   = Color(1.0, 0.70, 0.0)
 	mat.emission_energy_multiplier = 5.0
-	mat.transparency              = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.transparency               = BaseMaterial3D.TRANSPARENCY_ALPHA
 	ring.set_surface_override_material(0, mat)
-	get_tree().current_scene.add_child(ring)
+	get_tree().current_scene.add_child(ring)   # ← dans l'arbre d'abord
+	ring.global_position = nova_origin          # ← puis positionner
 	var tw := ring.create_tween().set_parallel(true)
 	tw.tween_property(ring, "scale", Vector3(NOVA_RANGE * 2.0, 1, NOVA_RANGE * 2.0), 0.40)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -424,3 +496,95 @@ func _play_reflect_sfx() -> void:
 	# Volume : monte avec le combo pour souligner la chaîne
 	var vol: float   = -5.0 + (_reflect_combo - 1) * 1.0
 	_play_shield_sfx(_SFX_REFLECT, vol, pitch)
+
+
+func _spawn_impact_vfx(hit_pos: Vector3, is_critical: bool) -> void:
+	var vfx_root = Node3D.new()
+	get_tree().current_scene.add_child(vfx_root)
+	vfx_root.global_position = hit_pos
+	
+	var look_dir = (hit_pos - player.global_position).normalized()
+	var up_vec = Vector3.UP if abs(look_dir.y) < 0.99 else Vector3.RIGHT
+	vfx_root.look_at(hit_pos + look_dir, up_vec)
+	
+	# Couleurs un peu plus denses/visibles (alpha à 0.9)
+	var color_core = Color(1.0, 1.0, 1.0, 0.9)
+	var color_glow = Color(1.0, 0.6, 0.0, 0.9) if is_critical else Color(0.2, 0.7, 1.0, 0.9)
+	
+	var tw = vfx_root.create_tween().set_parallel(true)
+	
+	# ==========================================
+	# 1. ÉCLAT CENTRAL (Un peu plus gros)
+	# ==========================================
+	var core = MeshInstance3D.new()
+	var sphere = SphereMesh.new()
+	sphere.radius = 0.08  # Plus gros que l'ancien (0.05)
+	sphere.height = 0.16
+	core.mesh = sphere
+	var mat_core = StandardMaterial3D.new()
+	mat_core.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat_core.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat_core.albedo_color = color_core
+	core.set_surface_override_material(0, mat_core)
+	vfx_root.add_child(core)
+	
+	tw.tween_property(core, "scale", Vector3(2.0, 2.0, 2.0), 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(core, "scale", Vector3.ZERO, 0.15).set_delay(0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+	# ==========================================
+	# 2. ONDE LÉGÈRE (Anneau plus visible)
+	# ==========================================
+	var ring = MeshInstance3D.new()
+	var torus = TorusMesh.new()
+	torus.inner_radius = 0.20
+	torus.outer_radius = 0.23 # Plus épais
+	torus.rings = 32
+	torus.ring_segments = 8
+	ring.mesh = torus
+	ring.rotation.x = PI / 2.0
+	
+	var mat_ring = StandardMaterial3D.new()
+	mat_ring.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat_ring.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat_ring.albedo_color = color_glow
+	ring.set_surface_override_material(0, mat_ring)
+	vfx_root.add_child(ring)
+	
+	ring.scale = Vector3(0.5, 0.5, 0.5)
+	tw.tween_property(ring, "scale", Vector3(2.2, 2.2, 2.2), 0.25).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tw.tween_property(mat_ring, "albedo_color:a", 0.0, 0.25).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+
+	# ==========================================
+	# 3. ÉTINCELLES (Plus lisibles)
+	# ==========================================
+	var num_spikes = 6 if is_critical else 4 # Légèrement plus d'étincelles
+	for i in range(num_spikes):
+		var pivot = Node3D.new()
+		vfx_root.add_child(pivot)
+		
+		var angle = (TAU / num_spikes) * i + randf_range(-0.2, 0.2)
+		pivot.rotation.z = angle
+		pivot.rotation.x = randf_range(-0.1, 0.1)
+		
+		var spike = MeshInstance3D.new()
+		var box = BoxMesh.new()
+		box.size = Vector3(0.01, 1.0, 0.01) # Épaisseur x2 par rapport à avant !
+		spike.mesh = box
+		
+		var mat_spike = StandardMaterial3D.new()
+		mat_spike.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat_spike.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat_spike.albedo_color = color_glow
+		spike.set_surface_override_material(0, mat_spike)
+		pivot.add_child(spike)
+		
+		spike.position.y = 0.1
+		spike.scale.y = 0.0
+		
+		var spike_len = randf_range(0.5, 0.9) # S'étirent un peu plus
+		tw.tween_property(spike, "scale:y", spike_len, 0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(spike, "position:y", 0.5, 0.20).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(spike, "scale:y", 0.0, 0.15).set_delay(0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+	# Nettoyage après 0.35s
+	tw.tween_callback(vfx_root.queue_free).set_delay(0.35)

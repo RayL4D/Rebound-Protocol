@@ -1,0 +1,35 @@
+[gd_scene format=3 uid="uid://b5t0qojat65bu"]
+
+[ext_resource type="Script" uid="uid://ciwex5iqw561o" path="res://scripts/ui/splash_screen_godot.gd" id="1_lcskn"]
+[ext_resource type="PackedScene" uid="uid://csuqak0vnysy3" path="res://scenes/ui/main_menu.tscn" id="2_7gbqn"]
+[ext_resource type="Texture2D" uid="uid://b0is8yd06jcgs" path="res://splash_screen_rebound.png" id="3_eina6"]
+
+[node name="Splash_screen_godot" type="Control" unique_id=1454420271]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_lcskn")
+load_scene = ExtResource("2_7gbqn")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=144248742]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.14117648, 0.14117648, 0.14117648, 1)
+
+[node name="TextureRect" type="TextureRect" parent="." unique_id=1726721333]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("3_eina6")
+expand_mode = 2
+stretch_mode = 5

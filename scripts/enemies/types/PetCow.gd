@@ -19,6 +19,7 @@
 #   │   ├── [Modèle blaster-e.glb]
 #   │   └── WeaponShotgun (Node3D) ← script WeaponShotgun.gd
 # =============================================================
+@tool
 class_name PetCow
 extends Enemy
 
@@ -40,7 +41,13 @@ func _on_ready() -> void:
 		return
 	if player == null:
 		return
-	weapon.activate(player)
+	if not use_detection:
+		weapon.activate(player)
+
+
+func _on_player_detected() -> void:
+	if weapon != null and player != null:
+		weapon.activate(player)
 
 
 # =============================================================
@@ -48,17 +55,13 @@ func _on_ready() -> void:
 # =============================================================
 
 func _update_movement(_delta: float) -> void:
-	var dir  := player.global_position - global_position
-	dir.y     = 0.0
-	var dist  := dir.length()
-
+	var dist := global_position.distance_to(player.global_position)
 	if dist <= stop_distance:
-		# À portée → stopper, WeaponShotgun gère le tir
 		velocity.x = 0.0
 		velocity.z = 0.0
 		return
-
-	# Foncer vers le joueur
-	dir = dir.normalized()
+	var dir := _get_move_direction()
+	if dir == Vector3.ZERO:
+		return
 	velocity.x = dir.x * move_speed
 	velocity.z = dir.z * move_speed

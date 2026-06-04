@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://dugi48yxe82ny"]
+
+[ext_resource type="Script" uid="uid://uegnmmx8xlw5" path="res://scripts/pickups/chest.gd" id="1_6om70"]
+[ext_resource type="PackedScene" uid="uid://hvvpwr31i5xx" path="res://assets/models/platformerkit/chest.glb" id="2_chest"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_area"]
+radius = 2.0
+
+[node name="Chest" type="Node3D" unique_id=1892450482]
+script = ExtResource("1_6om70")
+
+[node name="ChestModel" parent="." instance=ExtResource("2_chest")]
+position = Vector3(0, -0.4, 0)
+scale = Vector3(1.5, 1.5, 1.5)
+
+[node name="InteractArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="InteractArea"]
+shape = SubResource("SphereShape3D_area")
+
+[node name="Prompt" type="Label3D" parent="."]
+position = Vector3(0, 1.4, 0)
+billboard = 1
+no_depth_test = true
+pixel_size = 0.005
+font_size = 48
+text = "Ouvrir"
+modulate = Color(1, 0.9, 0.3, 1)
+visible = false

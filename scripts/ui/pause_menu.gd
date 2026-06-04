@@ -19,6 +19,9 @@ const FONT_PATH     := "res://ui_theme/fonts/Xolonium-Regular.ttf"
 const COLOR_CYAN  := Color(0.0,  0.851, 1.0,  1.0)
 const COLOR_BG    := Color(0.0,  0.0,   0.0,  0.65)   # overlay semi-transparent
 const COLOR_PANEL := Color(0.08, 0.11,  0.14, 0.95)
+const COLOR_DIM    := Color(0.55,  0.60,  0.65,  1.0)
+const COLOR_GOLD   := Color(1.0,   0.82,  0.0,   1.0)
+const COLOR_RED   := Color(0.9,   0.25,  0.25,  1.0)
 
 # --- Refs UI -------------------------------------------------
 var _panel_main:     Control
@@ -26,12 +29,16 @@ var _panel_settings: Control
 var _panel_skills:   Control
 var _skills_list:    VBoxContainer   # contenu dynamique, rebâti à chaque ouverture
 
-var _volume_slider:    HSlider
-var _music_slider:     HSlider
-var _sfx_slider:       HSlider
-var _fullscreen_check: CheckButton
-var _lang_buttons:     Dictionary = {}
+var _volume_slider:     HSlider
+var _music_slider:      HSlider
+var _sfx_slider:        HSlider
+var _fullscreen_check:  CheckButton
+var _auto_target_check: CheckButton = null   # null sur desktop
+var _lang_buttons:      Dictionary = {}
 var _font: FontFile = null
+var _confirm_overlay: ColorRect = null
+
+var _M: float = 1.6 if OS.has_feature("mobile") else 1.0
 
 # --- Audio ------------------------------------------------------
 const _SFX_HOVER:       AudioStream = preload("res://audio/sfx/ui/btn_hover.wav")
@@ -137,7 +144,7 @@ func _build_main_panel() -> Control:
 	inner.add_child(HSeparator.new())
 	inner.add_child(_make_button("PAUSE_RESUME",    _resume))
 	inner.add_child(_make_button("PAUSE_SETTINGS",  _show_settings_panel))
-	inner.add_child(_make_button("COMPÉTENCES",     _show_skills_panel))
+	inner.add_child(_make_button("UI_BTN_SKILL",     _show_skills_panel))
 	inner.add_child(_make_button("PAUSE_QUIT_MENU", _quit_to_menu))
 
 	return center
@@ -188,6 +195,13 @@ func _build_settings_panel() -> Control:
 	_add_section_label(inner, "SETTINGS_SECTION_LANGUAGE")
 	_add_language_buttons(inner)
 
+	# Section Mobile (uniquement sur mobile)
+	if OS.has_feature("mobile"):
+		inner.add_child(HSeparator.new())
+		_add_section_label(inner, "SETTINGS_SECTION_MOBILE")
+		_auto_target_check = _add_check(inner, "SETTINGS_AUTO_TARGET")
+		_auto_target_check.toggled.connect(_on_auto_target_toggled)
+
 	# Bouton retour (hors panneau)
 	vbox.add_child(_make_button("SETTINGS_BACK", _show_main_panel))
 
@@ -227,12 +241,12 @@ func _show_skills_panel() -> void:
 
 	if acquired.is_empty():
 		var lbl := Label.new()
-		lbl.text = "Aucune compétence acquise pour l'instant."
+		lbl.text = tr("SKILL_VIEW")
 		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		lbl.add_theme_color_override("font_color", Color(0.50, 0.55, 0.60))
 		if _font:
 			lbl.add_theme_font_override("font", _font)
-		lbl.add_theme_font_size_override("font_size", 15)
+		lbl.add_theme_font_size_override("font_size", int(15 * _M))
 		_skills_list.add_child(lbl)
 	else:
 		for skill_id in acquired:
@@ -274,10 +288,15 @@ func _on_fullscreen_toggled(pressed: bool) -> void:
 	_save_settings()
 
 
-func _change_language(locale: String) -> void:
-	TranslationServer.set_locale(locale)
-	_refresh_lang_buttons()
+func _on_auto_target_toggled(pressed: bool) -> void:
+	Settings.auto_target_enabled = pressed
 	_save_settings()
+
+
+func _change_language(locale: String) -> void:
+	if TranslationServer.get_locale().begins_with(locale):
+		return
+	_show_language_confirm_dialog(locale)
 
 
 # =============================================================
@@ -302,6 +321,7 @@ func _save_settings() -> void:
 	cfg.set_value("audio",   "sfx_volume",    _sfx_slider.value)
 	cfg.set_value("display", "fullscreen",    _fullscreen_check.button_pressed)
 	cfg.set_value("locale",  "language",      TranslationServer.get_locale())
+	cfg.set_value("mobile",  "auto_target",   Settings.auto_target_enabled)
 	cfg.save(SETTINGS_PATH)
 
 
@@ -326,9 +346,15 @@ func _load_settings_into_panel() -> void:
 	_sfx_slider.value_changed.connect(_on_sfx_changed)
 
 	_fullscreen_check.set_pressed_no_signal(
-		cfg.get_value("display", "fullscreen", false)
+		cfg.get_value("display", "fullscreen", true)
 	)
 	_refresh_lang_buttons()
+
+	# Ciblage auto — activé par défaut
+	var at: bool = cfg.get_value("mobile", "auto_target", true)
+	Settings.auto_target_enabled = at
+	if _auto_target_check != null:
+		_auto_target_check.set_pressed_no_signal(at)
 
 
 # ------------------------------------------------------------------
@@ -344,19 +370,19 @@ func _build_skills_panel() -> Control:
 	center.add_child(outer)
 
 	var panel := _make_panel_box()
-	panel.custom_minimum_size = Vector2(580, 0)
+	panel.custom_minimum_size = Vector2(580 * _M, 0)
 	outer.add_child(panel)
 
 	var inner := VBoxContainer.new()
-	inner.add_theme_constant_override("separation", 12)
+	inner.add_theme_constant_override("separation", int(12 * _M))
 	panel.add_child(inner)
 
-	_add_title(inner, "⚡  COMPÉTENCES  ⚡")
+	_add_title(inner, "⚡  " + tr("UI_BTN_SKILL") + "  ⚡")
 	inner.add_child(HSeparator.new())
 
 	# ScrollContainer : hauteur bornée pour ne pas dépasser l'écran
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size          = Vector2(0, 340)
+	scroll.custom_minimum_size          = Vector2(0, 340 * _M)
 	scroll.horizontal_scroll_mode       = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll.size_flags_vertical          = Control.SIZE_EXPAND_FILL
 	inner.add_child(scroll)
@@ -409,7 +435,7 @@ func _make_skill_row(skill_id: String) -> Control:
 	name_lbl.add_theme_color_override("font_color", Color.WHITE)
 	if _font:
 		name_lbl.add_theme_font_override("font", _font)
-	name_lbl.add_theme_font_size_override("font_size", 16)
+	name_lbl.add_theme_font_size_override("font_size", int(16 * _M))
 	header.add_child(name_lbl)
 
 	var rar_lbl := Label.new()
@@ -417,7 +443,7 @@ func _make_skill_row(skill_id: String) -> Control:
 	rar_lbl.add_theme_color_override("font_color", rc)
 	if _font:
 		rar_lbl.add_theme_font_override("font", _font)
-	rar_lbl.add_theme_font_size_override("font_size", 12)
+	rar_lbl.add_theme_font_size_override("font_size", int(12 * _M))
 	header.add_child(rar_lbl)
 
 	# Description
@@ -427,7 +453,7 @@ func _make_skill_row(skill_id: String) -> Control:
 	desc.add_theme_color_override("font_color", Color(0.72, 0.80, 0.88))
 	if _font:
 		desc.add_theme_font_override("font", _font)
-	desc.add_theme_font_size_override("font_size", 13)
+	desc.add_theme_font_size_override("font_size", int(13 * _M))
 	col.add_child(desc)
 
 	return row
@@ -446,10 +472,10 @@ func _make_panel_box() -> PanelContainer:
 	style.border_width_top      = 2
 	style.border_width_bottom   = 2
 	style.border_color          = COLOR_CYAN
-	style.content_margin_left   = 40.0
-	style.content_margin_right  = 40.0
-	style.content_margin_top    = 32.0
-	style.content_margin_bottom = 32.0
+	style.content_margin_left   = 40.0 * _M
+	style.content_margin_right  = 40.0 * _M
+	style.content_margin_top    = 32.0 * _M
+	style.content_margin_bottom = 32.0 * _M
 	panel.add_theme_stylebox_override("panel", style)
 	return panel
 
@@ -460,7 +486,7 @@ func _add_title(parent: Control, text: String) -> void:
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if _font:
 		lbl.add_theme_font_override("font", _font)
-	lbl.add_theme_font_size_override("font_size", 36)
+	lbl.add_theme_font_size_override("font_size", int(36 * _M))
 	lbl.add_theme_color_override("font_color", COLOR_CYAN)
 	parent.add_child(lbl)
 
@@ -471,23 +497,23 @@ func _add_section_label(parent: Control, text: String) -> void:
 	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if _font:
 		lbl.add_theme_font_override("font", _font)
-	lbl.add_theme_font_size_override("font_size", 16)
+	lbl.add_theme_font_size_override("font_size", int(16 * _M))
 	lbl.add_theme_color_override("font_color", Color(0.7, 0.85, 0.9))
 	parent.add_child(lbl)
 
 
 func _add_slider(parent: Control, label_text: String, min_v: float, max_v: float, default_v: float) -> HSlider:
 	var hbox := HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 16)
+	hbox.add_theme_constant_override("separation", int(16 * _M))
 	parent.add_child(hbox)
 
 	var lbl := Label.new()
 	lbl.text = label_text
-	lbl.custom_minimum_size = Vector2(160, 0)
+	lbl.custom_minimum_size = Vector2(160 * _M, 0)
 	lbl.vertical_alignment  = VERTICAL_ALIGNMENT_CENTER
 	if _font:
 		lbl.add_theme_font_override("font", _font)
-	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.add_theme_font_size_override("font_size", int(14 * _M))
 	hbox.add_child(lbl)
 
 	var slider := HSlider.new()
@@ -495,17 +521,17 @@ func _add_slider(parent: Control, label_text: String, min_v: float, max_v: float
 	slider.max_value           = max_v
 	slider.step                = 1.0
 	slider.value               = default_v
-	slider.custom_minimum_size = Vector2(200, 0)
+	slider.custom_minimum_size = Vector2(200 * _M, 0)
 	hbox.add_child(slider)
 
 	var val_lbl := Label.new()
-	val_lbl.custom_minimum_size       = Vector2(40, 0)
+	val_lbl.custom_minimum_size       = Vector2(40 * _M, 0)
 	val_lbl.horizontal_alignment      = HORIZONTAL_ALIGNMENT_RIGHT
 	val_lbl.vertical_alignment        = VERTICAL_ALIGNMENT_CENTER
 	val_lbl.text                      = str(int(default_v)) + "%"
 	if _font:
 		val_lbl.add_theme_font_override("font", _font)
-	val_lbl.add_theme_font_size_override("font_size", 14)
+	val_lbl.add_theme_font_size_override("font_size", int(14 * _M))
 	val_lbl.add_theme_color_override("font_color", COLOR_CYAN)
 	hbox.add_child(val_lbl)
 
@@ -516,14 +542,14 @@ func _add_slider(parent: Control, label_text: String, min_v: float, max_v: float
 func _add_check(parent: Control, label_text: String) -> CheckButton:
 	var hbox := HBoxContainer.new()
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	hbox.add_theme_constant_override("separation", 16)
+	hbox.add_theme_constant_override("separation", int(16 * _M))
 	parent.add_child(hbox)
 
 	var lbl := Label.new()
 	lbl.text = label_text
 	if _font:
 		lbl.add_theme_font_override("font", _font)
-	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.add_theme_font_size_override("font_size", int(14 * _M))
 	hbox.add_child(lbl)
 
 	var check := CheckButton.new()
@@ -534,16 +560,17 @@ func _add_check(parent: Control, label_text: String) -> CheckButton:
 func _add_language_buttons(parent: Control) -> void:
 	var hbox := HBoxContainer.new()
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	hbox.add_theme_constant_override("separation", 20)
+	hbox.add_theme_constant_override("separation", int(20 * _M))
 	parent.add_child(hbox)
 
 	var langs := {"FR": "fr", "EN": "en", "ES": "es"}
 	for label in langs:
 		var btn := Button.new()
 		btn.text = label
-		btn.custom_minimum_size = Vector2(60, 36)
+		btn.custom_minimum_size = Vector2(60 * _M, 36 * _M)
 		if _font:
 			btn.add_theme_font_override("font", _font)
+		btn.add_theme_font_size_override("font_size", int(14 * _M))
 		btn.pressed.connect(_change_language.bind(langs[label]))
 		hbox.add_child(btn)
 		_lang_buttons[langs[label]] = btn
@@ -566,11 +593,11 @@ func _refresh_lang_buttons() -> void:
 func _make_button(label_text: String, callback: Callable) -> Button:
 	var btn := Button.new()
 	btn.text                   = label_text
-	btn.custom_minimum_size    = Vector2(220, 44)
+	btn.custom_minimum_size    = Vector2(220 * _M, 44 * _M)
 	btn.process_mode           = Node.PROCESS_MODE_WHEN_PAUSED  # reçoit le touch/clic pendant la pause
 	if _font:
 		btn.add_theme_font_override("font", _font)
-	btn.add_theme_font_size_override("font_size", 18)
+	btn.add_theme_font_size_override("font_size", int(18 * _M))
 	btn.add_theme_color_override("font_color", COLOR_CYAN)
 
 	var style := StyleBoxFlat.new()
@@ -591,6 +618,143 @@ func _make_button(label_text: String, callback: Callable) -> Button:
 	# Son connecté EN PREMIER pour jouer avant que le callback quitte la scène
 	btn.pressed.connect(func():
 		if _sfx_player and _SFX_CLICK and is_inside_tree():
+			_sfx_player.stream      = _SFX_CLICK
+			_sfx_player.volume_db   = 5.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
+	btn.pressed.connect(callback)
+	return btn
+	
+# =============================================================
+# BOÎTE DE DIALOGUE DE LANGUE
+# =============================================================
+
+func _show_language_confirm_dialog(new_locale: String) -> void:
+	if _confirm_overlay != null:
+		_confirm_overlay.queue_free()
+
+	var previous_locale := TranslationServer.get_locale()
+	
+	# ASTUCE : On applique la nouvelle langue IMMÉDIATEMENT. 
+	# Ainsi, les tr() en dessous génèreront les textes dans la langue ciblée.
+	TranslationServer.set_locale(new_locale)
+
+	var overlay := ColorRect.new()
+	overlay.color = Color(0.0, 0.0, 0.0, 0.65)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(center)
+
+	var panel := PanelContainer.new()
+	var pstyle := StyleBoxFlat.new()
+	pstyle.bg_color            = COLOR_PANEL
+	pstyle.border_color        = COLOR_CYAN
+	pstyle.set_border_width_all(2)
+	pstyle.content_margin_left   = 40.0
+	pstyle.content_margin_right  = 40.0
+	pstyle.content_margin_top    = 32.0
+	pstyle.content_margin_bottom = 32.0
+	panel.add_theme_stylebox_override("panel", pstyle)
+	center.add_child(panel)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 14)
+	panel.add_child(vbox)
+
+	# Titre et textes (seront traduits dans la nouvelle langue)
+	vbox.add_child(_make_dialog_label(tr("UI_LANG_DIALOG_TITLE"), 16, COLOR_CYAN, true))
+	vbox.add_child(_make_dialog_label(tr("UI_LANG_DIALOG_MSG"), 15, Color(0.9, 0.9, 1.0), false))
+	vbox.add_child(_make_dialog_label(tr("UI_LANG_DIALOG_WARN"), 12, COLOR_GOLD, false))
+	vbox.add_child(_make_dialog_label(tr("UI_LANG_DIALOG_RESTART"), 11, COLOR_DIM, false))
+
+	var hbox := HBoxContainer.new()
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	hbox.add_theme_constant_override("separation", 20)
+	vbox.add_child(hbox)
+
+	# Bouton ANNULER — Fond ROUGE
+	var cancel_btn := _make_dialog_button(tr("UI_LANG_DIALOG_CANCEL"), COLOR_RED, true, func():
+		overlay.queue_free()
+		_confirm_overlay = null
+		# Le joueur annule : on restaure l'ancienne langue !
+		TranslationServer.set_locale(previous_locale)
+		_refresh_lang_buttons()
+	)
+	cancel_btn.custom_minimum_size = Vector2(150, 44)
+	hbox.add_child(cancel_btn)
+
+	# Bouton CONTINUER — Fond CYAN
+	var confirm_btn := _make_dialog_button(tr("UI_LANG_DIALOG_CONFIRM"), COLOR_CYAN, true, func():
+		overlay.queue_free()
+		_confirm_overlay = null
+		# Le joueur confirme : on valide le changement via SceneManager
+		SceneManager.update_language(new_locale)
+		_refresh_lang_buttons()
+		_save_settings()
+	)
+	confirm_btn.custom_minimum_size = Vector2(150, 44)
+	hbox.add_child(confirm_btn)
+
+	_confirm_overlay = overlay
+	add_child(_confirm_overlay)
+
+func _make_dialog_label(text: String, size: int, color: Color, outlined: bool) -> Label:
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl.custom_minimum_size = Vector2(380, 0)
+	if _font:
+		lbl.add_theme_font_override("font", _font)
+	lbl.add_theme_font_size_override("font_size", size)
+	lbl.add_theme_color_override("font_color", color)
+	if outlined:
+		lbl.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.8))
+		lbl.add_theme_constant_override("outline_size", 2)
+	return lbl
+
+func _make_dialog_button(text: String, color: Color, filled: bool, callback: Callable) -> Button:
+	var btn := Button.new()
+	btn.text = text
+	if _font:
+		btn.add_theme_font_override("font", _font)
+	btn.add_theme_font_size_override("font_size", 14)
+	
+	var sn := StyleBoxFlat.new()
+	var sh := StyleBoxFlat.new()
+	sn.set_border_width_all(1)
+	sh.set_border_width_all(1)
+	
+	if filled:
+		# Colore le fond en fonction de la couleur passée en argument
+		sn.bg_color = Color(color.r * 0.25, color.g * 0.25, color.b * 0.25, 0.9)
+		sn.border_color = color
+		sh.bg_color = Color(color.r * 0.45, color.g * 0.45, color.b * 0.45, 0.95)
+		sh.border_color = color
+		btn.add_theme_color_override("font_color", color)
+		btn.add_theme_color_override("font_hover_color", Color.WHITE)
+	else:
+		sn.bg_color = Color(0.08, 0.08, 0.10, 0.90)
+		sn.border_color = color
+		sh.bg_color = Color(0.14, 0.14, 0.18, 0.95)
+		sh.border_color = color
+		btn.add_theme_color_override("font_color", color)
+		
+	btn.add_theme_stylebox_override("normal", sn)
+	btn.add_theme_stylebox_override("hover", sh)
+	
+	btn.mouse_entered.connect(func():
+		if _sfx_player and _SFX_HOVER:
+			_sfx_player.stream      = _SFX_HOVER
+			_sfx_player.volume_db   = 2.0
+			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
+			_sfx_player.play()
+	)
+	btn.pressed.connect(func():
+		if _sfx_player and _SFX_CLICK:
 			_sfx_player.stream      = _SFX_CLICK
 			_sfx_player.volume_db   = 5.0
 			_sfx_player.pitch_scale = randf_range(0.97, 1.03)
