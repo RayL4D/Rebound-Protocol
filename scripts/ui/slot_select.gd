@@ -251,8 +251,10 @@ func _show_tutorial_skip_dialog(slot: int) -> void:
 	var play_btn := _make_button(tr("UI_DIALOG_TUTO_PLAY"), func():
 		overlay.queue_free()
 		_confirm_overlay = null
-		SaveData.set_current_level("arena_base"); SaveData.save_current()
-		SceneManager.load_level("res://scenes/levels/arena_base.tscn")
+		SaveData.set_current_level("arena_base")
+		SaveData.save_current()
+		# ← Au lieu de load_level directement, on va aux vidéos
+		get_tree().change_scene_to_file("res://scenes/ui/tutorial_video.tscn")
 	, COLOR_CYAN, true)
 	play_btn.custom_minimum_size = Vector2(150 * _M, 44 * _M); hbox.add_child(play_btn)
 	var skip_btn := _make_button(tr("UI_DIALOG_TUTO_SKIP"), func():
