@@ -18,6 +18,11 @@ var _font: FontFile = null
 var _confirm_overlay: Control = null
 
 func _ready() -> void:
+	# Sécurité solo : si un peer réseau traîne encore (ex. après une partie coop),
+	# on le coupe pour rétablir l'état solo. Sinon Enemy._die() croit être en coop
+	# et n'accorde ni pièces ni XP (c'est CoopArena qui les distribue en coop).
+	if multiplayer.has_multiplayer_peer():
+		NetworkManager.disconnect_from_game()
 	if ResourceLoader.exists(FONT_PATH):
 		_font = load(FONT_PATH)
 	SaveData.reload_from_disk()

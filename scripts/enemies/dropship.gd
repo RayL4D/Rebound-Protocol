@@ -48,7 +48,7 @@ func _ready() -> void:
 
 	# ── Séquence d'atterrissage : serveur uniquement ─────────────────────────
 	# Les clients voient l'animation via le MultiplayerSynchronizer ci-dessus.
-	if not multiplayer.is_server():
+	if multiplayer.has_multiplayer_peer() and not multiplayer.is_server():
 		return
 
 	if dropship_mesh:
@@ -101,7 +101,7 @@ func _start_delivery_sequence() -> void:
 
 func _spawn_mobs() -> void:
 	# Uniquement le serveur spawne les mobs — le MultiplayerSpawner les réplique aux clients
-	if not multiplayer.is_server():
+	if multiplayer.has_multiplayer_peer() and not multiplayer.is_server():
 		return
 
 	if not mob_scene:
