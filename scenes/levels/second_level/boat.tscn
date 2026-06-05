@@ -1,0 +1,43 @@
+[gd_scene format=3 uid="uid://dobf1mams4o6b"]
+
+[ext_resource type="Script" uid="uid://iipwkwy257mm" path="res://scripts/boat/boat.gd" id="1_2sjr3"]
+[ext_resource type="PackedScene" uid="uid://csovlk7uytl7e" path="res://scenes/levels/second_level/ship_large_2.tscn" id="1_qk016"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2sjr3"]
+size = Vector3(4.8234825, 10.049945, 13.143404)
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_mvt3w"]
+height = 9.991928
+radius = 6.7368164
+
+[node name="boat" type="CharacterBody3D" unique_id=1029019454]
+script = ExtResource("1_2sjr3")
+
+[node name="ship-large2" parent="." unique_id=1602477363 instance=ExtResource("1_qk016")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1830138606]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.001778245, 4.993673, 0.0015258789)
+shape = SubResource("BoxShape3D_2sjr3")
+debug_color = Color(1, 0, 0, 1)
+
+[node name="inputLabel" type="Label3D" parent="." unique_id=1855140418]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.46664536, 4.5541725, -1.9065926)
+billboard = 1
+text = "F"
+font_size = 200
+outline_size = 100
+
+[node name="Area3D" type="Area3D" parent="." unique_id=2003197902]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D" unique_id=1310903399]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.122134686, 4.969006, -0.28046942)
+shape = SubResource("CylinderShape3D_mvt3w")
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1556526275]
+unique_name_in_owner = true
+transform = Transform3D(-0.9999339, 9.229274e-10, 0.011501407, 0.00541854, 0.8820693, 0.47108853, -0.010145038, 0.47111964, -0.88201106, 0, 10.433606, -7.4822426)
+fov = 116.93701
+
+[connection signal="body_entered" from="Area3D" to="." method="_on_area_3d_body_entered"]
+[connection signal="body_exited" from="Area3D" to="." method="_on_area_3d_body_exited"]

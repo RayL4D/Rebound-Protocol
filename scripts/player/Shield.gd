@@ -156,7 +156,7 @@ func refresh_upgrades() -> void:
 func _process(delta: float) -> void:
 	# Multijoueur : le bouclier distant ne doit pas réagir à la souris locale.
 	# player.is_multiplayer_authority() retourne true en solo → aucun impact.
-	if not player.is_multiplayer_authority():
+	if multiplayer.has_multiplayer_peer() and not player.is_multiplayer_authority():
 		return
 	_orbit_toward_mouse()
 	# Décrémenter les timers de combo — reset quand la fenêtre expire
