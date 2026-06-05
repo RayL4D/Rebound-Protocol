@@ -285,7 +285,7 @@ func _ready() -> void:
 	# is_multiplayer_authority() retourne true par défaut en solo → aucun impact.
 	# On force camera.current = true pour le joueur local plutôt que de se fier
 	# à la valeur par défaut de la scène — évite l'écran gris sur le client.
-	if not is_multiplayer_authority():
+	if multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
 		camera.current = false
 		set_process_input(false)
 	else:
@@ -610,7 +610,7 @@ func _physics_process(delta: float) -> void:
 
 	# Multijoueur : seul le pair local contrôle sa propre physique.
 	# MultiplayerSynchronizer écrit la position du joueur distant directement.
-	if not is_multiplayer_authority():
+	if multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
 		return
 
 	if is_dead:
@@ -724,7 +724,7 @@ func _physics_process(delta: float) -> void:
 func _input(event: InputEvent) -> void:
 	if Engine.is_editor_hint():
 		return
-	if not is_multiplayer_authority():
+	if multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
 		return   # Multijoueur : ignorer les inputs pour les joueurs distants
 	if is_dead:
 		return   # Bloquer tout input caméra/zoom pendant l'animation de mort

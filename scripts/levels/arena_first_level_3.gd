@@ -5,7 +5,7 @@ extends Node3D
 
 # --- RÉFÉRENCES AUX NŒUDS ---
 @onready var wave_manager_zone2: WaveManager = $Wave_manager_container/WaveManager_Zone2
-@onready var level_exit: Node = $WorldObjects_container/portal_container/LevelExit
+@onready var level_exit: Node = $Level_Exit
 @onready var hud: Node = $HUD
 @onready var hidden_save_point_1 = $SavePoint_container/SavePoint_2
 @onready var _nav_region: NavigationRegion3D = $NavigationRegion3D
@@ -25,6 +25,12 @@ func _ready() -> void:
 	_setup_ui()
 	_setup_waves()
 	_connect_signals()
+
+	# Le portail final (zone traversable activée par la clé du boss) téléporte
+	# vers le niveau 2. On le règle ici dans le script plutôt que dans la scène
+	# pour que ça survive aux sauvegardes de la scène dans l'éditeur.
+	if level_exit:
+		level_exit.next_scene_path = "res://scenes/levels/second_level/arena_second_level_1.tscn"
 
 	# === DÉSACTIVATION DES SAVE POINTS AU LANCEMENT ===
 	if hidden_save_point_1:

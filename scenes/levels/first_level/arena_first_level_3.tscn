@@ -814,10 +814,6 @@ transform = Transform3D(-31.440529, -0.16379292, -5.320778, -12.586131, 0.967799
 
 [node name="portal_container" type="Node3D" parent="NavigationRegion3D/WorldObjects_container" unique_id=1170260978]
 
-[node name="LevelExit" parent="NavigationRegion3D/WorldObjects_container/portal_container" unique_id=336532745 instance=ExtResource("35_1x23w")]
-transform = Transform3D(0.049806967, 0, -2.6995406, 0, 2.7, 0, 2.6995406, 0, 0.049806967, 330.8805, 54.49592, -373.23566)
-next_scene_path = "uid://77djq65vwb1y"
-
 [node name="entry_portal" type="Node3D" parent="NavigationRegion3D/WorldObjects_container/portal_container" unique_id=691497894]
 transform = Transform3D(0.9574405, 0, -0.28863075, 0, 1, 0, 0.28863075, 0, 0.9574405, -14.269655, 38.671165, -6.246505)
 
@@ -1210,5 +1206,8 @@ patrol_enabled = true
 [node name="PauseMenu" parent="." unique_id=217714843 instance=ExtResource("38_pohuh")]
 
 [node name="MobileControls" parent="." unique_id=1449797109 instance=ExtResource("39_2bpxm")]
+
+[node name="Level_Exit" parent="." unique_id=336532745 instance=ExtResource("35_1x23w")]
+transform = Transform3D(1.1924881e-08, 0, -1, 0, 1, 0, 1, 0, 1.1924881e-08, 329.3895, 45.810417, -371.9966)
 
 [connection signal="body_entered" from="Wave_manager_container/Trigger_Zone2" to="." method="_on_trigger_zone_2_body_entered"]
