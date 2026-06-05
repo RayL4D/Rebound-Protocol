@@ -22,6 +22,7 @@ var _mat: StandardMaterial3D = null
 # =============================================================
 
 func _ready() -> void:
+	add_to_group("bullets")   # Détectable par Player._find_nearest_threat() (auto-face mobile)
 	$VisibleOnScreenNotifier3D.screen_exited.connect(_on_screen_exited)
 	body_entered.connect(_on_body_entered)
 	_setup_visuals()

@@ -26,7 +26,8 @@ func _ready() -> void:
 	
 
 	wave_manager.setup_ui(wave_label, message_label, enemies_label, panel)
-	
+	_scale_hud_labels_for_mobile(wave_label, message_label, enemies_label)
+
 	if hidden_save_point_1:
 		hidden_save_point_1.visible = false
 		hidden_save_point_1.process_mode = Node.PROCESS_MODE_DISABLED
@@ -73,6 +74,34 @@ func _prewarm_bullet_shaders() -> void:
 
 func _on_tutorial_completed() -> void:
 	wave_manager.start()
+
+
+# =============================================================
+# SCALING MOBILE — labels dialogue / vague
+# =============================================================
+func _scale_hud_labels_for_mobile(wave_label: Label, message_label: Label, enemies_label: Label) -> void:
+	if not OS.has_feature("mobile"):
+		return
+	const M := 1.6
+	var font_sz := int(20 * M * 1.35)   # ~43 px
+
+	# Taille de police
+	for lbl: Label in [wave_label, message_label, enemies_label]:
+		if lbl != null:
+			lbl.add_theme_font_size_override("font_size", font_sz)
+
+	# Élargir la zone MessageLabel (anchor center-top → offsets horizontaux)
+	if message_label != null:
+		message_label.offset_left   = -220.0
+		message_label.offset_right  =  220.0
+		message_label.offset_top    =  100.0
+		message_label.offset_bottom =  100.0 + font_sz + 10.0
+
+	# GridContainer (Wave / Ennemis) en bas à droite
+	var grid := hud.get_node_or_null("WaveContainer/GridContainer")
+	if grid != null:
+		grid.offset_left = -408.0 * M
+		grid.offset_top  = -50.0  * M
 
 
 # =============================================================

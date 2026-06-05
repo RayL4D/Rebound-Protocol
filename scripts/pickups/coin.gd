@@ -30,6 +30,7 @@ var _land_played: bool = false   # évite de rejouer si plusieurs rebonds
 
 var _player:     Player = null
 var _attracted:  bool   = false
+var _collecting: bool   = false   # garde contre les appels multiples en coop
 var _lifetime:   float  = LIFETIME
 var _bob_time:   float  = 0.0      # pour l'animation de flottaison
 
@@ -44,10 +45,12 @@ var _gravity:    float   = 18.0    # Force de la gravité personnalisée
 # =============================================================
 
 ## Instancie et ajoute une pièce dans la scène.
-## value : nombre de pièces (1–5)
-static func spawn(parent: Node, world_pos: Vector3, value: int = 1) -> void:
+## coin_id : nom unique (utilisé en coop pour la synchronisation réseau).
+static func spawn(parent: Node, world_pos: Vector3, value: int = 1, coin_id: String = "") -> void:
 	var coin := _build()
 	coin._value = value
+	if coin_id != "":
+		coin.name = coin_id
 	parent.add_child(coin)
 	
 	# On démarre exactement au centre de l'ennemi
@@ -114,7 +117,20 @@ static func _build() -> Coin:
 # =============================================================
 
 func _ready() -> void:
-	_player = get_tree().get_first_node_in_group("player")
+	_player = _find_closest_player()
+
+
+func _find_closest_player() -> Player:
+	var closest: Player = null
+	var min_dist_sq := INF
+	for p in get_tree().get_nodes_in_group("player"):
+		if not (p is Player) or not is_instance_valid(p):
+			continue
+		var d := global_position.distance_squared_to((p as Player).global_position)
+		if d < min_dist_sq:
+			min_dist_sq = d
+			closest = p as Player
+	return closest
 	_sfx     = AudioStreamPlayer.new()
 	_sfx.bus = "SFX"
 	add_child(_sfx)
@@ -164,6 +180,21 @@ func _process(delta: float) -> void:
 		# Flottaison sinusoïdale douce
 		position.y += sin(_bob_time * 3.0) * 0.003
 
+		# Fallback : si body_entered n'a pas déclenché (problème de layer en coop),
+		# on vérifie la distance directement chaque frame.
+		# En coop, on ne réagit qu'au joueur local pour éviter que la pièce
+		# soit attribuée au mauvais joueur sur chaque machine.
+		if not _attracted or _player == null or not is_instance_valid(_player):
+			for p: Node in get_tree().get_nodes_in_group("player"):
+				if p is Player and is_instance_valid(p):
+					# En multijoueur, ignorer les joueurs distants
+					if multiplayer.has_multiplayer_peer() and not (p as Node).is_multiplayer_authority():
+						continue
+					if global_position.distance_to((p as Player).global_position) < BASE_ATTRACT_RADIUS:
+						_attracted = true
+						_player = p as Player
+						break
+
 		# Attraction vers le joueur
 		if _attracted and _player != null and is_instance_valid(_player):
 			var dir := (_player.global_position + Vector3(0, 0.5, 0)) - global_position
@@ -174,15 +205,40 @@ func _process(delta: float) -> void:
 
 func _on_body_entered(body: Node) -> void:
 	if body is Player:
+		# En multijoueur, ignorer les collisions avec les joueurs distants
+		if multiplayer.has_multiplayer_peer() and not (body as Node).is_multiplayer_authority():
+			return
 		_attracted = true
 		_player    = body as Player
 
 
 func _collect() -> void:
-	SaveData.add_coins(_value)
-	_spawn_collect_burst()
+	if _collecting:
+		return          # déjà en cours — ignore les appels multiples (chaque frame)
+	_collecting = true
 
-	# Player flottant — survit au queue_free de la pièce
+	# En coop : on passe par CoopArena pour que la collecte soit exclusive
+	# (premier joueur qui touche la pièce la gagne, elle disparaît pour tous).
+	if multiplayer.has_multiplayer_peer():
+		var arena := get_tree().current_scene
+		if arena.has_method("_network_collect_coin"):
+			arena._network_collect_coin(name, _value)
+		return
+	# Solo : ajout direct
+	_do_collect()
+
+
+## Applique les effets de collecte en local (son, particules, pièces).
+func _do_collect() -> void:
+	SaveData.add_coins(_value)
+	play_collect_effects()
+	queue_free()
+
+
+## Joue les effets visuels + son de collecte sans ajouter de pièces.
+## Appelé par CoopArena._rpc_remove_coin sur le client collecteur.
+func play_collect_effects() -> void:
+	_spawn_collect_burst()
 	if _SFX_COLLECT != null:
 		var p := AudioStreamPlayer.new()
 		p.stream      = _SFX_COLLECT
@@ -192,8 +248,6 @@ func _collect() -> void:
 		get_tree().root.add_child(p)
 		p.play()
 		p.finished.connect(p.queue_free)
-
-	queue_free()
 
 
 # =============================================================

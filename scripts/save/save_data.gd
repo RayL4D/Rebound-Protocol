@@ -164,8 +164,12 @@ func _ready() -> void:
 
 ## Recharge toutes les données depuis le disque (sans toucher à active_slot).
 ## À appeler avant d'afficher un écran qui lit les infos des slots.
+## Émet slot_loaded si un slot est actif afin que XpManager (et tout autre
+## autoload abonné) se resynchronise avec les données du dernier checkpoint.
 func reload_from_disk() -> void:
 	_load_from_disk()
+	if active_slot >= 0:
+		slot_loaded.emit()
 
 
 # =============================================================
@@ -217,6 +221,7 @@ func get_slot_info(slot: int) -> Dictionary:
 		"timestamp": s.get("timestamp", 0),
 		"coins":     s.get("coins", 0),
 		"hp":        s.get("hp", 0),
+		"xp_level":  s.get("xp_level", 0),
 	}
 
 
@@ -224,14 +229,19 @@ func get_slot_info(slot: int) -> Dictionary:
 # ACCÈS AU SLOT ACTIF — pièces, checkpoint, niveau, HP
 # =============================================================
 
+## Portefeuille temporaire utilisé quand aucun slot n'est actif (ex : mode coop
+## où les clients rejoignent sans passer par la sélection de sauvegarde).
+var _session_coins: int = 0
+
 func get_coins() -> int:
 	if active_slot < 0 or active_slot >= MAX_SLOTS:
-		return 0
+		return _session_coins
 	return int(saves[active_slot].get("coins", 0))
 
 
 func add_coins(amount: int) -> void:
 	if active_slot < 0 or active_slot >= MAX_SLOTS:
+		_session_coins += amount
 		return
 	# Mise à jour en mémoire uniquement — persisté au prochain checkpoint.
 	saves[active_slot]["coins"] = int(saves[active_slot].get("coins", 0)) + amount
@@ -239,13 +249,21 @@ func add_coins(amount: int) -> void:
 
 func spend_coins(amount: int) -> bool:
 	if active_slot < 0 or active_slot >= MAX_SLOTS:
-		return false
+		if _session_coins < amount:
+			return false
+		_session_coins -= amount
+		return true
 	var current := int(saves[active_slot].get("coins", 0))
 	if current < amount:
 		return false
 	# Mise à jour en mémoire uniquement — persisté au prochain checkpoint.
 	saves[active_slot]["coins"] = current - amount
 	return true
+
+
+## Réinitialise le portefeuille de session (appelé au retour au menu).
+func reset_session_coins() -> void:
+	_session_coins = 0
 
 
 func set_checkpoint(checkpoint_id: String) -> void:

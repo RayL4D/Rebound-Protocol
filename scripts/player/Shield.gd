@@ -68,6 +68,11 @@ func _ready() -> void:
 	# activée qu'à la fin de Player._ready(), après Shield._ready()).
 	camera = null
 
+	# Initialiser _shield_direction depuis le facing réel du joueur APRÈS que
+	# Player._ready() a eu le temps de s'exécuter (children avant parent,
+	# donc on diffère à la fin du frame courant via call_deferred).
+	call_deferred("_init_shield_direction")
+
 	# Player polyphonique pour les sons bouclier (block + reflect)
 	_sfx_shield = AudioStreamPlayer.new()
 	_sfx_shield.bus = "SFX"
@@ -105,6 +110,17 @@ func _ready() -> void:
 	_base_parry_window     = parry_timer.perfect_window
 	_base_max_parry_window = parry_timer.max_parry_window
 	_apply_save_upgrades()
+
+
+## Lit le facing initial du robot_model après que Player._ready() a terminé.
+## Évite que le bouclier apparaisse à la mauvaise position au premier frame.
+func _init_shield_direction() -> void:
+	var p := player as Player
+	if p == null or p.robot_model == null:
+		return
+	var fwd := p.robot_model.global_transform.basis.z
+	if fwd.length_squared() > 0.01:
+		_shield_direction = fwd.normalized()
 
 
 func _apply_save_upgrades() -> void:
@@ -176,14 +192,38 @@ func _orbit_toward_mouse() -> void:
 
 	var dir := Vector3.ZERO
 
-	# --- Joystick mobile prioritaire ---
 	var p := player as Player
-	if p != null and p._joystick_aim_dir.length_squared() > 0.04:
+
+	# --- Auto-target mobile : bouclier suit la direction du personnage ---
+	# Quand auto-target est actif, le personnage fait face à l'ennemi ciblé.
+	# Le bouclier doit suivre cette même direction plutôt que le toucher d'écran.
+	if OS.has_feature("mobile") and Settings.auto_target_enabled and p != null:
+		# Si joystick droit actif → override manuel (même logique que Player)
+		if p._joystick_aim_dir.length_squared() > 0.04:
+			var cb        := camera.global_transform.basis
+			var cam_right := Vector3(cb.x.x, 0.0, cb.x.z).normalized()
+			var cam_fwd   := -Vector3(cb.z.x, 0.0, cb.z.z).normalized()
+			dir = cam_right * p._joystick_aim_dir.x - cam_fwd * p._joystick_aim_dir.y
+			dir.y = 0.0
+		else:
+			# Sinon : forward du robot_model (direction de l'auto-face)
+			# basis.z pointe dans la direction du regard (atan2(x,z) convention)
+			dir = p.robot_model.global_transform.basis.z
+			dir.y = 0.0
+
+	# --- Joystick mobile prioritaire (sans auto-target) ---
+	elif p != null and p._joystick_aim_dir.length_squared() > 0.04:
 		var cb        := camera.global_transform.basis
 		var cam_right := Vector3(cb.x.x, 0.0, cb.x.z).normalized()
 		var cam_fwd   := -Vector3(cb.z.x, 0.0, cb.z.z).normalized()
 		dir = cam_right * p._joystick_aim_dir.x - cam_fwd * p._joystick_aim_dir.y
 		dir.y = 0.0
+
+	elif OS.has_feature("mobile"):
+		# Mobile sans auto-target et joystick au repos :
+		# Utiliser la dernière direction connue (initialisée à FORWARD au spawn)
+		dir = _shield_direction
+
 	else:
 		# --- Souris (desktop) ---
 		var mouse_pos := get_viewport().get_mouse_position()
@@ -365,6 +405,17 @@ func _spawn_reflected_bullet(bullet_damage: int, is_critical: bool = false) -> v
 		var bullet3: BulletReflected = _bullet_reflected_scene.instantiate()
 		get_tree().current_scene.add_child(bullet3)
 		bullet3.init(global_position, -_shield_direction, final_dmg, false, true)
+
+	# ── Synchronisation multijoueur : spawner les répliques visuelles ──
+	# sur les machines des autres joueurs via RPC (balle principale + variantes).
+	if multiplayer.has_multiplayer_peer() and player is Player:
+		var p := player as Player
+		p.rpc_spawn_reflected_bullet.rpc(global_position, _shield_direction, final_dmg, is_critical)
+		if has_xp and XpManager.has_skill("double_bullet"):
+			var dir2b := _shield_direction.rotated(Vector3.UP, PI / 12.0)
+			p.rpc_spawn_reflected_bullet.rpc(global_position, dir2b, final_dmg, is_critical)
+		if has_xp and XpManager.has_skill("omni_bullet"):
+			p.rpc_spawn_reflected_bullet.rpc(global_position, -_shield_direction, final_dmg, false)
 
 
 # =============================================================

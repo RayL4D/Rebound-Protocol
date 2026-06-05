@@ -102,7 +102,11 @@ func _on_body_entered(body: Node) -> void:
 	if body is Player:
 		_player_near = true
 		if not _opened:
-			_prompt.visible = true
+			if OS.has_feature("mobile"):
+				# Sur mobile : ouverture automatique en entrant dans la zone
+				_open()
+			else:
+				_prompt.visible = true
 
 
 func _on_body_exited(body: Node) -> void:

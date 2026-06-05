@@ -45,7 +45,10 @@ func _process(delta: float) -> void:
 		return
 
 	# Détecter clic gauche (action "parry")
-	if Input.is_action_just_pressed("parry"):
+	# Sur mobile, on ignore l'action clavier/souris — seul notify_mobile_press() compte
+	# (emulate_mouse_from_touch transforme chaque toucher d'écran en clic gauche,
+	#  ce qui déclencherait une parade fantôme sans l'animation)
+	if Input.is_action_just_pressed("parry") and not OS.has_feature("mobile"):
 		_parry_pressed    = true
 		_parry_press_time = _get_time()
 

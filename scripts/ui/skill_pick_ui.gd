@@ -35,6 +35,9 @@ var _rarity_val: int   = 0
 var _rc:         Color = Color.WHITE
 var _rn:         String = ""
 
+var _M: float = 1.6 if OS.has_feature("mobile") else 1.0
+var _is_waiting: bool = false   # true → ne pas queue_free après le choix (coop)
+
 var _sfx_hover:  AudioStreamPlayer = null
 var _sfx_choose: AudioStreamPlayer = null
 const _SFX_HOVER_PATH  := "res://audio/sfx/ui/btn_hover.wav"
@@ -92,8 +95,8 @@ func _build_ui() -> void:
 	add_child(flash)
 
 	# ── Panneau d'annonce (440 × 320, centré) ─────────────────
-	const AW := 440.0
-	const AH := 320.0
+	var AW := 440.0 * _M
+	var AH := 320.0 * _M
 	var announce := Control.new()
 	announce.size         = Vector2(AW, AH)
 	announce.position     = Vector2((vp.x - AW) * 0.5, (vp.y - AH) * 0.5)
@@ -129,29 +132,39 @@ func _build_ui() -> void:
 	# VBox contenu
 	var a_vbox := VBoxContainer.new()
 	a_vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	a_vbox.offset_left   =  24.0
-	a_vbox.offset_right  = -24.0
-	a_vbox.offset_top    =  18.0
-	a_vbox.offset_bottom = -18.0
-	a_vbox.add_theme_constant_override("separation", 10)
+	a_vbox.offset_left   =  24.0 * _M
+	a_vbox.offset_right  = -24.0 * _M
+	a_vbox.offset_top    =  18.0 * _M
+	a_vbox.offset_bottom = -18.0 * _M
+	a_vbox.add_theme_constant_override("separation", int(10 * _M))
 	a_vbox.process_mode  = Node.PROCESS_MODE_ALWAYS
 	announce.add_child(a_vbox)
 
-	# Titre
+	# Titre — éclairs dessinés flanquant le texte
+	var a_title_row := HBoxContainer.new()
+	a_title_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	a_title_row.add_theme_constant_override("separation", 8)
+	a_vbox.add_child(a_title_row)
+	var a_bolt_l := _LightningIcon.new()
+	a_bolt_l.custom_minimum_size = Vector2(22 * _M, 28 * _M)
+	a_title_row.add_child(a_bolt_l)
 	var a_header := Label.new()
 	a_header.text = tr("UI_SKILL_LEVEL_TITLE") % _level
 	a_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	a_header.add_theme_font_size_override("font_size", 28)
+	a_header.add_theme_font_size_override("font_size", int(28 * _M))
 	a_header.add_theme_color_override("font_color", C_GOLD)
 	a_header.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 	a_header.add_theme_constant_override("outline_size", 5)
-	a_vbox.add_child(a_header)
+	a_title_row.add_child(a_header)
+	var a_bolt_r := _LightningIcon.new()
+	a_bolt_r.custom_minimum_size = Vector2(22 * _M, 28 * _M)
+	a_title_row.add_child(a_bolt_r)
 
 	# Sous-titre
 	var a_sub := Label.new()
 	a_sub.text = tr("UI_SKILL_DRAWING")
 	a_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	a_sub.add_theme_font_size_override("font_size", 11)
+	a_sub.add_theme_font_size_override("font_size", int(11 * _M))
 	a_sub.add_theme_color_override("font_color", Color(C_CYAN, 0.60))
 	a_vbox.add_child(a_sub)
 
@@ -164,7 +177,7 @@ func _build_ui() -> void:
 
 	# ── Boîte de tirage (symbole + couleur animée) ─────────────
 	var cycle_box := Control.new()
-	cycle_box.custom_minimum_size  = Vector2(0, 120)
+	cycle_box.custom_minimum_size  = Vector2(0, 120 * _M)
 	cycle_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	cycle_box.mouse_filter          = Control.MOUSE_FILTER_IGNORE
 	a_vbox.add_child(cycle_box)
@@ -190,7 +203,7 @@ func _build_ui() -> void:
 	cycle_sym.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	cycle_sym.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cycle_sym.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
-	cycle_sym.add_theme_font_size_override("font_size", 54)
+	cycle_sym.add_theme_font_size_override("font_size", int(54 * _M))
 	cycle_sym.add_theme_color_override("font_color", Color(C_CYAN, 0.45))
 	cycle_sym.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.70))
 	cycle_sym.add_theme_constant_override("outline_size", 5)
@@ -201,7 +214,7 @@ func _build_ui() -> void:
 	var cycle_rar := Label.new()
 	cycle_rar.text = "???"
 	cycle_rar.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cycle_rar.add_theme_font_size_override("font_size", 13)
+	cycle_rar.add_theme_font_size_override("font_size", int(13 * _M))
 	cycle_rar.add_theme_color_override("font_color", Color(C_CYAN, 0.45))
 	a_vbox.add_child(cycle_rar)
 
@@ -316,8 +329,8 @@ func _reveal_cards(bg: ColorRect) -> void:
 	add_child(ambient)
 
 	# ── Panneau principal (780 × 530) ─────────────────────────
-	const PW := 780.0
-	const PH := 530.0
+	var PW := 780.0 * _M
+	var PH := 530.0 * _M
 	var panel_root := Control.new()
 	panel_root.size         = Vector2(PW, PH)
 	panel_root.position     = Vector2((vp.x - PW) * 0.5, (vp.y - PH) * 0.5)
@@ -340,8 +353,8 @@ func _reveal_cards(bg: ColorRect) -> void:
 	# Ligne accent haut
 	var top_bar := ColorRect.new()
 	top_bar.color    = Color(_rc, 0.75)
-	top_bar.position = Vector2(36.0, 0.0)
-	top_bar.size     = Vector2(PW - 72.0, 3.0)
+	top_bar.position = Vector2(36.0 * _M, 0.0)
+	top_bar.size     = Vector2(PW - 72.0 * _M, 3.0)
 	top_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel_root.add_child(top_bar)
 
@@ -353,23 +366,33 @@ func _reveal_cards(bg: ColorRect) -> void:
 	# ── VBox contenu ──────────────────────────────────────────
 	var vbox := VBoxContainer.new()
 	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	vbox.offset_left   =  30.0
-	vbox.offset_right  = -30.0
-	vbox.offset_top    =  24.0
-	vbox.offset_bottom = -22.0
-	vbox.add_theme_constant_override("separation", 12)
+	vbox.offset_left   =  30.0 * _M
+	vbox.offset_right  = -30.0 * _M
+	vbox.offset_top    =  24.0 * _M
+	vbox.offset_bottom = -22.0 * _M
+	vbox.add_theme_constant_override("separation", int(12 * _M))
 	vbox.process_mode  = Node.PROCESS_MODE_ALWAYS
 	panel_root.add_child(vbox)
 
-	# Header
+	# Header — éclairs dessinés flanquant le texte
+	var title_row := HBoxContainer.new()
+	title_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	title_row.add_theme_constant_override("separation", 8)
+	vbox.add_child(title_row)
+	var bolt_l := _LightningIcon.new()
+	bolt_l.custom_minimum_size = Vector2(24 * _M, 30 * _M)
+	title_row.add_child(bolt_l)
 	var header := Label.new()
 	header.text = tr("UI_SKILL_LEVEL_TITLE") % _level
 	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	header.add_theme_font_size_override("font_size", 30)
+	header.add_theme_font_size_override("font_size", int(30 * _M))
 	header.add_theme_color_override("font_color", C_GOLD)
 	header.add_theme_color_override("font_outline_color", Color(0, 0, 0, 1))
 	header.add_theme_constant_override("outline_size", 5)
-	vbox.add_child(header)
+	title_row.add_child(header)
+	var bolt_r := _LightningIcon.new()
+	bolt_r.custom_minimum_size = Vector2(24 * _M, 30 * _M)
+	title_row.add_child(bolt_r)
 
 	# Rangée ── Rareté ──
 	var div_row := HBoxContainer.new()
@@ -380,27 +403,27 @@ func _reveal_cards(bg: ColorRect) -> void:
 
 	var line_l := ColorRect.new()
 	line_l.color               = Color(_rc, 0.40)
-	line_l.custom_minimum_size = Vector2(100, 1)
+	line_l.custom_minimum_size = Vector2(100 * _M, 1)
 	line_l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	line_l.mouse_filter        = Control.MOUSE_FILTER_IGNORE
 	div_row.add_child(line_l)
 
 	var rar_badge := Label.new()
 	rar_badge.text = "✦  %s  ✦" % _rn.to_upper()
-	rar_badge.add_theme_font_size_override("font_size", 11)
+	rar_badge.add_theme_font_size_override("font_size", int(11 * _M))
 	rar_badge.add_theme_color_override("font_color", Color(_rc, 0.92))
 	div_row.add_child(rar_badge)
 
 	var line_r := ColorRect.new()
 	line_r.color               = Color(_rc, 0.40)
-	line_r.custom_minimum_size = Vector2(100, 1)
+	line_r.custom_minimum_size = Vector2(100 * _M, 1)
 	line_r.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	line_r.mouse_filter        = Control.MOUSE_FILTER_IGNORE
 	div_row.add_child(line_r)
 
 	# ── Cartes ────────────────────────────────────────────────
 	var hbox := HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 36)
+	hbox.add_theme_constant_override("separation", int(36 * _M))
 	hbox.alignment           = BoxContainer.ALIGNMENT_CENTER
 	hbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	hbox.process_mode        = Node.PROCESS_MODE_ALWAYS
@@ -416,7 +439,7 @@ func _reveal_cards(bg: ColorRect) -> void:
 	var hint := Label.new()
 	hint.text = tr("UI_SKILL_CHOOSE_HINT")
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint.add_theme_font_size_override("font_size", 10)
+	hint.add_theme_font_size_override("font_size", int(10 * _M))
 	hint.add_theme_color_override("font_color", Color(C_TEXT_DIM, 0.40))
 	vbox.add_child(hint)
 
@@ -453,9 +476,9 @@ func _build_card(skill_data: Dictionary, index: int) -> Control:
 	var skill_name: String = tr(skill_data.get("name",        ""))
 	var skill_desc: String = tr(skill_data.get("description", ""))
 
-	const CW := 300.0
-	const CH := 250.0
-	const IH := 80.0
+	var CW := 300.0 * _M
+	var CH := 250.0 * _M
+	var IH := 80.0 * _M
 
 	# Wrapper
 	var wrapper := Control.new()
@@ -521,7 +544,7 @@ func _build_card(skill_data: Dictionary, index: int) -> Control:
 	sym_lbl.size     = Vector2(CW, IH - 6.0)
 	sym_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sym_lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
-	sym_lbl.add_theme_font_size_override("font_size", 38)
+	sym_lbl.add_theme_font_size_override("font_size", int(38 * _M))
 	sym_lbl.add_theme_color_override("font_color", Color(rc, 0.88))
 	sym_lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.65))
 	sym_lbl.add_theme_constant_override("outline_size", 5)
@@ -532,17 +555,17 @@ func _build_card(skill_data: Dictionary, index: int) -> Control:
 	var badge_bg := ColorRect.new()
 	badge_bg.color    = Color(rc, 0.90)
 	badge_bg.position = Vector2(2.0, 2.0)
-	badge_bg.size     = Vector2(36.0, 26.0)
+	badge_bg.size     = Vector2(36.0 * _M, 26.0 * _M)
 	badge_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(badge_bg)
 
 	var badge_lbl := Label.new()
 	badge_lbl.text     = "[%d]" % index
 	badge_lbl.position = Vector2(2.0, 2.0)
-	badge_lbl.size     = Vector2(36.0, 26.0)
+	badge_lbl.size     = Vector2(36.0 * _M, 26.0 * _M)
 	badge_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	badge_lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
-	badge_lbl.add_theme_font_size_override("font_size", 10)
+	badge_lbl.add_theme_font_size_override("font_size", int(10 * _M))
 	badge_lbl.add_theme_color_override("font_color", Color(0.04, 0.04, 0.08, 1.0))
 	badge_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(badge_lbl)
@@ -563,7 +586,7 @@ func _build_card(skill_data: Dictionary, index: int) -> Control:
 	var rar_lbl := Label.new()
 	rar_lbl.text = rn.to_upper()
 	rar_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	rar_lbl.add_theme_font_size_override("font_size", 9)
+	rar_lbl.add_theme_font_size_override("font_size", int(9 * _M))
 	rar_lbl.add_theme_color_override("font_color", Color(rc, 0.70))
 	rar_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	inner.add_child(rar_lbl)
@@ -571,7 +594,7 @@ func _build_card(skill_data: Dictionary, index: int) -> Control:
 	var name_lbl := Label.new()
 	name_lbl.text = skill_name
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_lbl.add_theme_font_size_override("font_size", 17)
+	name_lbl.add_theme_font_size_override("font_size", int(17 * _M))
 	name_lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
 	name_lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.90))
 	name_lbl.add_theme_constant_override("outline_size", 3)
@@ -588,7 +611,7 @@ func _build_card(skill_data: Dictionary, index: int) -> Control:
 	var desc_lbl := Label.new()
 	desc_lbl.text = skill_desc
 	desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	desc_lbl.add_theme_font_size_override("font_size", 11)
+	desc_lbl.add_theme_font_size_override("font_size", int(11 * _M))
 	desc_lbl.add_theme_color_override("font_color", C_TEXT_DIM)
 	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	desc_lbl.mouse_filter  = Control.MOUSE_FILTER_IGNORE
@@ -625,15 +648,17 @@ func _build_card(skill_data: Dictionary, index: int) -> Control:
 
 func _make_corners(origin: Vector2, sz: Vector2, color: Color) -> Array[ColorRect]:
 	var result: Array[ColorRect] = []
+	var cl := _CL * _M
+	var ct := _CT * _M
 	var defs := [
-		[origin,                                            Vector2(_CL, _CT)],
-		[origin,                                            Vector2(_CT, _CL)],
-		[origin + Vector2(sz.x - _CL, 0.0),                Vector2(_CL, _CT)],
-		[origin + Vector2(sz.x - _CT, 0.0),                Vector2(_CT, _CL)],
-		[origin + Vector2(0.0, sz.y - _CT),                 Vector2(_CL, _CT)],
-		[origin + Vector2(0.0, sz.y - _CL),                 Vector2(_CT, _CL)],
-		[origin + Vector2(sz.x - _CL, sz.y - _CT),         Vector2(_CL, _CT)],
-		[origin + Vector2(sz.x - _CT, sz.y - _CL),         Vector2(_CT, _CL)],
+		[origin,                                       Vector2(cl, ct)],
+		[origin,                                       Vector2(ct, cl)],
+		[origin + Vector2(sz.x - cl, 0.0),             Vector2(cl, ct)],
+		[origin + Vector2(sz.x - ct, 0.0),             Vector2(ct, cl)],
+		[origin + Vector2(0.0, sz.y - ct),              Vector2(cl, ct)],
+		[origin + Vector2(0.0, sz.y - cl),              Vector2(ct, cl)],
+		[origin + Vector2(sz.x - cl, sz.y - ct),        Vector2(cl, ct)],
+		[origin + Vector2(sz.x - ct, sz.y - cl),        Vector2(ct, cl)],
 	]
 	for d in defs:
 		var r := ColorRect.new()
@@ -685,7 +710,74 @@ func _on_card_chosen(skill_id: String) -> void:
 	var _finish := func() -> void:
 		get_tree().paused = false
 		skill_chosen.emit(skill_id)
-		queue_free()
+		if not _is_waiting:
+			queue_free()
+		# Sinon : CoopArena appellera enter_waiting_mode() puis queue_free()
+		# quand tous les joueurs auront choisi.
 	var tw := create_tween()
 	tw.tween_interval(0.12)
 	tw.tween_callback(_finish)
+
+
+# =============================================================
+# MODE ATTENTE COOP — affiché quand le joueur a choisi mais attend les autres
+# =============================================================
+
+## Garde la fenêtre ouverte, désactive les cartes, affiche un message propre au-dessus.
+## Appelé par CoopArena juste après skill_chosen (UI encore vivante).
+func enter_waiting_mode() -> void:
+	_is_waiting = true
+
+	# Désactiver toutes les cartes (plus cliquables)
+	_disable_buttons_recursive(self)
+
+	# Fond semi-transparent sur les cartes
+	var dimmer := ColorRect.new()
+	dimmer.color = Color(0.0, 0.0, 0.0, 0.45)
+	dimmer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dimmer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(dimmer)
+
+	# Message centré, propre, texte uniquement
+	var M := _M
+	var lbl := Label.new()
+	lbl.text = "En attente des coéquipiers..."
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	lbl.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	lbl.offset_left   = -250.0 * M
+	lbl.offset_right  =  250.0 * M
+	lbl.offset_top    = -20.0  * M
+	lbl.offset_bottom =  20.0  * M
+	lbl.add_theme_font_size_override("font_size", int(18 * M))
+	lbl.add_theme_color_override("font_color",         Color(0.4, 1.0, 0.85))
+	lbl.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 1.0))
+	lbl.add_theme_constant_override("outline_size", 4)
+	add_child(lbl)
+
+
+func _disable_buttons_recursive(node: Node) -> void:
+	if node is Button:
+		(node as Button).disabled = true
+	for child in node.get_children():
+		_disable_buttons_recursive(child)
+
+
+# =============================================================
+# ICÔNE ÉCLAIR — dessinée (compatible toutes plateformes)
+# =============================================================
+
+class _LightningIcon extends Control:
+	func _draw() -> void:
+		var c   := size * 0.5
+		var s   := minf(size.x, size.y) * 0.44
+		var col := Color(1.0, 0.85, 0.0)
+		# Éclair : polygone en forme de Z inversé
+		draw_polygon(PackedVector2Array([
+			c + Vector2( s * 0.28, -s),
+			c + Vector2(-s * 0.08, -s * 0.06),
+			c + Vector2( s * 0.38, -s * 0.06),
+			c + Vector2(-s * 0.28,  s),
+			c + Vector2( s * 0.08,  s * 0.06),
+			c + Vector2(-s * 0.38,  s * 0.06),
+		]), PackedColorArray([col, col, col, col, col, col]))

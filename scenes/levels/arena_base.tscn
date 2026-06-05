@@ -21,7 +21,7 @@
 [ext_resource type="PackedScene" uid="uid://pbrlw8kcrlq4" path="res://scenes/ui/game_over.tscn" id="15_tm1id"]
 [ext_resource type="Script" uid="uid://c8iuwrbemhmo6" path="res://scripts/levels/wave_manager.gd" id="16_wvmgr"]
 [ext_resource type="PackedScene" uid="uid://dtifgbtbsqu6s" path="res://scenes/levels/zones/hangar_exit.tscn" id="17_dyu6h"]
-[ext_resource type="PackedScene" uid="uid://bxss4q4q2p5dq" path="res://scenes/ui/mobile_controls.tscn" id="22_dyu6h"]
+[ext_resource type="PackedScene" uid="uid://cnm5imuwr82km" path="res://scenes/ui/mobile_controls.tscn" id="22_dyu6h"]
 [ext_resource type="PackedScene" uid="uid://b2oxmnlr28vu" path="res://scenes/enemies/pet_dog.tscn" id="24_lj50e"]
 [ext_resource type="PackedScene" uid="uid://dugi48yxe82ny" path="res://scenes/pickups/chest.tscn" id="25_3ojju"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="28_pausemnu"]
@@ -1424,13 +1424,15 @@ next_scene_path = "uid://dpcguux7a3rqn"
 
 [node name="SavePoint" parent="." unique_id=1095395053 instance=ExtResource("32_2i80p")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.824667, -0.41242743, -25.17982)
+checkpoint_id = "tutorial_1"
+level_name = "arena_base"
 
 [node name="Chest" parent="." unique_id=1892450482 instance=ExtResource("25_3ojju")]
 transform = Transform3D(0.08058166, 0, 0.99674803, 0, 1, 0, -0.99674803, 0, 0.08058166, -6.6517687, 0, 4.6073527)
 coin_count = 10
 
 [node name="Player" parent="." unique_id=222719199 instance=ExtResource("12_idjjk")]
-transform = Transform3D(-0.03135827, 0, 0.9995084, 0, 1, 0, -0.9995084, 0, -0.03135827, 21.861422, 0.38722146, 12.712403)
+transform = Transform3D(-0.18527229, 0, -0.9826874, 0, 1, 0, 0.9826874, 0, -0.18527229, 21.861422, 0.38722146, 12.712403)
 
 [node name="HUD" parent="." unique_id=1994348935 instance=ExtResource("14_srw3s")]
 

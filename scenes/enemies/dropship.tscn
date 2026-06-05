@@ -222,6 +222,9 @@ billboard_mode = 1
 [sub_resource type="QuadMesh" id="QuadMesh_1hj7y"]
 material = SubResource("StandardMaterial3D_728gm")
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_8327p"]
+size = Vector3(13.963135, 1, 19.547058)
+
 [node name="Dropship" type="Node3D" unique_id=1404871699]
 script = ExtResource("1_mxcpi")
 mob_scene = ExtResource("2_8327p")
@@ -278,3 +281,10 @@ amount = 50
 sub_emitter = NodePath(".")
 process_material = SubResource("ParticleProcessMaterial_8327p")
 draw_pass_1 = SubResource("QuadMesh_1hj7y")
+
+[node name="PushArea" type="Area3D" parent="Dropship_container" unique_id=293465514]
+unique_name_in_owner = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Dropship_container/PushArea" unique_id=188925471]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.82487, -3.9159698, 20.81113)
+shape = SubResource("BoxShape3D_8327p")

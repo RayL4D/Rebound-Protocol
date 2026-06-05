@@ -93,6 +93,12 @@ var _target_zoom:      float = 8.0    # Initialisé depuis le SpringArm dans _re
 # --- Mobile : direction du joystick droit (espace caméra) --------
 var _joystick_aim_dir: Vector2 = Vector2.ZERO
 
+# --- Auto-target mobile ------------------------------------------
+const AUTO_TARGET_MAX_DIST: float = 20.0       # Distance maximale de ciblage auto (mètres)
+var _auto_target_enemy:    Node3D     = null   # ennemi actuellement ciblé
+var _enemy_indicators:     Dictionary = {}     # enemy Node3D → Node3D indicateur visuel
+var _indicator_rot:        float      = 0.0    # rotation animée partagée des indicateurs
+
 # --- Cache pré-slide pour le stomp --------------------------------
 # move_and_slide() modifie velocity.y quand on atterrit → on sauvegarde
 # la valeur AVANT pour pouvoir vérifier la vitesse de chute réelle.
@@ -158,6 +164,11 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _base_max_hp:     int   = 0
 var _base_move_speed: float = 0.0
 
+# Sauvegarde du collision_mask du spring_arm avant la mort (restauré au respawn)
+var _spring_arm_mask_before_death: int = 0
+# Sauvegarde du collision_layer du CharacterBody3D (le joueur devient traversable à la mort)
+var _collision_layer_before_death: int = 0
+
 # Drapeau : restaurer position + HP au premier frame de physique.
 # call_deferred() sur méthode GDScript peut échouer silencieusement dans
 # certaines versions de Godot 4 — on passe par _physics_process à la place.
@@ -190,6 +201,7 @@ var _sfx_impact: AudioStreamPlayer = null   # Stomp sur ennemi + dash hit
 
 # --- Signaux -----------------------------------------------------
 signal player_died
+signal player_respawned  # Émis lors d'un respawn coop (fin de manche)
 signal hp_changed(new_hp: int)
 signal jumped          # Émis à chaque saut (clavier ET mobile)
 signal parried         # Émis à chaque appui parade (clavier ET mobile)
@@ -509,6 +521,21 @@ func restore_from_checkpoint() -> void:
 	_restore_from_save()
 
 
+## Restaure uniquement les HP depuis la sauvegarde, SANS toucher à la position.
+## Utilisé lors d'une transition inter-niveau : le checkpoint appartient au niveau
+## précédent, la position serait hors-map, mais les HP doivent être conservés.
+func restore_hp_only() -> void:
+	_restore_pending = false
+	if SaveData.active_slot < 0:
+		hp_changed.emit(current_hp)
+		return
+	var saved_hp := SaveData.get_player_hp()
+	if saved_hp > 0:
+		current_hp = mini(saved_hp, max_hp)
+	hp_changed.emit(current_hp)
+	print("[Player] restore_hp_only — hp=", current_hp, " / ", max_hp)
+
+
 ## Restaure position + HP depuis le dernier checkpoint sauvegardé.
 ## Appelée soit via _restore_pending dans _physics_process, soit via restore_from_checkpoint().
 func _restore_from_save() -> void:
@@ -548,9 +575,11 @@ func _restore_from_save() -> void:
 		print("[Player] HP final : ", current_hp, " / ", max_hp)
 	else:
 		print("[Player] _restore_from_save — aucun checkpoint, position et HP = défaut.")
-		# Premier lancement : enregistrer le HP initial en mémoire (pas d'écriture disque).
+		# Premier lancement : enregistrer les HP initiaux et persister sur disque
+		# pour qu'un quit avant le premier save point sauvegarde quand même le bon HP.
 		if SaveData.get_player_hp() == 0:
 			SaveData.set_player_hp(current_hp)
+			SaveData.save_current()
 
 	# Toujours émettre pour que le HUD affiche le bon HP dès le départ.
 	hp_changed.emit(current_hp)
@@ -639,7 +668,15 @@ func _physics_process(delta: float) -> void:
 	spring_arm.rotation_degrees = Vector3(_cam_pitch, _cam_yaw, 0.0)
 	spring_arm.spring_length    = lerp(spring_arm.spring_length, _target_zoom, 10.0 * delta)
 
-	_rotate_toward_mouse()
+	# Mise à jour auto-target mobile (avant rotate pour que l'ennemi ciblé soit à jour)
+	if OS.has_feature("mobile") and Settings.auto_target_enabled:
+		_update_auto_target()
+
+	_rotate_toward_mouse(delta)
+
+	# Indicateurs visuels des ennemis (visibles seulement si auto-target activé)
+	if OS.has_feature("mobile"):
+		_update_enemy_indicators(delta)
 
 	# Déclenche l'animation de parade (clavier/gamepad ou bouton mobile)
 	var mobile_parry := _mobile_parry_requested
@@ -671,10 +708,13 @@ func _physics_process(delta: float) -> void:
 	# ── Multijoueur : envoyer position + orientation + HP aux autres pairs ──
 	# has_multiplayer_peer() est false en solo → aucun coût.
 	if multiplayer.has_multiplayer_peer():
-		var pb := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
-		var anim_state: String = pb.get_current_node() if pb != null else "idle"
-		_rpc_sync_transform.rpc(global_position, robot_model.global_rotation.y, current_hp,
-			shield.global_position, shield.global_rotation.y, anim_state)
+		var peer := multiplayer.multiplayer_peer
+		# Vérifier que le canal est encore ouvert avant d'envoyer (évite errno=32)
+		if peer != null and peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED:
+			var pb := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
+			var anim_state: String = pb.get_current_node() if pb != null else "idle"
+			_rpc_sync_transform.rpc(global_position, robot_model.global_rotation.y, current_hp,
+				shield.global_position, shield.global_rotation.y, anim_state)
 
 
 # =============================================================
@@ -720,6 +760,18 @@ func _input(event: InputEvent) -> void:
 # =============================================================
 
 func _handle_camera_orbit(delta: float) -> void:
+	# Auto-suivi caméra horizontal vers l'ennemi ciblé (mode auto-target mobile)
+	if OS.has_feature("mobile") and Settings.auto_target_enabled \
+			and _auto_target_enemy != null and is_instance_valid(_auto_target_enemy):
+		var dir := (_auto_target_enemy as Node3D).global_position - global_position
+		dir.y = 0.0
+		if dir.length_squared() > 0.1:
+			# + 180° : la caméra se place derrière le joueur → ennemi au fond de l'écran
+			var desired_yaw := rad_to_deg(atan2(dir.x, dir.z)) + 180.0
+			# Différence angulaire sur ±180° pour éviter les demi-tours
+			var diff := fmod(desired_yaw - _target_snap_yaw + 540.0, 360.0) - 180.0
+			_target_snap_yaw += diff * minf(2.5 * delta, 1.0)
+
 	# Interpolation fluide vers les angles cibles
 	# Le yaw accumule sans modulo pour éviter les sauts 359° → 0°
 	_cam_yaw   = lerp(_cam_yaw,   _target_snap_yaw, 10.0 * delta)
@@ -833,8 +885,8 @@ func _handle_movement() -> void:
 # ROTATION VERS LA SOURIS
 # =============================================================
 
-func _rotate_toward_mouse() -> void:
-	# --- Joystick mobile prioritaire ---
+func _rotate_toward_mouse(delta: float = 0.0) -> void:
+	# --- Joystick mobile prioritaire (override manuel) ---
 	if _joystick_aim_dir.length_squared() > 0.04:
 		var cb        := camera.global_transform.basis
 		var cam_right := Vector3(cb.x.x, 0.0, cb.x.z).normalized()
@@ -843,6 +895,35 @@ func _rotate_toward_mouse() -> void:
 		world_dir.y   = 0.0
 		if world_dir.length_squared() > 0.01:
 			robot_model.global_rotation.y = atan2(world_dir.x, world_dir.z)
+		return
+
+	# --- Auto-face mobile (ciblage auto actif, joystick au repos) ---
+	# Face à l'ennemi ciblé. Sans cible, tourne avec la caméra.
+	# Le joystick droit reste un override manuel (ci-dessus).
+	if OS.has_feature("mobile") and Settings.auto_target_enabled:
+		if _auto_target_enemy != null and is_instance_valid(_auto_target_enemy):
+			var dir := _auto_target_enemy.global_position - global_position
+			dir.y = 0.0
+			if dir.length_squared() > 0.25:
+				var target_yaw := atan2(dir.x, dir.z)
+				robot_model.global_rotation.y = lerp_angle(
+					robot_model.global_rotation.y,
+					target_yaw,
+					minf(12.0 * delta, 1.0)
+				)
+		else:
+			# Pas de cible : le personnage suit la direction de la caméra
+			# La caméra est derrière le joueur → joueur = caméra_yaw - 180°
+			var target_player_yaw := deg_to_rad(_cam_yaw - 180.0)
+			robot_model.global_rotation.y = lerp_angle(
+				robot_model.global_rotation.y,
+				target_player_yaw,
+				minf(10.0 * delta, 1.0)
+			)
+		return   # Ne pas appliquer la logique souris sur mobile
+
+	# --- Mobile sans auto-target (joystick au repos → aucune rotation auto) ---
+	if OS.has_feature("mobile"):
 		return
 
 	# --- Souris (desktop) ---
@@ -872,6 +953,177 @@ func _rotate_toward_mouse() -> void:
 	# Assigner directement en global_rotation.y (espace monde),
 	# identique à ce que fait le bouclier — pas de lag, pas d'offset.
 	robot_model.global_rotation.y = atan2(look_dir.x, look_dir.z)
+
+
+# =============================================================
+# AUTO-TARGET (mobile)
+# =============================================================
+
+## Met à jour _auto_target_enemy : si la cible courante est invalide ou trop loin,
+## sélectionne automatiquement l'ennemi le plus proche dans la zone de ciblage.
+func _update_auto_target() -> void:
+	if _auto_target_enemy != null and is_instance_valid(_auto_target_enemy):
+		# Relâcher la cible si elle sort de la distance maximale
+		var dist := global_position.distance_to(_auto_target_enemy.global_position)
+		if dist <= AUTO_TARGET_MAX_DIST:
+			return   # Cible valide et dans la zone — on la garde
+		_auto_target_enemy = null
+	_auto_target_enemy = _find_nearest_enemy()
+
+
+## Retourne l'ennemi le plus proche en vie dans la limite AUTO_TARGET_MAX_DIST.
+func _find_nearest_enemy() -> Node3D:
+	var best_node: Node3D = null
+	var best_dist: float  = AUTO_TARGET_MAX_DIST   # Limite de distance max
+	for node in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(node) or not (node is Node3D):
+			continue
+		var dist: float = global_position.distance_to((node as Node3D).global_position)
+		if dist < best_dist:
+			best_dist = dist
+			best_node = node as Node3D
+	return best_node
+
+
+## Passe à l'ennemi suivant dans la liste (uniquement ceux dans la zone de ciblage).
+## Appelée par MobileControls quand le joueur tape sur l'écran hors boutons.
+func cycle_auto_target() -> void:
+	var enemies := get_tree().get_nodes_in_group("enemies")
+	# Filtrer les invalides et ceux hors portée
+	enemies = enemies.filter(func(n):
+		return is_instance_valid(n) and n is Node3D \
+			and global_position.distance_to((n as Node3D).global_position) <= AUTO_TARGET_MAX_DIST
+	)
+	if enemies.is_empty():
+		_auto_target_enemy = null
+		return
+
+	# Trouver l'index courant
+	var current_idx := -1
+	for i in enemies.size():
+		if enemies[i] == _auto_target_enemy:
+			current_idx = i
+			break
+
+	# Choisir l'ennemi suivant
+	_auto_target_enemy = enemies[(current_idx + 1) % enemies.size()] as Node3D
+
+
+## Crée un indicateur visuel : anneau + 4 triangles de visée.
+## Les triangles ("Arrows") sont masqués par défaut — visibles uniquement sur la cible.
+func _create_enemy_indicator() -> Node3D:
+	var indicator := Node3D.new()
+
+	# --- Anneau torus ---
+	var ring := MeshInstance3D.new()
+	ring.name = "Ring"
+	var torus := TorusMesh.new()
+	torus.inner_radius   = 0.30
+	torus.outer_radius   = 0.42
+	torus.rings          = 16
+	torus.ring_segments  = 24
+	ring.mesh = torus
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color               = Color(0.0, 0.55, 1.0, 0.85)
+	mat.emission_enabled           = true
+	mat.emission                   = Color(0.0, 0.45, 1.0)
+	mat.emission_energy_multiplier = 2.8
+	mat.transparency               = BaseMaterial3D.TRANSPARENCY_ALPHA
+	ring.set_surface_override_material(0, mat)
+	indicator.add_child(ring)
+
+	# --- 4 triangles de visée (style ancienne cible) ---
+	var arrows_node := Node3D.new()
+	arrows_node.name    = "Arrows"
+	arrows_node.visible = false   # Masqué pour les ennemis non ciblés
+	var arrow_mat := StandardMaterial3D.new()
+	arrow_mat.albedo_color               = Color(0.0, 1.0, 1.0, 1.0)
+	arrow_mat.emission_enabled           = true
+	arrow_mat.emission                   = Color(0.0, 0.9, 1.0)
+	arrow_mat.emission_energy_multiplier = 3.5
+	for i in 4:
+		var arrow := MeshInstance3D.new()
+		var prism  := PrismMesh.new()
+		prism.size = Vector3(0.12, 0.06, 0.12)
+		arrow.mesh = prism
+		arrow.set_surface_override_material(0, arrow_mat)
+		var angle: float = TAU / 4.0 * float(i)
+		arrow.position  = Vector3(sin(angle) * 0.60, 0.0, cos(angle) * 0.60)
+		arrow.rotation.y = -angle
+		arrows_node.add_child(arrow)
+	indicator.add_child(arrows_node)
+
+	get_tree().current_scene.add_child(indicator)
+	return indicator
+
+
+## Met à jour les indicateurs de TOUS les ennemis :
+##   • Bleu  = ennemi présent mais non ciblé
+##   • Rouge = ennemi actuellement ciblé
+##   • Invisible si auto-target désactivé
+func _update_enemy_indicators(delta: float) -> void:
+	_indicator_rot += delta * 1.8
+
+	# Supprimer les indicateurs d'ennemis qui ne sont plus dans la scène
+	var to_remove: Array = []
+	for enemy in _enemy_indicators.keys():
+		if not is_instance_valid(enemy):
+			to_remove.append(enemy)
+	for enemy in to_remove:
+		var ind = _enemy_indicators[enemy]
+		if is_instance_valid(ind):
+			(ind as Node3D).queue_free()
+		_enemy_indicators.erase(enemy)
+
+	# Si auto-target désactivé : masquer tout et sortir
+	if not Settings.auto_target_enabled:
+		for enemy in _enemy_indicators:
+			var ind = _enemy_indicators[enemy]
+			if is_instance_valid(ind):
+				(ind as Node3D).visible = false
+		return
+
+	# Mettre à jour / créer un indicateur par ennemi vivant
+	for node in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(node) or not (node is Node3D):
+			continue
+		var enemy := node as Node3D
+
+		if not _enemy_indicators.has(enemy) or not is_instance_valid(_enemy_indicators[enemy]):
+			_enemy_indicators[enemy] = _create_enemy_indicator()
+
+		var indicator := _enemy_indicators[enemy] as Node3D
+		indicator.visible          = true
+		indicator.global_position  = enemy.global_position + Vector3(0, 1.9, 0)
+		indicator.rotation.y       = _indicator_rot
+
+		# Couleur anneau + visibilité des triangles selon statut cible
+		var is_target := (enemy == _auto_target_enemy)
+		var ring := indicator.get_node_or_null("Ring") as MeshInstance3D
+		if ring != null:
+			var mat := ring.get_surface_override_material(0) as StandardMaterial3D
+			if mat != null:
+				if is_target:
+					# Cible active : rouge vif
+					mat.albedo_color               = Color(1.0, 0.10, 0.05, 0.90)
+					mat.emission                   = Color(1.0, 0.05, 0.00)
+					mat.emission_energy_multiplier = 3.5
+				else:
+					# Ennemis non ciblés : cyan (style ancienne cible)
+					mat.albedo_color               = Color(0.0, 0.90, 1.0, 0.90)
+					mat.emission                   = Color(0.0, 0.75, 1.0)
+					mat.emission_energy_multiplier = 2.8
+		# Triangles de visée : visibles uniquement sur la cible (rouge/orange)
+		var arrows_node := indicator.get_node_or_null("Arrows") as Node3D
+		if arrows_node != null:
+			arrows_node.visible = is_target
+			if is_target and arrows_node.get_child_count() > 0:
+				var first_arrow := arrows_node.get_child(0) as MeshInstance3D
+				if first_arrow != null:
+					var arrow_mat := first_arrow.get_surface_override_material(0) as StandardMaterial3D
+					if arrow_mat != null:
+						arrow_mat.albedo_color = Color(1.0, 0.45, 0.05, 1.0)
+						arrow_mat.emission     = Color(1.0, 0.30, 0.00)
 
 
 # =============================================================
@@ -1147,6 +1399,10 @@ func _check_dash_hits() -> void:
 # =============================================================
 
 func take_damage(amount: int) -> void:
+	# En multijoueur, seul le pair authority traite les dégâts de son propre joueur.
+	# Le serveur ne doit pas appliquer de dégâts sur les répliques distantes.
+	if multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
+		return
 	if is_dead or _invincible or _dash_invincible:
 		return
 
@@ -1211,15 +1467,100 @@ func _die() -> void:
 	# Figer le spring arm à sa longueur courante et désactiver sa détection
 	# de collision : sans ça, le mesh de l'animation de mort entre en collision
 	# avec le bras, qui se raccourcit à zéro et met la caméra dans le corps.
+	_spring_arm_mask_before_death = spring_arm.collision_mask
 	spring_arm.spring_length  = _target_zoom
 	spring_arm.collision_mask = 0
+
+	# Rendre le cadavre traversable (ennemis + projectiles passent à travers)
+	_collision_layer_before_death = collision_layer
+	collision_layer = 0
+
+	# Cacher le bouclier
+	if is_instance_valid(shield):
+		shield.hide()
 
 	# Déclenché ici directement car _physics_process retourne immédiatement
 	# quand is_dead est true — _update_animation() ne serait jamais appelée.
 	_play_sfx(_SFX_DIE, -4.0)
 	var playback := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
 	playback.travel("die")
+
+	# Propager l'état mort aux machines distantes via RPC fiable
+	# (le transform sync s'arrête quand is_dead → les clients resteraient debout sinon)
+	# Guard: seul l'authority envoie ce RPC (évite l'erreur si _die() est
+	# accidentellement appelé sur une réplique côté serveur)
+	if multiplayer.has_multiplayer_peer() and is_multiplayer_authority():
+		_rpc_broadcast_death.rpc()
+
 	player_died.emit()
+
+
+## Propagé à tous les pairs non-authority pour forcer l'animation + état mort.
+@rpc("authority", "reliable")
+func _rpc_broadcast_death() -> void:
+	if is_multiplayer_authority():
+		return  # déjà géré localement dans _die()
+	is_dead         = true
+	collision_layer = 0
+	if is_instance_valid(shield):
+		shield.hide()
+	var pb := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
+	if pb != null:
+		pb.travel("die")
+
+
+## Spawne une réplique visuelle d'une balle renvoyée sur toutes les machines distantes.
+## Appelé par Shield.gd après chaque spawn local en mode multijoueur.
+@rpc("authority", "reliable")
+func rpc_spawn_reflected_bullet(pos: Vector3, dir: Vector3,
+		dmg: int, critical: bool) -> void:
+	if is_multiplayer_authority():
+		return  # L'authority a déjà spawné la balle localement
+	const SCENE_PATH := "res://scenes/enemies/bullet_reflected.tscn"
+	var scene: PackedScene = load(SCENE_PATH)
+	if scene == null:
+		return
+	var bullet: BulletReflected = scene.instantiate() as BulletReflected
+	bullet._visual_only = true   # pas de dégâts, pas de skills secondaires
+	get_tree().current_scene.add_child(bullet)
+	bullet.init(pos, dir, dmg, critical)
+
+
+## Respawn coop : rappelé par CoopArena à la fin de chaque manche.
+## Remet le joueur en vie à la moitié de ses HP maximum.
+func coop_respawn(spawn_pos: Vector3) -> void:
+	if not is_dead:
+		return
+
+	is_dead    = false
+	current_hp = max(1, max_hp / 2)
+
+	# Téléportation au point de spawn
+	global_position            = spawn_pos
+	spring_arm.global_position = spawn_pos + Vector3(0.0, 0.9, 0.0)
+
+	# Restaurer les propriétés du spring arm
+	spring_arm.collision_mask = _spring_arm_mask_before_death
+	spring_arm.spring_length  = _target_zoom
+
+	# Restaurer le collision_layer (joueur à nouveau solide)
+	collision_layer = _collision_layer_before_death
+
+	# Réafficher le bouclier
+	if is_instance_valid(shield):
+		shield.show()
+
+	# Restaurer la caméra locale
+	camera.current = true
+
+	# Reprendre l'animation depuis idle
+	var playback := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
+	if playback != null:
+		playback.travel("idle")
+
+	# Notifier HUD et CoopDeathScreen
+	hp_changed.emit(current_hp)
+	player_respawned.emit()
 
 
 # =============================================================
