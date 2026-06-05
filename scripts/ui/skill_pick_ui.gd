@@ -36,6 +36,7 @@ var _rc:         Color = Color.WHITE
 var _rn:         String = ""
 
 var _M: float = 1.6 if OS.has_feature("mobile") else 1.0
+var _is_waiting: bool = false   # true → ne pas queue_free après le choix (coop)
 
 var _sfx_hover:  AudioStreamPlayer = null
 var _sfx_choose: AudioStreamPlayer = null
@@ -709,10 +710,57 @@ func _on_card_chosen(skill_id: String) -> void:
 	var _finish := func() -> void:
 		get_tree().paused = false
 		skill_chosen.emit(skill_id)
-		queue_free()
+		if not _is_waiting:
+			queue_free()
+		# Sinon : CoopArena appellera enter_waiting_mode() puis queue_free()
+		# quand tous les joueurs auront choisi.
 	var tw := create_tween()
 	tw.tween_interval(0.12)
 	tw.tween_callback(_finish)
+
+
+# =============================================================
+# MODE ATTENTE COOP — affiché quand le joueur a choisi mais attend les autres
+# =============================================================
+
+## Garde la fenêtre ouverte, désactive les cartes, affiche un message propre au-dessus.
+## Appelé par CoopArena juste après skill_chosen (UI encore vivante).
+func enter_waiting_mode() -> void:
+	_is_waiting = true
+
+	# Désactiver toutes les cartes (plus cliquables)
+	_disable_buttons_recursive(self)
+
+	# Fond semi-transparent sur les cartes
+	var dimmer := ColorRect.new()
+	dimmer.color = Color(0.0, 0.0, 0.0, 0.45)
+	dimmer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dimmer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(dimmer)
+
+	# Message centré, propre, texte uniquement
+	var M := _M
+	var lbl := Label.new()
+	lbl.text = "En attente des coéquipiers..."
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment   = VERTICAL_ALIGNMENT_CENTER
+	lbl.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	lbl.offset_left   = -250.0 * M
+	lbl.offset_right  =  250.0 * M
+	lbl.offset_top    = -20.0  * M
+	lbl.offset_bottom =  20.0  * M
+	lbl.add_theme_font_size_override("font_size", int(18 * M))
+	lbl.add_theme_color_override("font_color",         Color(0.4, 1.0, 0.85))
+	lbl.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 1.0))
+	lbl.add_theme_constant_override("outline_size", 4)
+	add_child(lbl)
+
+
+func _disable_buttons_recursive(node: Node) -> void:
+	if node is Button:
+		(node as Button).disabled = true
+	for child in node.get_children():
+		_disable_buttons_recursive(child)
 
 
 # =============================================================

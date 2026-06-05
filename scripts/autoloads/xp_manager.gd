@@ -37,6 +37,10 @@ var _phantom_bullet_toggle:    bool  = false # alterné par BulletReflected pour
 # --- Signaux ---------------------------------------------------
 signal xp_changed(current_xp: int, xp_to_next: int)
 signal leveled_up(new_level: int)
+## Émis quand l'UI de choix de compétence s'ouvre / se ferme.
+## Utilisé par CoopArena pour synchroniser la pause entre tous les joueurs.
+signal skill_pick_started
+signal skill_pick_ended(ui: Node)   ## ui = référence au SkillPickUI (encore vivant quand émis)
 
 # --- Script de l'UI (lazy-loaded) ------------------------------
 const _UI_SCRIPT_PATH := "res://scripts/ui/skill_pick_ui.gd"
@@ -177,6 +181,7 @@ func _threshold(lvl: int) -> int:
 
 
 func _show_skill_pick() -> void:
+	skill_pick_started.emit()
 	_ui_pending = true
 	var skills  := SkillCatalogue.draw_two(acquired_skills)
 	var ui_gd: GDScript = load(_UI_SCRIPT_PATH)
@@ -193,6 +198,7 @@ func _show_skill_pick() -> void:
 func _on_skill_chosen(id: String, ui: Node) -> void:
 	apply_skill(id)
 	_ui_pending = false
+	skill_pick_ended.emit(ui)   # ui encore vivant à ce stade (queue_free vient après)
 	# Un level-up peut s'être accumulé pendant le choix → chaîner
 	_check_level_up()
 

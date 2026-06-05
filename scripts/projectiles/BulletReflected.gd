@@ -29,6 +29,10 @@ var _is_clone:         bool  = false  # true = balle clone (pas de re-clonage)
 var _is_phantom:       bool  = false  # phantom_bullet : visuel spécial
 var _is_poisoned:      bool  = false  # poison_bullet : applique DoT
 
+# Réplique visuelle (coop) : pas de dégâts, pas de skills secondaires.
+# Utilisé sur les machines des autres joueurs pour voir les balles renvoyées.
+var _visual_only: bool = false
+
 var _dist_traveled:    float = 0.0    # pour le clone à mi-chemin
 var _clone_spawned:    bool  = false  # anti-doublon clone
 const _CLONE_DIST := 3.5             # unités avant spawn du clone
@@ -49,8 +53,8 @@ func _physics_process(delta: float) -> void:
 	global_position += direction * speed * delta
 	_dist_traveled  += speed * delta
 
-	# Clone de balle : spawn à mi-chemin (~3.5 unités)
-	if not _is_clone and not _clone_spawned and _dist_traveled >= _CLONE_DIST:
+	# Clone de balle : spawn à mi-chemin (~3.5 unités) — désactivé sur les répliques visuelles
+	if not _is_clone and not _clone_spawned and not _visual_only and _dist_traveled >= _CLONE_DIST:
 		_clone_spawned = true
 		if get_tree().root.has_node("XpManager") and XpManager.has_skill("clone_bullet"):
 			_spawn_clone()
@@ -155,6 +159,13 @@ func _orient_to_direction() -> void:
 # =============================================================
 
 func _on_body_entered(body: Node3D) -> void:
+	# Réplique visuelle : juste l'effet d'impact, pas de dégâts ni de skills.
+	if _visual_only:
+		if body.is_in_group("enemies") or _wall_bounces <= 0:
+			_spawn_impact()
+			queue_free()
+		return
+
 	if not body.is_in_group("enemies"):
 		# Décor / géométrie : arrêter la balle sauf si un rebond mural est encore disponible
 		# (le raycast de _check_wall_bounce devrait avoir changé la direction avant,

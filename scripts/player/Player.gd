@@ -164,6 +164,11 @@ var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var _base_max_hp:     int   = 0
 var _base_move_speed: float = 0.0
 
+# Sauvegarde du collision_mask du spring_arm avant la mort (restauré au respawn)
+var _spring_arm_mask_before_death: int = 0
+# Sauvegarde du collision_layer du CharacterBody3D (le joueur devient traversable à la mort)
+var _collision_layer_before_death: int = 0
+
 # Drapeau : restaurer position + HP au premier frame de physique.
 # call_deferred() sur méthode GDScript peut échouer silencieusement dans
 # certaines versions de Godot 4 — on passe par _physics_process à la place.
@@ -196,6 +201,7 @@ var _sfx_impact: AudioStreamPlayer = null   # Stomp sur ennemi + dash hit
 
 # --- Signaux -----------------------------------------------------
 signal player_died
+signal player_respawned  # Émis lors d'un respawn coop (fin de manche)
 signal hp_changed(new_hp: int)
 signal jumped          # Émis à chaque saut (clavier ET mobile)
 signal parried         # Émis à chaque appui parade (clavier ET mobile)
@@ -702,10 +708,13 @@ func _physics_process(delta: float) -> void:
 	# ── Multijoueur : envoyer position + orientation + HP aux autres pairs ──
 	# has_multiplayer_peer() est false en solo → aucun coût.
 	if multiplayer.has_multiplayer_peer():
-		var pb := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
-		var anim_state: String = pb.get_current_node() if pb != null else "idle"
-		_rpc_sync_transform.rpc(global_position, robot_model.global_rotation.y, current_hp,
-			shield.global_position, shield.global_rotation.y, anim_state)
+		var peer := multiplayer.multiplayer_peer
+		# Vérifier que le canal est encore ouvert avant d'envoyer (évite errno=32)
+		if peer != null and peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED:
+			var pb := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
+			var anim_state: String = pb.get_current_node() if pb != null else "idle"
+			_rpc_sync_transform.rpc(global_position, robot_model.global_rotation.y, current_hp,
+				shield.global_position, shield.global_rotation.y, anim_state)
 
 
 # =============================================================
@@ -1390,6 +1399,10 @@ func _check_dash_hits() -> void:
 # =============================================================
 
 func take_damage(amount: int) -> void:
+	# En multijoueur, seul le pair authority traite les dégâts de son propre joueur.
+	# Le serveur ne doit pas appliquer de dégâts sur les répliques distantes.
+	if multiplayer.has_multiplayer_peer() and not is_multiplayer_authority():
+		return
 	if is_dead or _invincible or _dash_invincible:
 		return
 
@@ -1454,15 +1467,100 @@ func _die() -> void:
 	# Figer le spring arm à sa longueur courante et désactiver sa détection
 	# de collision : sans ça, le mesh de l'animation de mort entre en collision
 	# avec le bras, qui se raccourcit à zéro et met la caméra dans le corps.
+	_spring_arm_mask_before_death = spring_arm.collision_mask
 	spring_arm.spring_length  = _target_zoom
 	spring_arm.collision_mask = 0
+
+	# Rendre le cadavre traversable (ennemis + projectiles passent à travers)
+	_collision_layer_before_death = collision_layer
+	collision_layer = 0
+
+	# Cacher le bouclier
+	if is_instance_valid(shield):
+		shield.hide()
 
 	# Déclenché ici directement car _physics_process retourne immédiatement
 	# quand is_dead est true — _update_animation() ne serait jamais appelée.
 	_play_sfx(_SFX_DIE, -4.0)
 	var playback := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
 	playback.travel("die")
+
+	# Propager l'état mort aux machines distantes via RPC fiable
+	# (le transform sync s'arrête quand is_dead → les clients resteraient debout sinon)
+	# Guard: seul l'authority envoie ce RPC (évite l'erreur si _die() est
+	# accidentellement appelé sur une réplique côté serveur)
+	if multiplayer.has_multiplayer_peer() and is_multiplayer_authority():
+		_rpc_broadcast_death.rpc()
+
 	player_died.emit()
+
+
+## Propagé à tous les pairs non-authority pour forcer l'animation + état mort.
+@rpc("authority", "reliable")
+func _rpc_broadcast_death() -> void:
+	if is_multiplayer_authority():
+		return  # déjà géré localement dans _die()
+	is_dead         = true
+	collision_layer = 0
+	if is_instance_valid(shield):
+		shield.hide()
+	var pb := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
+	if pb != null:
+		pb.travel("die")
+
+
+## Spawne une réplique visuelle d'une balle renvoyée sur toutes les machines distantes.
+## Appelé par Shield.gd après chaque spawn local en mode multijoueur.
+@rpc("authority", "reliable")
+func rpc_spawn_reflected_bullet(pos: Vector3, dir: Vector3,
+		dmg: int, critical: bool) -> void:
+	if is_multiplayer_authority():
+		return  # L'authority a déjà spawné la balle localement
+	const SCENE_PATH := "res://scenes/enemies/bullet_reflected.tscn"
+	var scene: PackedScene = load(SCENE_PATH)
+	if scene == null:
+		return
+	var bullet: BulletReflected = scene.instantiate() as BulletReflected
+	bullet._visual_only = true   # pas de dégâts, pas de skills secondaires
+	get_tree().current_scene.add_child(bullet)
+	bullet.init(pos, dir, dmg, critical)
+
+
+## Respawn coop : rappelé par CoopArena à la fin de chaque manche.
+## Remet le joueur en vie à la moitié de ses HP maximum.
+func coop_respawn(spawn_pos: Vector3) -> void:
+	if not is_dead:
+		return
+
+	is_dead    = false
+	current_hp = max(1, max_hp / 2)
+
+	# Téléportation au point de spawn
+	global_position            = spawn_pos
+	spring_arm.global_position = spawn_pos + Vector3(0.0, 0.9, 0.0)
+
+	# Restaurer les propriétés du spring arm
+	spring_arm.collision_mask = _spring_arm_mask_before_death
+	spring_arm.spring_length  = _target_zoom
+
+	# Restaurer le collision_layer (joueur à nouveau solide)
+	collision_layer = _collision_layer_before_death
+
+	# Réafficher le bouclier
+	if is_instance_valid(shield):
+		shield.show()
+
+	# Restaurer la caméra locale
+	camera.current = true
+
+	# Reprendre l'animation depuis idle
+	var playback := anim_tree.get("parameters/playback") as AnimationNodeStateMachinePlayback
+	if playback != null:
+		playback.travel("idle")
+
+	# Notifier HUD et CoopDeathScreen
+	hp_changed.emit(current_hp)
+	player_respawned.emit()
 
 
 # =============================================================

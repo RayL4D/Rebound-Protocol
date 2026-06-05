@@ -46,6 +46,11 @@ class WaveData:
 @export var enemy_scene: PackedScene  ## Ennemi par défaut (rétro-compatibilité)
 @export var enemy_catalog: Array[PackedScene] = []  ## 📋 Catalogue d'ennemis : [0]=Dog, [1]=Cat, [2]=Lion...
 @export var time_between_waves: float = 2.5
+## En mode co-op, la mort d'un joueur ne doit pas stopper les vagues.
+@export var ignore_player_death: bool = false
+## Nœud parent où les dropships/ennemis sont ajoutés.
+## Si null → get_tree().current_scene (comportement solo par défaut).
+var spawn_root: Node = null
 
 # --- VARIABLES INTERNES ---
 var _waves: Array[WaveData] = []
@@ -237,8 +242,15 @@ func _spawn_dropship(pos: Vector3, enemy_count: int, override_enemy_idx: int = -
 	ship.enemy_died_callback = _on_enemy_died
 	ship.dropship_mesh = _current_wave_data.dropship_mesh
 
-	get_tree().current_scene.add_child(ship)
-	ship.global_position = pos
+	var parent: Node = spawn_root if spawn_root != null else get_tree().current_scene
+	# Positionner AVANT add_child : le MultiplayerSpawner capture l'état initial
+	# au moment du add_child → la bonne position est envoyée aux clients.
+	# spawn_root (EnemiesRoot) est à l'origine du monde, donc position locale = globale.
+	if parent is Node3D:
+		ship.position = (parent as Node3D).to_local(pos)
+	else:
+		ship.position = pos
+	parent.add_child(ship, true)  # force_readable_name évite les noms réservés
 
 
 # =============================================================
@@ -275,6 +287,8 @@ func _finish_all_waves() -> void:
 	all_waves_finished.emit()
 
 func _on_player_died() -> void:
+	if ignore_player_death:
+		return
 	_is_running = false
 	_show_message(tr("UI_DEATH_MSG"))
 
